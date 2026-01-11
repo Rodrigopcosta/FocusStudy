@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://focusstudy.com.br",
+    url: "https://focus-study.online",
     siteName: "FocusStudy",
     title: "FocusStudy - Planejador de Estudos para Concursos e Faculdade",
     description:
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   alternates: {
-    canonical: "https://focusstudy.com.br",
+    canonical: "https://focus-study.online",
   },
   category: "education",
   generator: "Next.js",
