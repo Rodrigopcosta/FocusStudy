@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,11 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false) // Novo state para o Google
   const router = useRouter()
+  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -39,6 +39,24 @@ export default function LoginPage() {
     }
   }
 
+  // FUNÇÃO PARA LOGIN COM GOOGLE
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          // Garanta que esta URL é a mesma que você configurou no Google Cloud
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) throw error
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Erro ao conectar com Google.")
+      setIsGoogleLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-muted/30">
       <div className="w-full max-w-sm">
@@ -52,9 +70,38 @@ export default function LoginPage() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
-              <CardDescription>Entre com seu email e senha para acessar sua conta</CardDescription>
+              <CardDescription>Entre com sua conta para acessar o FocusStudy</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* BOTÃO DO GOOGLE */}
+              <Button
+                variant="outline"
+                type="button"
+                className="w-full mb-4"
+                onClick={handleGoogleLogin}
+                disabled={isGoogleLoading || isLoading}
+              >
+                {isGoogleLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <img
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                    alt="Google"
+                    className="mr-2 h-4 w-4"
+                  />
+                )}
+                Entrar com Google
+              </Button>
+
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Ou continue com email</span>
+                </div>
+              </div>
+
               <form onSubmit={handleLogin}>
                 <div className="flex flex-col gap-4">
                   <div className="grid gap-2">
@@ -79,7 +126,7 @@ export default function LoginPage() {
                     />
                   </div>
                   {error && <p className="text-sm text-destructive text-center">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
