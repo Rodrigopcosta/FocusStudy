@@ -47,7 +47,7 @@ export default function LoginPage() {
         provider: "google",
         options: {
           // Garanta que esta URL é a mesma que você configurou no Google Cloud
-          redirectTo: 'https://focus-study.online/auth/callback',
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error
