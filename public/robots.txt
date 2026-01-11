@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow private routes
+Disallow: /dashboard
+Disallow: /api
+
+# Sitemap
+Sitemap: https://focusstudy.com.br/sitemap.xml
