@@ -33,13 +33,13 @@ export function TaskFilters({ disciplines }: TaskFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Select value={searchParams.get("status") || "all"} onValueChange={(value) => updateFilter("status", value)}>
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-35">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos</SelectItem>
           <SelectItem value="pending">Pendentes</SelectItem>
-          <SelectItem value="completed">Concluidas</SelectItem>
+          <SelectItem value="completed">Concluídas</SelectItem>
         </SelectContent>
       </Select>
 
@@ -47,7 +47,7 @@ export function TaskFilters({ disciplines }: TaskFiltersProps) {
         value={searchParams.get("discipline") || "all"}
         onValueChange={(value) => updateFilter("discipline", value)}
       >
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-45">
           <SelectValue placeholder="Disciplina" />
         </SelectTrigger>
         <SelectContent>
@@ -61,13 +61,13 @@ export function TaskFilters({ disciplines }: TaskFiltersProps) {
       </Select>
 
       <Select value={searchParams.get("priority") || "all"} onValueChange={(value) => updateFilter("priority", value)}>
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-35">
           <SelectValue placeholder="Prioridade" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas</SelectItem>
           <SelectItem value="high">Alta</SelectItem>
-          <SelectItem value="medium">Media</SelectItem>
+          <SelectItem value="medium">Média</SelectItem>
           <SelectItem value="low">Baixa</SelectItem>
         </SelectContent>
       </Select>

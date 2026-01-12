@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { X, Play, Pause, RotateCcw, Coffee, Target } from "lucide-react"
 import type { PomodoroMode } from "@/types/database"
 
+// Modos disponíveis e seus tempos (em segundos)
 const MODES = {
   "25/5": { work: 25 * 60, break: 5 * 60 },
   "50/10": { work: 50 * 60, break: 10 * 60 },
@@ -25,16 +26,18 @@ export default function FocusModePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
+    // Inicializa o som de alerta
     audioRef.current = new Audio(
       "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleB0MLKfa+tq0QwYck83+4MI/Hzyk3v73tkgFFKnT/OO2SzgWudj/5LNLMyfH6Ofvnj4dKZre8OWgS0YVn8f/76w9Ei2k3v/ooEsEI6fX/OytQQ0krdj/8KIxKI3B/O+jJhOezf/vpSIVpt3/9aETJq/d//CeEy+s1v/xmRkyqdf/8ZYVO6bR/++SDjyn0P/0kAo/pcz/9YsJQaLI//WHBT+jw//2hQM/o77/+IIBP6K5//h/AD+htf/5fAA/obH/+XkAPqGt//l3AD6gqv/5dQA+oKf/+nMAP6Ck//pxAECgof/6cABBn5//+24AQZ+d//tsAEKem//7agBCnpn/+2gAQ56X//tmAESdlf/7ZQBEnZT/+2QARZ2S//tiAEack//7YQBGnJH/+2AARpuQ//teAEebj//7XQBHm47/+1wASJqM//taAEiajP/7WQBJmov/+1gASZmK//tXAEmZif/7VgBKmYj/+1UASpiH//tUAEuYhv/7UwBLl4X/+1IAS5eF//tRAEyWhP/7UABMloP/+08ATJaC//tOAE2Vgf/7TQBNlYH/+0wATpSA//tLAE6Uf//7SgBOlH//+0kAT5N+//tIAE+Tfv/7RwBQkn3/+0YAUJl9//tFAA==",
     )
 
-    // Enter fullscreen on mount
+    // Entrar em fullscreen ao abrir a página
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {})
     }
 
     return () => {
+      // Sai do fullscreen ao desmontar
       if (document.exitFullscreen && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {})
       }
@@ -47,6 +50,7 @@ export default function FocusModePage() {
     }
   }, [])
 
+  // Salva a sessão no Supabase
   const saveSession = useCallback(
     async (status: "completed" | "interrupted") => {
       if (!startTimeRef.current) return
@@ -60,6 +64,7 @@ export default function FocusModePage() {
 
       const durationSeconds = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000)
 
+      // Salva na tabela pomodoro_sessions
       await supabase.from("pomodoro_sessions").insert({
         user_id: user.id,
         mode,
@@ -70,6 +75,7 @@ export default function FocusModePage() {
         ended_at: new Date().toISOString(),
       })
 
+      // Atualiza estatísticas diárias
       const today = new Date().toISOString().split("T")[0]
       const { data: existingStats } = await supabase
         .from("study_stats")
@@ -101,6 +107,7 @@ export default function FocusModePage() {
     [mode],
   )
 
+  // Timer do Pomodoro
   useEffect(() => {
     let interval: NodeJS.Timeout
 
@@ -125,6 +132,7 @@ export default function FocusModePage() {
     return () => clearInterval(interval)
   }, [isRunning, timeLeft, isBreak, mode, playSound, saveSession])
 
+  // Controle de início, pausa e reset
   const handleStart = () => {
     if (!isRunning && !isBreak) {
       startTimeRef.current = new Date()
@@ -132,9 +140,7 @@ export default function FocusModePage() {
     setIsRunning(true)
   }
 
-  const handlePause = () => {
-    setIsRunning(false)
-  }
+  const handlePause = () => setIsRunning(false)
 
   const handleReset = () => {
     if (isRunning && startTimeRef.current) {
@@ -155,6 +161,7 @@ export default function FocusModePage() {
     router.push("/dashboard/pomodoro")
   }
 
+  // Formatação do tempo
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60

@@ -24,7 +24,7 @@ export default function RegisterPage() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false) // State para o Google
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -52,7 +52,7 @@ export default function RegisterPage() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("As senhas nao coincidem")
+      setError("As senhas não coincidem")
       setIsLoading(false)
       return
     }
@@ -64,7 +64,7 @@ export default function RegisterPage() {
     }
 
     if (!termsAccepted) {
-      setError("Voce deve aceitar os termos de uso e politica de privacidade")
+      setError("Você deve aceitar os termos de uso e a política de privacidade")
       setIsLoading(false)
       return
     }
@@ -106,7 +106,7 @@ export default function RegisterPage() {
                 <div>
                   <h2 className="text-xl font-semibold mb-2">Conta criada com sucesso!</h2>
                   <p className="text-muted-foreground text-sm">
-                    Verifique seu email para confirmar sua conta. Depois, voce podera fazer login.
+                    Verifique seu e-mail para confirmar sua conta. Depois, você poderá fazer login.
                   </p>
                 </div>
                 <Button asChild className="w-full mt-4">
@@ -167,7 +167,6 @@ export default function RegisterPage() {
 
               <form onSubmit={handleSignUp}>
                 <div className="flex flex-col gap-4">
-                  {/* ... Restante dos campos do formulário (nome, email, etc) ... */}
                   <div className="grid gap-2">
                     <Label htmlFor="name">Nome *</Label>
                     <Input
@@ -180,7 +179,7 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">E-mail *</Label>
                     <Input
                       id="email"
                       type="email"
@@ -202,7 +201,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="gender">Genero</Label>
+                      <Label htmlFor="gender">Gênero</Label>
                       <Select value={gender} onValueChange={setGender}>
                         <SelectTrigger id="gender">
                           <SelectValue placeholder="Selecione" />
@@ -211,7 +210,7 @@ export default function RegisterPage() {
                           <SelectItem value="male">Masculino</SelectItem>
                           <SelectItem value="female">Feminino</SelectItem>
                           <SelectItem value="other">Outro</SelectItem>
-                          <SelectItem value="prefer_not_say">Prefiro nao dizer</SelectItem>
+                          <SelectItem value="prefer_not_say">Prefiro não dizer</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -224,7 +223,7 @@ export default function RegisterPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="exam">Concurso Publico</SelectItem>
+                        <SelectItem value="exam">Concurso Público</SelectItem>
                         <SelectItem value="college">Faculdade / Universidade</SelectItem>
                       </SelectContent>
                     </Select>
@@ -264,7 +263,7 @@ export default function RegisterPage() {
                       </Link>{" "}
                       e a{" "}
                       <Link href="/privacy" className="text-primary hover:underline" target="_blank">
-                        Politica de Privacidade
+                        Política de Privacidade
                       </Link>
                     </label>
                   </div>
@@ -282,7 +281,7 @@ export default function RegisterPage() {
                   </Button>
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Ja tem uma conta?{" "}
+                  Já tem uma conta?{" "}
                   <Link href="/login" className="text-primary underline underline-offset-4 hover:text-primary/80">
                     Entrar
                   </Link>
@@ -292,7 +291,7 @@ export default function RegisterPage() {
           </Card>
           <div className="text-center">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              Voltar para a pagina inicial
+              Voltar para a página inicial
             </Link>
           </div>
         </div>

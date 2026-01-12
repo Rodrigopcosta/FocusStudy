@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     template: "%s | FocusStudy",
   },
   description:
-    "Organize seus estudos com o FocusStudy. Gerencie tarefas, crie anotacoes estruturadas e use a tecnica Pomodoro para maximizar seu foco. Ideal para concurseiros e universitarios.",
+    "Organize seus estudos com o FocusStudy. Gerencie tarefas, crie anotações estruturadas e use a técnica Pomodoro para maximizar seu foco. Ideal para concurseiros e universitários.",
   keywords: [
     "planejador de estudos",
     "concursos",
     "faculdade",
     "pomodoro",
-    "organizacao",
+    "organização",
     "tarefas",
     "notas",
     "estudo",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     siteName: "FocusStudy",
     title: "FocusStudy - Planejador de Estudos para Concursos e Faculdade",
     description:
-      "Organize seus estudos com tarefas, notas e tecnica Pomodoro. Ideal para concurseiros e universitarios.",
+      "Organize seus estudos com tarefas, notas e técnica Pomodoro. Ideal para concurseiros e universitários.",
     images: [
       {
         url: "/og-image.png",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FocusStudy - Planejador de Estudos",
-    description: "Organize seus estudos com tarefas, notas e tecnica Pomodoro.",
+    description: "Organize seus estudos com tarefas, notas e técnica Pomodoro.",
     images: ["/og-image.png"],
   },
   alternates: {

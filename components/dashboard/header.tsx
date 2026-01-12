@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { usePathname } from "next/navigation"
 
+// Mapeia rotas para nomes amigáveis
 const pageNames: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/dashboard/tasks": "Tarefas",
@@ -23,7 +24,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ profile }: DashboardHeaderProps) {
   const pathname = usePathname()
-  const pageName = pageNames[pathname] || "Dashboard"
+  const pageName = pageNames[pathname] || "Dashboard" // fallback caso a rota não esteja no map
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">

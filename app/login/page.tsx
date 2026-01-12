@@ -98,14 +98,14 @@ export default function LoginPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Ou continue com email</span>
+                  <span className="bg-background px-2 text-muted-foreground">Ou continue com e-mail</span>
                 </div>
               </div>
 
               <form onSubmit={handleLogin}>
                 <div className="flex flex-col gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">E-mail</Label>
                     <Input
                       id="email"
                       type="email"
@@ -138,7 +138,7 @@ export default function LoginPage() {
                   </Button>
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Nao tem uma conta?{" "}
+                  Não tem uma conta?{" "}
                   <Link href="/register" className="text-primary underline underline-offset-4 hover:text-primary/80">
                     Criar conta
                   </Link>
@@ -148,7 +148,7 @@ export default function LoginPage() {
           </Card>
           <div className="text-center">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              Voltar para a pagina inicial
+              Voltar para a página inicial
             </Link>
           </div>
         </div>

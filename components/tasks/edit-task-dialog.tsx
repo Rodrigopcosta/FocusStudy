@@ -62,14 +62,15 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
         <DialogHeader>
           <DialogTitle>Editar Tarefa</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-title">Titulo *</Label>
+            <Label htmlFor="edit-title">Título *</Label>
             <Input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-description">Descricao</Label>
+            <Label htmlFor="edit-description">Descrição</Label>
             <Textarea
               id="edit-description"
               value={description}
@@ -103,8 +104,8 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="theory">Teoria</SelectItem>
-                  <SelectItem value="review">Revisao</SelectItem>
-                  <SelectItem value="questions">Questoes</SelectItem>
+                  <SelectItem value="review">Revisão</SelectItem>
+                  <SelectItem value="questions">Questões</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -119,7 +120,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Media</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
                   <SelectItem value="high">Alta</SelectItem>
                 </SelectContent>
               </Select>
@@ -138,7 +139,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-dueDate">Data de conclusao</Label>
+            <Label htmlFor="edit-dueDate">Data de conclusão</Label>
             <Input id="edit-dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
 

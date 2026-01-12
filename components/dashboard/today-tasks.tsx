@@ -84,7 +84,7 @@ export function TodayTasks({ tasks }: TodayTasksProps) {
                       </span>
                     )}
                     <Badge variant="secondary" className={priorityColors[task.priority]}>
-                      {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Media" : "Baixa"}
+                      {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Média" : "Baixa"}
                     </Badge>
                   </div>
                 </div>

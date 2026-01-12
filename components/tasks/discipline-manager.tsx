@@ -70,6 +70,7 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
           <DialogTitle>Gerenciar Disciplinas</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {/* Formulário de criação */}
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
               <Label>Nome da disciplina</Label>
@@ -80,6 +81,7 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label>Cor</Label>
               <div className="flex gap-2 flex-wrap">
@@ -96,8 +98,9 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
                 ))}
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Icone</Label>
+              <Label>Ícone</Label>
               <div className="flex gap-2 flex-wrap">
                 {ICONS.map((i) => (
                   <button
@@ -113,12 +116,14 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
                 ))}
               </div>
             </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Adicionar Disciplina
             </Button>
           </form>
 
+          {/* Disciplinas existentes */}
           {disciplines.length > 0 && (
             <div className="border-t pt-4">
               <Label className="text-sm text-muted-foreground mb-2 block">Disciplinas existentes</Label>

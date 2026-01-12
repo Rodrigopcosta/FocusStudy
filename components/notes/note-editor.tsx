@@ -86,7 +86,7 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-lg font-semibold border-none shadow-none focus-visible:ring-0 px-0 h-auto"
-            placeholder="Titulo da nota"
+            placeholder="Título da nota"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
               Salvando...
             </span>
           ) : lastSaved ? (
-            <span className="text-xs text-muted-foreground">Salvo as {lastSaved.toLocaleTimeString("pt-BR")}</span>
+            <span className="text-xs text-muted-foreground">Salvo às {lastSaved.toLocaleTimeString("pt-BR")}</span>
           ) : null}
           <Button variant="ghost" size="icon" onClick={handleToggleImportant}>
             <Star className={`h-4 w-4 ${isImportant ? "text-chart-4 fill-chart-4" : "text-muted-foreground"}`} />
@@ -109,7 +109,7 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Disciplina:</span>
           <Select value={disciplineId} onValueChange={handleDisciplineChange}>
-            <SelectTrigger className="w-[180px] h-8">
+            <SelectTrigger className="w-45 h-8">
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
@@ -122,11 +122,11 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Topico:</span>
+          <span className="text-sm text-muted-foreground">Tópico:</span>
           <Input
             value={topic}
             onChange={(e) => handleTopicChange(e.target.value)}
-            className="h-8 w-[200px]"
+            className="h-8 w-50"
             placeholder="Ex: Art. 5"
           />
         </div>
@@ -137,13 +137,13 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
         <Textarea
           value={content}
           onChange={(e) => handleContentChange(e.target.value)}
-          placeholder="Comece a escrever suas anotacoes...
+          placeholder={`Comece a escrever suas anotações...
 
-Dica: Use Markdown para formatar seu texto!
+Dica: use Markdown para formatar seu texto:
 - **negrito** para destacar
-- *italico* para enfase
-- # Titulos para organizar
-- - listas para enumerar"
+- *itálico* para ênfase
+- # Títulos para organizar
+- - listas para enumerar`}
           className="h-full resize-none border-none shadow-none focus-visible:ring-0 text-base leading-relaxed"
         />
       </div>
