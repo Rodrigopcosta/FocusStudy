@@ -110,7 +110,7 @@ export function DisciplinesList({ disciplines, studyType }: DisciplinesListProps
             <AlertDialogTitle>Excluir disciplina?</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir a disciplina "{deletingDiscipline?.name}"? As tarefas e notas vinculadas a
-              ela nao serao excluidas, mas perderao o vinculo com esta disciplina.
+              ela não serão excluídas, mas perderão o vínculo com esta disciplina.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

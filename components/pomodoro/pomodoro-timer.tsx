@@ -115,13 +115,11 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
     } else if (isRunning && timeLeft === 0) {
       playSound()
       if (!isBreak) {
-        // Work session completed
         saveSession("completed")
         setCompletedCycles((prev) => prev + 1)
         setIsBreak(true)
         setTimeLeft(MODES[mode].break)
       } else {
-        // Break completed
         setIsBreak(false)
         setTimeLeft(MODES[mode].work)
         setIsRunning(false)
@@ -173,7 +171,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight">Pomodoro Timer</h1>
         <p className="text-muted-foreground">
-          {isBreak ? "Hora do descanso! Relaxe um pouco." : "Foque nos seus estudos"}
+          {isBreak ? "Hora do descanso! Relaxe um pouco." : "Foque nos seus estudos."}
         </p>
       </div>
 
@@ -182,7 +180,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
           {/* Mode Selector */}
           <div className="flex justify-center gap-4 mb-8">
             <Select value={mode} onValueChange={(v) => handleModeChange(v as PomodoroMode)} disabled={isRunning}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-35">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -273,7 +271,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
             </div>
             <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={isRunning}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione uma tarefa (opcional)" />
+                <SelectValue placeholder="Selecione uma tarefa (opcional)..." />
               </SelectTrigger>
               <SelectContent>
                 {tasks.map((task) => (
@@ -285,7 +283,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
               </SelectContent>
             </Select>
             {selectedTask && (
-              <p className="text-sm text-muted-foreground mt-2">{selectedTask.description || "Sem descricao"}</p>
+              <p className="text-sm text-muted-foreground mt-2">{selectedTask.description || "Sem descrição"}</p>
             )}
           </div>
         </CardContent>

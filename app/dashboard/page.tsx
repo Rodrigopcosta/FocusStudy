@@ -13,9 +13,9 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
-  // Get today's date
   const today = new Date().toISOString().split("T")[0]
 
+  // Estatísticas de hoje
   const { data: todayStats } = await supabase
     .from("study_stats")
     .select("*")
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     .eq("date", today)
     .maybeSingle()
 
-  // Fetch pending tasks
+  // Tarefas pendentes do usuário (limit 5)
   const { data: pendingTasks } = await supabase
     .from("tasks")
     .select("*, discipline:disciplines(*)")
@@ -32,12 +32,12 @@ export default async function DashboardPage() {
     .order("due_date", { ascending: true })
     .limit(5)
 
+  // Todas as tarefas para calcular totais
   const { data: allTasks } = await supabase.from("tasks").select("status").eq("user_id", user.id)
-
   const completedTasks = allTasks?.filter((t) => t.status === "completed").length || 0
   const pendingTasksCount = allTasks?.filter((t) => t.status === "pending").length || 0
 
-  // Fetch recent notes
+  // Notas recentes (limit 4)
   const { data: recentNotes } = await supabase
     .from("notes")
     .select("*, discipline:disciplines(*)")
@@ -45,10 +45,10 @@ export default async function DashboardPage() {
     .order("updated_at", { ascending: false })
     .limit(4)
 
-  // Fetch disciplines for pomodoro
+  // Disciplinas para o Quick Pomodoro
   const { data: disciplines } = await supabase.from("disciplines").select("*").eq("user_id", user.id).order("name")
 
-  // Fetch profile for streak
+  // Perfil do usuário (streak atual e melhor streak)
   const { data: profile } = await supabase
     .from("profiles")
     .select("streak_current, streak_best")

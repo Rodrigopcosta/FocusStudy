@@ -68,7 +68,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>Perfil</CardTitle>
-          <CardDescription>Suas informacoes pessoais</CardDescription>
+          <CardDescription>Suas informações pessoais</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -78,24 +78,24 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" value={userEmail} disabled />
-            <p className="text-xs text-muted-foreground">O email nao pode ser alterado</p>
+            <p className="text-xs text-muted-foreground">O email não pode ser alterado</p>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Preferencias</CardTitle>
-          <CardDescription>Personalize sua experiencia</CardDescription>
+          <CardTitle>Preferências</CardTitle>
+          <CardDescription>Personalize sua experiência</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Tema</Label>
-              <p className="text-sm text-muted-foreground">Escolha a aparencia do app</p>
+              <p className="text-sm text-muted-foreground">Escolha a aparência do app</p>
             </div>
             <Select value={theme} onValueChange={handleThemeChange}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -107,11 +107,11 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Modo Pomodoro Padrao</Label>
-              <p className="text-sm text-muted-foreground">Duracao padrao das sessoes</p>
+              <Label>Modo Pomodoro Padrão</Label>
+              <p className="text-sm text-muted-foreground">Duração padrão das sessões</p>
             </div>
             <Select value={pomodoroMode} onValueChange={(v) => setPomodoroMode(v as PomodoroMode)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -123,7 +123,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Notificacoes</Label>
+              <Label>Notificações</Label>
               <p className="text-sm text-muted-foreground">Receber lembretes de estudo</p>
             </div>
             <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
@@ -138,7 +138,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
         </Button>
         <Button onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Salvar Alteracoes
+          Salvar Alterações
         </Button>
       </div>
     </div>

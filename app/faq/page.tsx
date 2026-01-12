@@ -10,54 +10,54 @@ export const metadata = {
 
 const faqs = [
   {
-    question: "O FocusStudy e gratuito?",
+    question: "O FocusStudy é gratuito?",
     answer:
-      "Sim! O FocusStudy e totalmente gratuito. Voce pode criar sua conta e usar todas as funcionalidades sem nenhum custo.",
+      "Sim! O FocusStudy é totalmente gratuito. Você pode criar sua conta e usar todas as funcionalidades sem nenhum custo.",
   },
   {
-    question: "Como funciona a tecnica Pomodoro?",
+    question: "Como funciona a técnica Pomodoro?",
     answer:
-      "A tecnica Pomodoro consiste em dividir o tempo de estudo em blocos focados seguidos de pausas. No FocusStudy, oferecemos dois modos: 25 minutos de foco + 5 de pausa, ou 50 minutos de foco + 10 de pausa. Isso ajuda a manter a concentracao e evitar a fadiga mental.",
+      "A técnica Pomodoro consiste em dividir o tempo de estudo em blocos focados seguidos de pausas. No FocusStudy, oferecemos dois modos: 25 minutos de foco + 5 de pausa, ou 50 minutos de foco + 10 de pausa. Isso ajuda a manter a concentração e evitar a fadiga mental.",
   },
   {
     question: "Posso usar o FocusStudy para estudar para concursos?",
     answer:
-      "Com certeza! O FocusStudy foi desenvolvido pensando em concurseiros. Voce pode criar disciplinas especificas, organizar tarefas por prioridade, fazer anotacoes de cada materia e acompanhar seu progresso no dashboard.",
+      "Com certeza! O FocusStudy foi desenvolvido pensando em concurseiros. Você pode criar disciplinas específicas, organizar tarefas por prioridade, fazer anotações de cada matéria e acompanhar seu progresso no dashboard.",
   },
   {
-    question: "E para quem esta na faculdade?",
+    question: "E para quem está na faculdade?",
     answer:
-      "Tambem! Ao criar sua conta, voce pode escolher se esta estudando para concursos ou na faculdade. Para universitarios, oferecemos opcoes de organizar disciplinas por curso e materia.",
+      "Também! Ao criar sua conta, você pode escolher se está estudando para concursos ou na faculdade. Para universitários, oferecemos opções de organizar disciplinas por curso e matéria.",
   },
   {
-    question: "Meus dados estao seguros?",
+    question: "Meus dados estão seguros?",
     answer:
-      "Sim, levamos a seguranca muito a serio. Seus dados sao armazenados em servidores seguros com criptografia, e seguimos as melhores praticas de protecao de dados conforme a LGPD.",
+      "Sim, levamos a segurança muito a sério. Seus dados são armazenados em servidores seguros com criptografia, e seguimos as melhores práticas de proteção de dados conforme a LGPD.",
   },
   {
     question: "Como crio uma nova disciplina?",
     answer:
-      "Va ate a pagina de Disciplinas no menu lateral. La voce pode adicionar novas disciplinas com nome, cor e icone personalizados. As disciplinas podem ser usadas para organizar suas tarefas e notas.",
+      "Vá até a página de Disciplinas no menu lateral. Lá você pode adicionar novas disciplinas com nome, cor e ícone personalizados. As disciplinas podem ser usadas para organizar suas tarefas e notas.",
   },
   {
     question: "Posso editar ou excluir uma tarefa?",
     answer:
-      "Sim! Na lista de tarefas, clique no menu de tres pontos ao lado de qualquer tarefa para ver as opcoes de editar ou excluir. Voce tambem pode marcar tarefas como concluidas clicando no checkbox.",
+      "Sim! Na lista de tarefas, clique no menu de três pontos ao lado de qualquer tarefa para ver as opções de editar ou excluir. Você também pode marcar tarefas como concluídas clicando no checkbox.",
   },
   {
-    question: "O que e a sequencia (streak)?",
+    question: "O que é a sequência (streak)?",
     answer:
-      "A sequencia mostra quantos dias consecutivos voce estudou. Cada dia que voce completa ao menos uma sessao de Pomodoro ou tarefa, sua sequencia aumenta. E uma forma de motivacao para manter a consistencia nos estudos!",
+      "A sequência mostra quantos dias consecutivos você estudou. Cada dia que você completa ao menos uma sessão de Pomodoro ou tarefa, sua sequência aumenta. É uma forma de motivação para manter a consistência nos estudos!",
   },
   {
     question: "Posso usar o FocusStudy no celular?",
     answer:
-      "Sim! O FocusStudy e totalmente responsivo e funciona em qualquer dispositivo - computador, tablet ou celular. Basta acessar pelo navegador.",
+      "Sim! O FocusStudy é totalmente responsivo e funciona em qualquer dispositivo - computador, tablet ou celular. Basta acessar pelo navegador.",
   },
   {
-    question: "Como posso dar feedback ou sugestoes?",
+    question: "Como posso dar feedback ou sugestões?",
     answer:
-      "Adoramos ouvir nossos usuarios! Voce pode enviar feedback, sugestoes ou relatar problemas pelo email: contato@focusstudy.com.br",
+      "Adoramos ouvir nossos usuários! Você pode enviar feedback, sugestões ou relatar problemas pelo e-mail: contato@focusstudy.com.br",
   },
 ]
 
@@ -83,7 +83,7 @@ export default function FAQPage() {
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-3xl font-bold mb-4">Perguntas Frequentes</h1>
-        <p className="text-muted-foreground mb-8">Encontre respostas para as duvidas mais comuns sobre o FocusStudy.</p>
+        <p className="text-muted-foreground mb-8">Encontre respostas para as dúvidas mais comuns sobre o FocusStudy.</p>
 
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (
@@ -95,8 +95,8 @@ export default function FAQPage() {
         </Accordion>
 
         <div className="mt-12 p-6 rounded-lg bg-muted/50 text-center">
-          <h2 className="font-semibold mb-2">Nao encontrou sua resposta?</h2>
-          <p className="text-muted-foreground mb-4">Entre em contato conosco pelo email:</p>
+          <h2 className="font-semibold mb-2">Não encontrou sua resposta?</h2>
+          <p className="text-muted-foreground mb-4">Entre em contato conosco pelo e-mail:</p>
           <a href="mailto:contato@focusstudy.com.br" className="text-primary hover:underline">
             contato@focusstudy.com.br
           </a>

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -79,7 +78,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Titulo *</Label>
+            <Label htmlFor="title">Título *</Label>
             <Input
               id="title"
               value={title}
@@ -90,7 +89,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descricao</Label>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
               value={description}
@@ -107,7 +106,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
                 <DisciplineManager disciplines={disciplines} />
               </div>
               <Select value={disciplineId} onValueChange={setDisciplineId}>
-                <SelectTrigger>
+                <SelectTrigger className="w-36">
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,13 +122,13 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="theory">Teoria</SelectItem>
-                  <SelectItem value="review">Revisao</SelectItem>
-                  <SelectItem value="questions">Questoes</SelectItem>
+                  <SelectItem value="review">Revisão</SelectItem>
+                  <SelectItem value="questions">Questões</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -139,12 +138,12 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Media</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
                   <SelectItem value="high">Alta</SelectItem>
                 </SelectContent>
               </Select>
@@ -163,7 +162,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Data de conclusao</Label>
+            <Label htmlFor="dueDate">Data de conclusão</Label>
             <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
 

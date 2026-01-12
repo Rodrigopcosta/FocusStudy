@@ -35,7 +35,7 @@ export function StatsCards({ todayMinutes, tasksCompleted, pomodorosCompleted, s
               <CheckCircle2 className="h-6 w-6 text-chart-2" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tarefas Concluidas</p>
+              <p className="text-sm text-muted-foreground">Tarefas Concluídas</p>
               <p className="text-2xl font-bold">{tasksCompleted}</p>
             </div>
           </div>
@@ -63,7 +63,7 @@ export function StatsCards({ todayMinutes, tasksCompleted, pomodorosCompleted, s
               <Flame className="h-6 w-6 text-orange-500" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Sequencia</p>
+              <p className="text-sm text-muted-foreground">Sequência</p>
               <p className="text-2xl font-bold">{streak} dias</p>
             </div>
           </div>

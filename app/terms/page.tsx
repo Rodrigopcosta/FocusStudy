@@ -29,22 +29,22 @@ export default function TermsPage() {
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-3xl font-bold mb-8">Termos de Uso</h1>
-        <p className="text-muted-foreground mb-6">Ultima atualizacao: Janeiro de 2026</p>
+        <p className="text-muted-foreground mb-6">Última atualização: Janeiro de 2026</p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
-            <h2 className="text-xl font-semibold mb-4">1. Aceitacao dos Termos</h2>
+            <h2 className="text-xl font-semibold mb-4">1. Aceitação dos Termos</h2>
             <p className="text-muted-foreground">
-              Ao acessar e usar o FocusStudy, voce concorda em cumprir e estar vinculado a estes Termos de Uso. Se voce
-              nao concordar com qualquer parte destes termos, nao podera acessar o servico.
+              Ao acessar e usar o FocusStudy, você concorda em cumprir e estar vinculado a estes Termos de Uso. Se você
+              não concordar com qualquer parte destes termos, não poderá acessar o serviço.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">2. Descricao do Servico</h2>
+            <h2 className="text-xl font-semibold mb-4">2. Descrição do Serviço</h2>
             <p className="text-muted-foreground">
-              O FocusStudy e uma plataforma de organizacao de estudos que oferece ferramentas para gerenciamento de
-              tarefas, anotacoes, timer Pomodoro e acompanhamento de progresso. O servico e destinado a estudantes e
+              O FocusStudy é uma plataforma de organização de estudos que oferece ferramentas para gerenciamento de
+              tarefas, anotações, timer Pomodoro e acompanhamento de progresso. O serviço é destinado a estudantes e
               pessoas que desejam melhorar sua produtividade nos estudos.
             </p>
           </section>
@@ -52,70 +52,70 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold mb-4">3. Cadastro e Conta</h2>
             <p className="text-muted-foreground">
-              Para utilizar o FocusStudy, voce deve criar uma conta fornecendo informacoes precisas e completas. Voce e
-              responsavel por manter a confidencialidade de sua senha e por todas as atividades que ocorrem em sua
+              Para utilizar o FocusStudy, você deve criar uma conta fornecendo informações precisas e completas. Você é
+              responsável por manter a confidencialidade de sua senha e por todas as atividades que ocorrem em sua
               conta.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">4. Uso Aceitavel</h2>
-            <p className="text-muted-foreground mb-2">Voce concorda em nao:</p>
+            <h2 className="text-xl font-semibold mb-4">4. Uso Aceitável</h2>
+            <p className="text-muted-foreground mb-2">Você concorda em não:</p>
             <ul className="list-disc list-inside text-muted-foreground space-y-1">
-              <li>Usar o servico para fins ilegais ou nao autorizados</li>
+              <li>Usar o serviço para fins ilegais ou não autorizados</li>
               <li>Violar quaisquer leis locais, estaduais, nacionais ou internacionais</li>
-              <li>Transmitir virus ou codigo malicioso</li>
-              <li>Coletar informacoes de outros usuarios sem autorizacao</li>
-              <li>Interferir ou interromper o servico ou servidores</li>
+              <li>Transmitir vírus ou código malicioso</li>
+              <li>Coletar informações de outros usuários sem autorização</li>
+              <li>Interferir ou interromper o serviço ou servidores</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-4">5. Propriedade Intelectual</h2>
             <p className="text-muted-foreground">
-              Todo o conteudo do FocusStudy, incluindo textos, graficos, logos, icones e software, e propriedade do
-              FocusStudy ou de seus licenciadores e esta protegido por leis de direitos autorais.
+              Todo o conteúdo do FocusStudy, incluindo textos, gráficos, logos, ícones e software, é propriedade do
+              FocusStudy ou de seus licenciadores e está protegido por leis de direitos autorais.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">6. Conteudo do Usuario</h2>
+            <h2 className="text-xl font-semibold mb-4">6. Conteúdo do Usuário</h2>
             <p className="text-muted-foreground">
-              Voce mantem a propriedade de todo o conteudo que criar no FocusStudy (tarefas, notas, etc.). Ao usar nosso
-              servico, voce nos concede uma licenca limitada para armazenar e processar seu conteudo com o unico
-              proposito de fornecer o servico.
+              Você mantém a propriedade de todo o conteúdo que criar no FocusStudy (tarefas, notas, etc.). Ao usar nosso
+              serviço, você nos concede uma licença limitada para armazenar e processar seu conteúdo com o único
+              propósito de fornecer o serviço.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">7. Limitacao de Responsabilidade</h2>
+            <h2 className="text-xl font-semibold mb-4">7. Limitação de Responsabilidade</h2>
             <p className="text-muted-foreground">
-              O FocusStudy e fornecido "como esta", sem garantias de qualquer tipo. Nao nos responsabilizamos por
-              quaisquer danos diretos, indiretos, incidentais ou consequentes decorrentes do uso do servico.
+              O FocusStudy é fornecido "como está", sem garantias de qualquer tipo. Não nos responsabilizamos por
+              quaisquer danos diretos, indiretos, incidentais ou consequentes decorrentes do uso do serviço.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">8. Modificacoes dos Termos</h2>
+            <h2 className="text-xl font-semibold mb-4">8. Modificações dos Termos</h2>
             <p className="text-muted-foreground">
-              Reservamo-nos o direito de modificar estes termos a qualquer momento. Alteracoes significativas serao
-              comunicadas por email ou atraves do servico. O uso continuado apos as modificacoes constitui aceitacao dos
+              Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas serão
+              comunicadas por e-mail ou através do serviço. O uso continuado após as modificações constitui aceitação dos
               novos termos.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4">9. Rescisao</h2>
+            <h2 className="text-xl font-semibold mb-4">9. Rescisão</h2>
             <p className="text-muted-foreground">
-              Podemos encerrar ou suspender sua conta e acesso ao servico a qualquer momento, sem aviso previo, por
-              violacao destes termos ou por qualquer outro motivo.
+              Podemos encerrar ou suspender sua conta e acesso ao serviço a qualquer momento, sem aviso prévio, por
+              violação destes termos ou por qualquer outro motivo.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-4">10. Contato</h2>
             <p className="text-muted-foreground">
-              Se voce tiver duvidas sobre estes Termos de Uso, entre em contato conosco atraves do email:
+              Se você tiver dúvidas sobre estes Termos de Uso, entre em contato conosco através do e-mail:
               contato@focusstudy.com.br
             </p>
           </section>

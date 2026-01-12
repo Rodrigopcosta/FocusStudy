@@ -69,7 +69,7 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar notas..."
@@ -79,7 +79,7 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
           />
         </div>
         <Select value={disciplineFilter} onValueChange={(v) => updateFilter("discipline", v)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-45">
             <SelectValue placeholder="Disciplina" />
           </SelectTrigger>
           <SelectContent>
@@ -92,8 +92,8 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
           </SelectContent>
         </Select>
         <Select value={importantFilter} onValueChange={(v) => updateFilter("important", v)}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Importancia" />
+          <SelectTrigger className="w-35">
+            <SelectValue placeholder="Importância" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
@@ -114,7 +114,7 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
             <p className="text-muted-foreground">
               {notes.length === 0
                 ? "Nenhuma nota criada ainda. Crie sua primeira nota!"
-                : "Nenhuma nota encontrada com os filtros selecionados."}
+                : "Nenhuma nota encontrada com os filtros aplicados."}
             </p>
           </CardContent>
         </Card>
@@ -126,7 +126,7 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/dashboard/notes/${note.id}`} className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <h3 className="font-medium truncate group-hover:text-primary transition-colors">{note.title}</h3>
@@ -160,8 +160,8 @@ export function NotesList({ notes, disciplines }: NotesListProps) {
                     </DropdownMenu>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-3 min-h-[2.5rem]">
-                  {note.content || "Sem conteudo"}
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-3 min-h-10">
+                  {note.content || "Sem conteúdo"}
                 </p>
                 <div className="flex items-center justify-between">
                   {note.discipline ? (

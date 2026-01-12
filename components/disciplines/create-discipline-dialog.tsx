@@ -71,7 +71,7 @@ export function CreateDisciplineDialog({ children, studyType }: CreateDiscipline
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={studyType === "college" ? "Ex: Calculo I" : "Ex: Direito Constitucional"}
+              placeholder={studyType === "college" ? "Ex: Cálculo I" : "Ex: Direito Constitucional"}
               required
             />
           </div>
@@ -88,12 +88,12 @@ export function CreateDisciplineDialog({ children, studyType }: CreateDiscipline
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Materia / Area</Label>
+                <Label htmlFor="subject">Matéria / Área</Label>
                 <Input
                   id="subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Ex: Matematica"
+                  placeholder="Ex: Matemática"
                 />
               </div>
             </>
@@ -117,7 +117,7 @@ export function CreateDisciplineDialog({ children, studyType }: CreateDiscipline
           </div>
 
           <div className="space-y-2">
-            <Label>Icone</Label>
+            <Label>Ícone</Label>
             <div className="flex gap-2 flex-wrap">
               {ICONS.map((i) => (
                 <button

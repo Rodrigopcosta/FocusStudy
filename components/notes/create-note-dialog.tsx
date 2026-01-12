@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -74,12 +73,12 @@ export function CreateNoteDialog({ disciplines, children }: CreateNoteDialogProp
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="note-title">Titulo *</Label>
+            <Label htmlFor="note-title">Título *</Label>
             <Input
               id="note-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Principios Constitucionais"
+              placeholder="Ex: Princípios Constitucionais"
               required
             />
           </div>
@@ -101,7 +100,7 @@ export function CreateNoteDialog({ disciplines, children }: CreateNoteDialogProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note-topic">Topico</Label>
+            <Label htmlFor="note-topic">Tópico</Label>
             <Input
               id="note-topic"
               value={topic}

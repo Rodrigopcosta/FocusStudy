@@ -103,7 +103,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
 
         {profile && profile.streak_current > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Sequencia</SidebarGroupLabel>
+            <SidebarGroupLabel>Sequência</SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent">
                 <Flame className="h-5 w-5 text-orange-500" />
@@ -151,7 +151,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings className="mr-2 h-4 w-4" />
-                    Configuracoes
+                    Configurações
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

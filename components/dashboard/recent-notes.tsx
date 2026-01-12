@@ -37,13 +37,13 @@ export function RecentNotes({ notes }: RecentNotesProps) {
               <Link key={note.id} href={`/dashboard/notes/${note.id}`} className="group">
                 <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate group-hover:text-primary transition-colors">{note.title}</p>
-                        {note.is_important && <Star className="h-4 w-4 text-chart-4 fill-chart-4 flex-shrink-0" />}
+                        {note.is_important && <Star className="h-4 w-4 text-chart-4 fill-chart-4 shrink-0" />}
                       </div>
                       {note.discipline && (
                         <span

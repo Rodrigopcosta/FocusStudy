@@ -47,21 +47,21 @@ export default function LandingPage() {
             Organize seus estudos de forma inteligente
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-balance max-w-4xl mx-auto mb-6">
-            Sua aprovacao comeca com <span className="text-primary">organizacao</span>
+            Sua aprovação começa com <span className="text-primary">organização</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty">
-            Planeje seus estudos, faca anotacoes estruturadas e use a tecnica Pomodoro para maximizar seu foco e
+            Planeje seus estudos, faça anotações estruturadas e use a técnica Pomodoro para maximizar seu foco e
             produtividade.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild className="gap-2">
               <Link href="/register">
-                Comecar Gratuitamente
+                Começar Gratuitamente
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/login">Ja tenho uma conta</Link>
+              <Link href="/login">Já tenho uma conta</Link>
             </Button>
           </div>
         </div>
@@ -70,9 +70,9 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Tudo que voce precisa para estudar melhor</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">Tudo que você precisa para estudar melhor</h2>
           <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            Ferramentas pensadas para concurseiros e estudantes que buscam organizacao e foco.
+            Ferramentas pensadas para concurseiros e estudantes que buscam organização e foco.
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
@@ -83,17 +83,17 @@ export default function LandingPage() {
             <FeatureCard
               icon={BookOpen}
               title="Notas Estruturadas"
-              description="Crie anotacoes com Markdown, vincule a disciplinas e encontre tudo rapidamente."
+              description="Crie anotações com Markdown, vincule a disciplinas e encontre tudo rapidamente."
             />
             <FeatureCard
               icon={Timer}
               title="Timer Pomodoro"
-              description="Estude com foco usando a tecnica Pomodoro. Escolha entre modos 25/5 ou 50/10."
+              description="Estude com foco usando a técnica Pomodoro. Escolha entre modos 25/5 ou 50/10."
             />
             <FeatureCard
               icon={BarChart3}
               title="Dashboard de Progresso"
-              description="Acompanhe suas horas de estudo, tarefas concluidas e mantenha sua sequencia."
+              description="Acompanhe suas horas de estudo, tarefas concluídas e mantenha sua sequência."
             />
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Pronto para transformar seus estudos?</h2>
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-            Junte-se a milhares de estudantes que ja estao usando o FocusStudy para alcancar seus objetivos.
+            Junte-se a milhares de estudantes que já estão usando o FocusStudy para alcançar seus objetivos.
           </p>
           <Button size="lg" asChild>
             <Link href="/register">Criar Conta Gratuita</Link>
@@ -132,7 +132,7 @@ export default function LandingPage() {
               </Link>
               <Link href="/privacy" className="hover:text-foreground flex items-center gap-1">
                 <Shield className="h-4 w-4" />
-                Politica de Privacidade
+                Política de Privacidade
               </Link>
             </div>
             <p className="text-sm text-muted-foreground">2026 FocusStudy. Todos os direitos reservados.</p>

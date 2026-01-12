@@ -17,7 +17,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
         <CardHeader>
           <CardTitle className="text-base">Progresso das Tarefas</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[200px]">
+        <CardContent className="flex items-center justify-center h-50">
           <p className="text-muted-foreground text-sm text-center">Crie tarefas para ver seu progresso aqui</p>
         </CardContent>
       </Card>
@@ -25,7 +25,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
   }
 
   const data = [
-    { name: "Concluidas", value: completed, color: "hsl(var(--chart-2))" },
+    { name: "Concluídas", value: completed, color: "hsl(var(--chart-2))" },
     { name: "Pendentes", value: pending, color: "hsl(var(--chart-4))" },
   ]
 
@@ -38,7 +38,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4">
-          <div className="w-[140px] h-[140px]">
+          <div className="w-35 h-35">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value">
@@ -60,12 +60,12 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
           <div className="flex-1 space-y-3">
             <div className="text-center">
               <p className="text-3xl font-bold">{percentage}%</p>
-              <p className="text-sm text-muted-foreground">concluido</p>
+              <p className="text-sm text-muted-foreground">Concluído</p>
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded-full bg-chart-2" />
-                <span className="text-muted-foreground">Concluidas:</span>
+                <span className="text-muted-foreground">Concluídas:</span>
                 <span className="font-medium">{completed}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">

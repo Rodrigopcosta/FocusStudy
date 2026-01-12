@@ -26,16 +26,16 @@ export function QuickPomodoro({ disciplines, tasks }: QuickPomodoroProps) {
           </div>
           {topTask ? (
             <div className="mb-4">
-              <p className="text-sm text-muted-foreground mb-1">Proxima tarefa:</p>
+              <p className="text-sm text-muted-foreground mb-1">Próxima tarefa:</p>
               <p className="font-medium">{topTask.title}</p>
             </div>
           ) : (
-            <p className="text-muted-foreground mb-4">Foque nos seus estudos com a tecnica Pomodoro</p>
+            <p className="text-muted-foreground mb-4">Foque nos seus estudos com a técnica Pomodoro</p>
           )}
           <Button asChild size="lg" className="gap-2">
             <Link href={topTask ? `/dashboard/pomodoro?task=${topTask.id}` : "/dashboard/pomodoro"}>
               <Play className="h-4 w-4" />
-              Iniciar Sessao
+              Iniciar Sessão
             </Link>
           </Button>
         </div>

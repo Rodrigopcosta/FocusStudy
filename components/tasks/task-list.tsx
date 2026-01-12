@@ -27,8 +27,8 @@ const priorityColors = {
 
 const typeLabels = {
   theory: "Teoria",
-  review: "Revisao",
-  questions: "Questoes",
+  review: "Revisão",
+  questions: "Questões",
 }
 
 export function TaskList({ tasks, disciplines }: TaskListProps) {
@@ -139,7 +139,7 @@ export function TaskList({ tasks, disciplines }: TaskListProps) {
                       {typeLabels[task.type]}
                     </Badge>
                     <Badge variant="secondary" className={`text-xs ${priorityColors[task.priority]}`}>
-                      {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Media" : "Baixa"}
+                      {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Média" : "Baixa"}
                     </Badge>
                     {task.due_date && (
                       <span className="text-xs text-muted-foreground flex items-center gap-1">

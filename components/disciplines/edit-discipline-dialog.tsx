@@ -75,12 +75,12 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-subject">Materia / Area</Label>
+                <Label htmlFor="edit-subject">Matéria / Área</Label>
                 <Input
                   id="edit-subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Ex: Matematica"
+                  placeholder="Ex: Matemática"
                 />
               </div>
             </>
@@ -104,7 +104,7 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
           </div>
 
           <div className="space-y-2">
-            <Label>Icone</Label>
+            <Label>Ícone</Label>
             <div className="flex gap-2 flex-wrap">
               {ICONS.map((i) => (
                 <button
