@@ -73,7 +73,6 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
         ended_at: new Date().toISOString(),
       })
 
-      // Update daily stats
       const today = new Date().toISOString().split("T")[0]
       const { data: existingStats } = await supabase
         .from("study_stats")
@@ -167,10 +166,10 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
     : ((MODES[mode].work - timeLeft) / MODES[mode].work) * 100
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 px-2 sm:px-0">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Pomodoro Timer</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Pomodoro Timer</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           {isBreak ? "Hora do descanso! Relaxe um pouco." : "Foque nos seus estudos."}
         </p>
       </div>
@@ -178,9 +177,9 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
       <Card>
         <CardContent className="pt-6">
           {/* Mode Selector */}
-          <div className="flex justify-center gap-4 mb-8">
+          <div className="flex justify-center gap-2 md:gap-4 mb-6 md:mb-8">
             <Select value={mode} onValueChange={(v) => handleModeChange(v as PomodoroMode)} disabled={isRunning}>
-              <SelectTrigger className="w-35">
+              <SelectTrigger className="w-32 md:w-35">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -193,10 +192,10 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
             </Button>
           </div>
 
-          {/* Timer Display */}
-          <div className="relative flex items-center justify-center mb-8">
-            <div className="relative">
-              <svg className="w-64 h-64 transform -rotate-90">
+          {/* Timer Display - Agora totalmente responsivo */}
+          <div className="relative flex items-center justify-center mb-6 md:mb-8">
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 256 256">
                 <circle
                   cx="128"
                   cy="128"
@@ -220,16 +219,16 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-bold font-mono">{formatTime(timeLeft)}</span>
-                <span className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+                <span className="text-4xl md:text-5xl font-bold font-mono">{formatTime(timeLeft)}</span>
+                <span className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2 flex items-center gap-1">
                   {isBreak ? (
                     <>
-                      <Coffee className="h-4 w-4" />
+                      <Coffee className="h-3 w-3 md:h-4 md:w-4" />
                       Descanso
                     </>
                   ) : (
                     <>
-                      <Target className="h-4 w-4" />
+                      <Target className="h-3 w-3 md:h-4 md:w-4" />
                       Foco
                     </>
                   )}
@@ -238,26 +237,26 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          {/* Controls - Flex-wrap para evitar quebra de layout no mobile */}
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 mb-6 md:mb-8">
             {isRunning ? (
-              <Button size="lg" variant="outline" onClick={handlePause}>
-                <Pause className="mr-2 h-5 w-5" />
+              <Button size="lg" variant="outline" onClick={handlePause} className="flex-1 sm:flex-none min-w-[120px]">
+                <Pause className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 Pausar
               </Button>
             ) : (
-              <Button size="lg" onClick={handleStart}>
-                <Play className="mr-2 h-5 w-5" />
+              <Button size="lg" onClick={handleStart} className="flex-1 sm:flex-none min-w-[120px]">
+                <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 {timeLeft === MODES[mode].work && !isBreak ? "Iniciar" : "Continuar"}
               </Button>
             )}
-            <Button size="lg" variant="outline" onClick={handleReset}>
-              <RotateCcw className="mr-2 h-5 w-5" />
+            <Button size="lg" variant="outline" onClick={handleReset} className="flex-1 sm:flex-none min-w-[120px]">
+              <RotateCcw className="mr-2 h-4 w-4 md:h-5 md:w-5" />
               Reiniciar
             </Button>
-            <Button size="lg" variant="ghost" asChild>
+            <Button size="lg" variant="ghost" asChild className="w-full sm:w-auto mt-2 sm:mt-0">
               <Link href="/dashboard/focus">
-                <Maximize2 className="mr-2 h-5 w-5" />
+                <Maximize2 className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 Modo Foco
               </Link>
             </Button>
@@ -265,25 +264,29 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
 
           {/* Task Selector */}
           <div className="border-t pt-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-1">
               <span className="text-sm font-medium">Tarefa vinculada</span>
-              <span className="text-sm text-muted-foreground">{completedCycles} ciclos completos</span>
+              <span className="text-xs md:text-sm text-muted-foreground">{completedCycles} ciclos completos</span>
             </div>
             <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={isRunning}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma tarefa (opcional)..." />
               </SelectTrigger>
               <SelectContent>
                 {tasks.map((task) => (
                   <SelectItem key={task.id} value={task.id}>
-                    {task.discipline && `${task.discipline.icon} `}
-                    {task.title}
+                    <span className="truncate">
+                      {task.discipline && `${task.discipline.icon} `}
+                      {task.title}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {selectedTask && (
-              <p className="text-sm text-muted-foreground mt-2">{selectedTask.description || "Sem descrição"}</p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-2 line-clamp-2">
+                {selectedTask.description || "Sem descrição"}
+              </p>
             )}
           </div>
         </CardContent>

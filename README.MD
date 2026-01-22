@@ -1,1 +1,97 @@
-#INICIO DO PROJETO
+# 📚 FocusStudy
+
+> **Aumente seu foco, organize sua rotina e domine seus estudos.**
+
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg?style=for-the-badge)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+
+**Acesse o projeto:** [https://focus-study.online/](https://focus-study.online/)
+
+---
+
+## 📸 Screenshots do Projeto
+
+### 🖥️ Desktop (Web)
+| Dashboard (Modo Claro) | Pomodoro (Modo Escuro) |
+|:---:|:---:|
+| ![Dashboard Web](https://via.placeholder.com/600x400?text=Dashboard+Modo+Claro) | ![Pomodoro Web](https://via.placeholder.com/600x400?text=Pomodoro+Modo+Escuro) |
+
+### 📱 Mobile
+<div align="center">
+  <img src="https://via.placeholder.com/200x400?text=Login+Mobile" width="200" />
+  <img src="https://via.placeholder.com/200x400?text=Tasks+Mobile" width="200" />
+</div>
+
+---
+
+## 🎯 Sobre o FocusStudy
+O FocusStudy é uma plataforma Full Stack projetada para transformar a rotina de concurseiros e estudantes de alto rendimento. Através de uma interface minimalista e sem distrações, o app centraliza o gerenciamento de carga horária, anotações e execução de tarefas.
+
+### 🌟 Diferenciais
+- **🌓 Dual Theme:** Suporte completo a Modo Escuro (Dark) e Claro (Light) para conforto visual em longas sessões de estudo.
+- **🔒 Auth Híbrida:** Login seguro via e-mail ou **Google OAuth** via Supabase Auth.
+- **🏗️ Arquitetura Robusta:** Desenvolvido com **Clean Code** e tipagem rigorosa em TypeScript.
+- **⚡ Performance:** Server-side rendering com Next.js para carregamento instantâneo.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+- **Frontend:** Next.js 14+ (App Router), React, Lucide Icons.
+- **Estilização:** Tailwind CSS + Shadcn/UI (Componentes acessíveis).
+- **Backend-as-a-Service:** **Supabase** (PostgreSQL, Auth, RLS).
+- **Gerenciamento de Estado:** Hooks customizados e Supabase Realtime.
+
+---
+
+## 📐 Estrutura do Projeto (Arquitetura)
+
+O projeto segue uma estrutura modular focada em escalabilidade:
+
+```text
+app/
+├── auth/callback/   # Manipulação de tokens OAuth
+├── dashboard/       # Núcleo da aplicação (Disciplinas, Pomodoro, Notas)
+├── login/ & register/ # Fluxos de autenticação
+├── terms/ & privacy/  # Páginas legais e conformidade
+components/
+├── dashboard/       # Cards de estatísticas e gráficos
+├── disciplines/     # Gestão de matérias (Create/Edit Dialogs)
+├── notes/           # Editor de notas e listagens
+├── pomodoro/        # Timer funcional
+├── ui/              # Biblioteca de componentes base (Shadcn)
+lib/
+└── supabase/        # Configurações de Client, Server e Proxy
+
+
+🚀 Roadmap de Evolução
+[x] Autenticação com Google OAuth.
+
+[x] CRUD de Disciplinas com tipagem rigorosa.
+
+[ ] Modo Offline (PWA).
+
+[ ] Exportação de notas em PDF/Markdown.
+
+[ ] Sistema de Metas Mensais de horas.
+
+[ ] Gamificação (Conquistas por horas de foco).
+
+💡 Monetização Ética
+Plano Free: Acesso total às ferramentas de estudo essenciais.
+
+Plano Pro: Custom Domains, armazenamento ilimitado de arquivos nas notas e estatísticas avançadas de performance. Sem anúncios para não prejudicar o foco.
+
+👤 Autor
+Rodrigo Ward
+
+Se você tiver alguma dúvida ou sugestão, entre em contato:
+
+Email: rodrigo_ward@hotmail.com
+
+LinkedIn: https://www.linkedin.com/in/rodrigopc-developer/
+
+Desenvolvido com foco em performance e simplicidade. 🚀
