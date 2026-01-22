@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar, // Importamos o hook
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -55,11 +56,24 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  
+  // Acessamos as funções de controle da sidebar
+  const { isMobile, setOpenMobile } = useSidebar()
 
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/login")
+    
+    // Fecha a sidebar no mobile ao deslogar
+    if (isMobile) setOpenMobile(false)
+  }
+
+  // Função para fechar a sidebar no mobile ao clicar em itens manuais
+  const closeMobile = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
   }
 
   const initials =
@@ -122,6 +136,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
+                  {/* FAQ geralmente abre em nova aba, mas se não abrir, adicionamos o closeMobile */}
                   <Link href="/faq" target="_blank">
                     <HelpCircle className="h-4 w-4" />
                     <span>Perguntas Frequentes</span>
@@ -148,7 +163,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" className="w-(--radix-popper-anchor-width)">
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild onClick={closeMobile}>
                   <Link href="/dashboard/settings">
                     <Settings className="mr-2 h-4 w-4" />
                     Configurações
