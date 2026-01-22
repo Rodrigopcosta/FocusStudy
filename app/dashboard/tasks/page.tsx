@@ -13,13 +13,22 @@ export default async function TasksPage() {
 
   if (!user) return null
 
-  const { data: tasks } = await supabase
-    .from("tasks")
-    .select("*, discipline:disciplines(*)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+  // PERFORMANCE: Dispara as buscas em paralelo
+  const [tasksRes, disciplinesRes] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("*, discipline:disciplines(*)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("disciplines")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("name")
+  ])
 
-  const { data: disciplines } = await supabase.from("disciplines").select("*").eq("user_id", user.id).order("name")
+  const tasks = tasksRes.data || []
+  const disciplines = disciplinesRes.data || []
 
   return (
     <div className="space-y-6">
@@ -28,7 +37,7 @@ export default async function TasksPage() {
           <h1 className="text-2xl font-bold tracking-tight">Tarefas</h1>
           <p className="text-muted-foreground">Gerencie suas tarefas de estudo</p>
         </div>
-        <CreateTaskDialog disciplines={disciplines || []}>
+        <CreateTaskDialog disciplines={disciplines}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
@@ -36,8 +45,8 @@ export default async function TasksPage() {
         </CreateTaskDialog>
       </div>
 
-      <TaskFilters disciplines={disciplines || []} />
-      <TaskList tasks={tasks || []} disciplines={disciplines || []} />
+      <TaskFilters disciplines={disciplines} />
+      <TaskList tasks={tasks} disciplines={disciplines} />
     </div>
   )
 }
