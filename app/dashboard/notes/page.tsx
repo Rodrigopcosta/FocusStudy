@@ -7,18 +7,10 @@ import { Plus } from "lucide-react"
 export default async function NotesPage() {
   const supabase = await createClient()
 
-  // Obtém o usuário logado
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return null
 
-  /**
-   * PERFORMANCE: Executamos as duas buscas em paralelo.
-   * Usamos '*' para garantir que todas as propriedades exigidas pelas interfaces
-   * (como user_id, created_at, etc) estejam presentes, evitando erros de tipo.
-   */
   const [notesResponse, disciplinesResponse] = await Promise.all([
     supabase
       .from("notes")
@@ -37,14 +29,12 @@ export default async function NotesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho da página */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Notas</h1>
           <p className="text-muted-foreground">Suas anotações de estudo organizadas</p>
         </div>
 
-        {/* Botão de criar nova nota */}
         <CreateNoteDialog disciplines={disciplines}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -53,7 +43,6 @@ export default async function NotesPage() {
         </CreateNoteDialog>
       </div>
 
-      {/* Lista de notas */}
       <NotesList notes={notes} disciplines={disciplines} />
     </div>
   )
