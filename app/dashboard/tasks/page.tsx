@@ -7,13 +7,10 @@ import { Plus } from "lucide-react"
 
 export default async function TasksPage() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return null
 
-  // PERFORMANCE: Dispara as buscas em paralelo
   const [tasksRes, disciplinesRes] = await Promise.all([
     supabase
       .from("tasks")
