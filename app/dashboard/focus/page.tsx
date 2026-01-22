@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { X, Play, Pause, RotateCcw, Coffee, Target } from "lucide-react"
 import type { PomodoroMode } from "@/types/database"
 
-// Modos disponíveis e seus tempos (em segundos)
 const MODES = {
   "25/5": { work: 25 * 60, break: 5 * 60 },
   "50/10": { work: 50 * 60, break: 10 * 60 },
@@ -24,20 +23,18 @@ export default function FocusModePage() {
   const [completedCycles, setCompletedCycles] = useState(0)
   const startTimeRef = useRef<Date | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const isSavingRef = useRef(false)
 
   useEffect(() => {
-    // Inicializa o som de alerta
     audioRef.current = new Audio(
       "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleB0MLKfa+tq0QwYck83+4MI/Hzyk3v73tkgFFKnT/OO2SzgWudj/5LNLMyfH6Ofvnj4dKZre8OWgS0YVn8f/76w9Ei2k3v/ooEsEI6fX/OytQQ0krdj/8KIxKI3B/O+jJhOezf/vpSIVpt3/9aETJq/d//CeEy+s1v/xmRkyqdf/8ZYVO6bR/++SDjyn0P/0kAo/pcz/9YsJQaLI//WHBT+jw//2hQM/o77/+IIBP6K5//h/AD+htf/5fAA/obH/+XkAPqGt//l3AD6gqv/5dQA+oKf/+nMAP6Ck//pxAECgof/6cABBn5//+24AQZ+d//tsAEKem//7agBCnpn/+2gAQ56X//tmAESdlf/7ZQBEnZT/+2QARZ2S//tiAEack//7YQBGnJH/+2AARpuQ//teAEebj//7XQBHm47/+1wASJqM//taAEiajP/7WQBJmov/+1gASZmK//tXAEmZif/7VgBKmYj/+1UASpiH//tUAEuYhv/7UwBLl4X/+1IAS5eF//tRAEyWhP/7UABMloP/+08ATJaC//tOAE2Vgf/7TQBNlYH/+0wATpSA//tLAE6Uf//7SgBOlH//+0kAT5N+//tIAE+Tfv/7RwBQkn3/+0YAUJl9//tFAA==",
     )
 
-    // Entrar em fullscreen ao abrir a página
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {})
     }
 
     return () => {
-      // Sai do fullscreen ao desmontar
       if (document.exitFullscreen && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {})
       }
@@ -50,64 +47,64 @@ export default function FocusModePage() {
     }
   }, [])
 
-  // Salva a sessão no Supabase
   const saveSession = useCallback(
     async (status: "completed" | "interrupted") => {
-      if (!startTimeRef.current) return
+      if (!startTimeRef.current || isSavingRef.current) return
+      isSavingRef.current = true
 
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
-      if (!user) return
+        if (!user) return
 
-      const durationSeconds = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000)
+        const durationSeconds = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000)
 
-      // Salva na tabela pomodoro_sessions
-      await supabase.from("pomodoro_sessions").insert({
-        user_id: user.id,
-        mode,
-        duration_seconds: durationSeconds,
-        completed_cycles: status === "completed" ? 1 : 0,
-        status,
-        started_at: startTimeRef.current.toISOString(),
-        ended_at: new Date().toISOString(),
-      })
-
-      // Atualiza estatísticas diárias
-      const today = new Date().toISOString().split("T")[0]
-      const { data: existingStats } = await supabase
-        .from("study_stats")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("date", today)
-        .single()
-
-      if (existingStats) {
-        await supabase
-          .from("study_stats")
-          .update({
-            total_minutes: existingStats.total_minutes + Math.floor(durationSeconds / 60),
-            pomodoros_completed:
-              status === "completed" ? existingStats.pomodoros_completed + 1 : existingStats.pomodoros_completed,
-          })
-          .eq("id", existingStats.id)
-      } else {
-        await supabase.from("study_stats").insert({
+        await supabase.from("pomodoro_sessions").insert({
           user_id: user.id,
-          date: today,
-          total_minutes: Math.floor(durationSeconds / 60),
-          pomodoros_completed: status === "completed" ? 1 : 0,
+          mode,
+          duration_seconds: durationSeconds,
+          completed_cycles: status === "completed" ? 1 : 0,
+          status,
+          started_at: startTimeRef.current.toISOString(),
+          ended_at: new Date().toISOString(),
         })
-      }
 
-      startTimeRef.current = null
+        const today = new Date().toISOString().split("T")[0]
+        const { data: existingStats } = await supabase
+          .from("study_stats")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("date", today)
+          .maybeSingle()
+
+        if (existingStats) {
+          await supabase
+            .from("study_stats")
+            .update({
+              total_minutes: existingStats.total_minutes + Math.floor(durationSeconds / 60),
+              pomodoros_completed:
+                status === "completed" ? existingStats.pomodoros_completed + 1 : existingStats.pomodoros_completed,
+            })
+            .eq("id", existingStats.id)
+        } else {
+          await supabase.from("study_stats").insert({
+            user_id: user.id,
+            date: today,
+            total_minutes: Math.floor(durationSeconds / 60),
+            pomodoros_completed: status === "completed" ? 1 : 0,
+          })
+        }
+      } finally {
+        startTimeRef.current = null
+        isSavingRef.current = false
+      }
     },
     [mode],
   )
 
-  // Timer do Pomodoro
   useEffect(() => {
     let interval: NodeJS.Timeout
 
@@ -132,7 +129,6 @@ export default function FocusModePage() {
     return () => clearInterval(interval)
   }, [isRunning, timeLeft, isBreak, mode, playSound, saveSession])
 
-  // Controle de início, pausa e reset
   const handleStart = () => {
     if (!isRunning && !isBreak) {
       startTimeRef.current = new Date()
@@ -161,7 +157,6 @@ export default function FocusModePage() {
     router.push("/dashboard/pomodoro")
   }
 
-  // Formatação do tempo
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
