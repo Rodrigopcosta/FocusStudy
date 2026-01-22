@@ -15,7 +15,9 @@ export async function updateSession(request: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+          cookiesToSet.forEach(({ name, value, options }) => 
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     },
@@ -25,15 +27,20 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes - redirect to login if not authenticated
-  if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
+  const pathname = request.nextUrl.pathname
+
+  // Redirecionamento de usuários NÃO LOGADOS (Proteção de rotas)
+  if (pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
-  // Auth routes - redirect to dashboard if already logged in
-  if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register") && user) {
+  // Redirecionamento de usuários LOGADOS (Performance e fluxo)
+  // Adicionamos "/" aqui para que o usuário logado não veja a landing page
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/"
+  
+  if (isAuthPage && user) {
     const url = request.nextUrl.clone()
     url.pathname = "/dashboard"
     return NextResponse.redirect(url)

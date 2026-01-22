@@ -12,18 +12,12 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
 
-  // Obtém o usuário logado
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  // Redireciona para login se não houver usuário ou houver erro
   if (error || !user) {
     redirect("/login")
   }
 
-  // Busca o perfil do usuário no banco
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
@@ -32,10 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      {/* Sidebar principal */}
       <DashboardSidebar user={user} profile={profile} />
-
-      {/* Conteúdo principal com header fixo */}
       <SidebarInset>
         <DashboardHeader user={user} profile={profile} />
         <main className="flex-1 p-4 md:p-6">{children}</main>

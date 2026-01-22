@@ -16,7 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar, // Importamos o hook
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -56,24 +56,17 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  
-  // Acessamos as funções de controle da sidebar
   const { isMobile, setOpenMobile } = useSidebar()
 
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push("/login")
-    
-    // Fecha a sidebar no mobile ao deslogar
     if (isMobile) setOpenMobile(false)
+    router.push("/login")
   }
 
-  // Função para fechar a sidebar no mobile ao clicar em itens manuais
   const closeMobile = () => {
-    if (isMobile) {
-      setOpenMobile(false)
-    }
+    if (isMobile) setOpenMobile(false)
   }
 
   const initials =
@@ -103,8 +96,12 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
-                    <Link href={item.href}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={pathname === item.href}
+                    onClick={closeMobile}
+                  >
+                    <Link href={item.href} prefetch={true}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -135,8 +132,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  {/* FAQ geralmente abre em nova aba, mas se não abrir, adicionamos o closeMobile */}
+                <SidebarMenuButton asChild onClick={closeMobile}>
                   <Link href="/faq" target="_blank">
                     <HelpCircle className="h-4 w-4" />
                     <span>Perguntas Frequentes</span>
@@ -164,7 +160,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" className="w-(--radix-popper-anchor-width)">
                 <DropdownMenuItem asChild onClick={closeMobile}>
-                  <Link href="/dashboard/settings">
+                  <Link href="/dashboard/settings" prefetch={true}>
                     <Settings className="mr-2 h-4 w-4" />
                     Configurações
                   </Link>

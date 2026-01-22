@@ -1,10 +1,9 @@
-'use client'
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-// Tentei usar o helper antigo, mas se der erro, use o pacote básico:
-import { createClient } from "@supabase/supabase-js" 
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
   BookOpen,
@@ -18,17 +17,11 @@ import {
   FileText,
 } from "lucide-react"
 
-// Se você tiver um arquivo lib/supabase.ts, pode importar de lá. 
-// Caso contrário, usamos variáveis de ambiente aqui para o cliente.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 export default function LandingPage() {
   const router = useRouter()
   const [loading, setLoading] = React.useState(true)
+  const supabase = createClient()
 
-  // Verifica se o usuário já está logado para redirecionar ao Dashboard
   React.useEffect(() => {
     const checkUser = async () => {
       try {
@@ -40,15 +33,13 @@ export default function LandingPage() {
           setLoading(false)
         }
       } catch (error) {
-        console.error("Erro ao verificar sessão:", error)
         setLoading(false)
       }
     }
 
     checkUser()
-  }, [router])
+  }, [router, supabase])
 
-  // Enquanto verifica a sessão, mostramos uma tela limpa ou um loader leve
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -59,7 +50,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -82,7 +72,6 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
@@ -110,7 +99,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">Tudo que você precisa para estudar melhor</h2>
@@ -142,7 +130,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Pronto para transformar seus estudos?</h2>

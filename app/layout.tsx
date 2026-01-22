@@ -9,6 +9,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://focus-study.online"),
   title: {
     default: "FocusStudy - Planejador de Estudos para Concursos e Faculdade",
     template: "%s | FocusStudy",
