@@ -1,5 +1,10 @@
-import type React from "react"
+'use client'
+
+import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+// Tentei usar o helper antigo, mas se der erro, use o pacote básico:
+import { createClient } from "@supabase/supabase-js" 
 import { Button } from "@/components/ui/button"
 import {
   BookOpen,
@@ -13,7 +18,45 @@ import {
   FileText,
 } from "lucide-react"
 
+// Se você tiver um arquivo lib/supabase.ts, pode importar de lá. 
+// Caso contrário, usamos variáveis de ambiente aqui para o cliente.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
 export default function LandingPage() {
+  const router = useRouter()
+  const [loading, setLoading] = React.useState(true)
+
+  // Verifica se o usuário já está logado para redirecionar ao Dashboard
+  React.useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session) {
+          router.replace("/dashboard")
+        } else {
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error)
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [router])
+
+  // Enquanto verifica a sessão, mostramos uma tela limpa ou um loader leve
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
