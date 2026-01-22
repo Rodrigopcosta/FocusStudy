@@ -240,17 +240,17 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask }: 
           {/* Controls - Flex-wrap para evitar quebra de layout no mobile */}
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 mb-6 md:mb-8">
             {isRunning ? (
-              <Button size="lg" variant="outline" onClick={handlePause} className="flex-1 sm:flex-none min-w-[120px]">
+              <Button size="lg" variant="outline" onClick={handlePause} className="flex-1 sm:flex-none min-w-30">
                 <Pause className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 Pausar
               </Button>
             ) : (
-              <Button size="lg" onClick={handleStart} className="flex-1 sm:flex-none min-w-[120px]">
+              <Button size="lg" onClick={handleStart} className="flex-1 sm:flex-none min-w-30">
                 <Play className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 {timeLeft === MODES[mode].work && !isBreak ? "Iniciar" : "Continuar"}
               </Button>
             )}
-            <Button size="lg" variant="outline" onClick={handleReset} className="flex-1 sm:flex-none min-w-[120px]">
+            <Button size="lg" variant="outline" onClick={handleReset} className="flex-1 sm:flex-none min-w-30">
               <RotateCcw className="mr-2 h-4 w-4 md:h-5 md:w-5" />
               Reiniciar
             </Button>
