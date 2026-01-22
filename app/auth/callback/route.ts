@@ -5,9 +5,10 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  // 'next' é o parâmetro padrão do Supabase para redirecionar após o login
+  const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    // No Next.js 15/16, cookies() precisa de await
     const cookieStore = await cookies()
     
     const supabase = createServerClient(
@@ -31,10 +32,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // PERFORMANCE: Redirecionamento direto para a URL de origem + destino
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
-  // Em caso de erro, volta para o login
-  return NextResponse.redirect(`${origin}/login`)
+  // Em caso de erro, redireciona para login com status 303 (See Other)
+  // para garantir que o navegador não tente fazer cache da falha
+  return NextResponse.redirect(`${origin}/login`, { status: 303 })
 }
