@@ -1,12 +1,11 @@
+'use client'
+
+import * as React from "react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { BookOpen, ArrowLeft } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-
-export const metadata = {
-  title: "Perguntas Frequentes",
-  description: "Perguntas frequentes sobre o FocusStudy - Planejador de Estudos",
-}
 
 const faqs = [
   {
@@ -62,18 +61,36 @@ const faqs = [
 ]
 
 export default function FAQPage() {
+  // Usando o seu cliente configurado em lib/supabase/client
+  const supabase = createClient()
+  const [backHref, setBackHref] = React.useState("/")
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          setBackHref("/dashboard")
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão na FAQ:", error)
+      }
+    }
+    checkUser()
+  }, [supabase])
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={backHref} className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <BookOpen className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-semibold text-lg">FocusStudy</span>
           </Link>
           <Button variant="ghost" asChild>
-            <Link href="/">
+            <Link href={backHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
             </Link>
