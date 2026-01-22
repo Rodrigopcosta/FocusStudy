@@ -9,22 +9,25 @@ export default async function NoteEditorPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: note } = await supabase
-    .from("notes")
-    .select("*, discipline:disciplines(*)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single()
+  const [noteRes, disciplinesRes] = await Promise.all([
+    supabase
+      .from("notes")
+      .select("*, discipline:disciplines(*)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("disciplines")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("name")
+  ])
 
-  if (!note) redirect("/dashboard/notes")
+  if (!noteRes.data) redirect("/dashboard/notes")
 
-  const { data: disciplines } = await supabase.from("disciplines").select("*").eq("user_id", user.id).order("name")
-
-  return <NoteEditor note={note} disciplines={disciplines || []} />
+  return <NoteEditor note={noteRes.data} disciplines={disciplinesRes.data || []} />
 }
