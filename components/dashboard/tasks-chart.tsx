@@ -1,5 +1,3 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
@@ -15,10 +13,12 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Progresso das Tarefas</CardTitle>
+          <CardTitle className="text-base font-semibold">Progresso das Tarefas</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-50">
-          <p className="text-muted-foreground text-sm text-center">Crie tarefas para ver seu progresso aqui</p>
+          <p className="text-muted-foreground text-sm text-center">
+            Crie tarefas para ver seu progresso aqui
+          </p>
         </CardContent>
       </Card>
     )
@@ -34,14 +34,24 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Progresso das Tarefas</CardTitle>
+        <CardTitle className="text-base font-semibold">Progresso das Tarefas</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          {/* Container do Gráfico com tamanho fixo v4 */}
           <div className="w-35 h-35">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value">
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={60}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -51,27 +61,38 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
                   contentStyle={{
                     backgroundColor: "hsl(var(--popover))",
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius)",
                   }}
+                  itemStyle={{ color: "hsl(var(--popover-foreground))" }}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex-1 space-y-3">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{percentage}%</p>
-              <p className="text-sm text-muted-foreground">Concluído</p>
+
+          {/* Legenda e Porcentagem */}
+          <div className="flex-1 space-y-4 w-full">
+            <div className="text-center sm:text-left">
+              <p className="text-3xl font-bold tracking-tight">{percentage}%</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                Concluído
+              </p>
             </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full bg-chart-2" />
-                <span className="text-muted-foreground">Concluídas:</span>
-                <span className="font-medium">{completed}</span>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-[hsl(var(--chart-2))]" />
+                  <span className="text-muted-foreground">Concluídas</span>
+                </div>
+                <span className="font-semibold">{completed}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full bg-chart-4" />
-                <span className="text-muted-foreground">Pendentes:</span>
-                <span className="font-medium">{pending}</span>
+              
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-[hsl(var(--chart-4))]" />
+                  <span className="text-muted-foreground">Pendentes</span>
+                </div>
+                <span className="font-semibold">{pending}</span>
               </div>
             </div>
           </div>
