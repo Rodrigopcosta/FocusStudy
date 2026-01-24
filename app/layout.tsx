@@ -70,14 +70,12 @@ export const metadata: Metadata = {
   },
   category: "education",
   generator: "Next.js",
-  // icons: {
-  //   icon: [
-  //     { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
-  //     { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
-  //     { url: "/icon.svg", type: "image/svg+xml" },
-  //   ],
-  //   apple: "/apple-icon.png",
-  // },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icon.svg",
+  },
 }
 
 export const viewport: Viewport = {
