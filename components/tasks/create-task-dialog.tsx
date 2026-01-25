@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon, Clock } from "lucide-react"
 import { DisciplineManager } from "./discipline-manager"
 
 interface CreateTaskDialogProps {
@@ -28,17 +28,24 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
   const [disciplineId, setDisciplineId] = useState<string>("")
   const [type, setType] = useState<TaskType>("theory")
   const [priority, setPriority] = useState<TaskPriority>("medium")
-  const [estimatedMinutes, setEstimatedMinutes] = useState("30")
+  
+  // Alterado para formato de tempo HH:mm
+  const [estimatedTime, setEstimatedTime] = useState("00:30")
+  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = useState("")
+
+  const today = new Date().toISOString().split("T")[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
+    // Converte HH:mm para minutos totais para o banco
+    const [hours, minutes] = estimatedTime.split(":").map(Number)
+    const totalMinutes = (hours * 60) + minutes
+
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return
 
@@ -49,8 +56,10 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
       discipline_id: disciplineId || null,
       type,
       priority,
-      estimated_minutes: Number.parseInt(estimatedMinutes) || 30,
+      estimated_minutes: totalMinutes || 30,
+      start_date: startDate || today,
       due_date: dueDate || null,
+      status: "pending"
     })
 
     setIsLoading(false)
@@ -65,37 +74,32 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     setDisciplineId("")
     setType("theory")
     setPriority("medium")
-    setEstimatedMinutes("30")
+    setEstimatedTime("00:30")
+    setStartDate(today)
     setDueDate("")
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-md">
+      {/* onInteractOutside impede fechar ao clicar nos selects no mobile */}
+      <DialogContent 
+        className="max-w-md overflow-y-auto max-h-[90vh]" 
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Nova Tarefa</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
+            <Label htmlFor="title">Título da Tarefa *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Estudar Direito Constitucional"
               required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes sobre a tarefa..."
-              rows={3}
+              autoFocus={false} // Evita abrir teclado automaticamente
             />
           </div>
 
@@ -106,7 +110,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
                 <DisciplineManager disciplines={disciplines} />
               </div>
               <Select value={disciplineId} onValueChange={setDisciplineId}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -120,9 +124,9 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>Tipo de Tarefa</Label>
               <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,41 +142,74 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="low" className="text-blue-500">Baixa (Azul)</SelectItem>
+                  <SelectItem value="medium" className="text-yellow-500">Média (Amarela)</SelectItem>
+                  <SelectItem value="high" className="text-orange-500">Alta (Laranja)</SelectItem>
+                  {/* Urgente pode ser mapeado para High ou nova categoria se preferir */}
+                  <SelectItem value="high" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimatedMinutes">Tempo (min)</Label>
+              <Label htmlFor="estimatedTime" className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Tempo Estimado
+              </Label>
               <Input
-                id="estimatedMinutes"
-                type="number"
-                value={estimatedMinutes}
-                onChange={(e) => setEstimatedMinutes(e.target.value)}
-                min="1"
+                id="estimatedTime"
+                type="time"
+                value={estimatedTime}
+                onChange={(e) => setEstimatedTime(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Data de Início</Label>
+              <Input 
+                id="startDate" 
+                type="date" 
+                min={today}
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Conclusão Prevista</Label>
+              <Input 
+                id="dueDate" 
+                type="date" 
+                min={startDate || today} // Validação: não permite antes do início
+                value={dueDate} 
+                onChange={(e) => setDueDate(e.target.value)} 
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Data de conclusão</Label>
-            <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <Label htmlFor="description">Descrição / Observações</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="O que você precisa estudar hoje?"
+              rows={2}
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar Tarefa
+              Salvar Tarefa
             </Button>
           </div>
         </form>
