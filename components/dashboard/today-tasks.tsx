@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react" // Adicionado para controle de estado local
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,20 +15,31 @@ interface TodayTasksProps {
   tasks: Task[]
 }
 
+// Cores atualizadas conforme solicitado
 const priorityColors = {
-  low: "bg-chart-2/20 text-chart-2",
-  medium: "bg-chart-4/20 text-chart-4",
-  high: "bg-destructive/20 text-destructive",
+  low: "bg-blue-500/20 text-blue-500",
+  medium: "bg-yellow-500/20 text-yellow-600",
+  high: "bg-orange-500/20 text-orange-500",
+  urgent: "bg-red-500/20 text-red-600 font-bold",
 }
 
 export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
   const router = useRouter()
-  // Estado local para refletir a mudança instantaneamente
   const [localTasks, setLocalTasks] = useState(initialTasks)
+  const isUpdating = useRef(false)
+
+  // Sincroniza estado local com as props do servidor
+  useEffect(() => {
+    if (!isUpdating.current) {
+      setLocalTasks(initialTasks)
+    }
+  }, [initialTasks])
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
-    // 1. Atualização Otimista: Muda na interface antes de ir ao banco
     const updatedStatus = completed ? "completed" : "pending"
+    isUpdating.current = true
+
+    // Atualização Otimista
     setLocalTasks(prev => 
       prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t)
     )
@@ -43,10 +54,14 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
       .eq("id", taskId)
     
     if (error) {
-      // Reverte se houver erro no banco
+      isUpdating.current = false
       setLocalTasks(initialTasks)
     } else {
       router.refresh()
+      // Delay para evitar o flicker do refresh no mobile
+      setTimeout(() => {
+        isUpdating.current = false
+      }, 800)
     }
   }
 
@@ -79,12 +94,11 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
                 key={task.id}
                 className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
-                {/* Div wrapper para aumentar área de clique conforme checklist */}
                 <div className="flex items-center justify-center min-w-6 min-h-6">
                   <Checkbox
                     checked={task.status === "completed"}
                     onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
-                    className="h-5 w-5" // Aumentado de h-4 para h-5
+                    className="h-5 w-5"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -103,8 +117,13 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
                         {task.discipline.icon} {task.discipline.name}
                       </span>
                     )}
-                    <Badge variant="secondary" className={priorityColors[task.priority]}>
-                      {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Média" : "Baixa"}
+                    <Badge 
+                      variant="secondary" 
+                      className={priorityColors[task.priority as keyof typeof priorityColors]}
+                    >
+                      {task.priority === "urgent" ? "Urgente" : 
+                       task.priority === "high" ? "Alta" : 
+                       task.priority === "medium" ? "Média" : "Baixa"}
                     </Badge>
                   </div>
                 </div>
