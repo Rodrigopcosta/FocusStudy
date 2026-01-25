@@ -68,6 +68,8 @@ export interface Note {
   created_at: string;
   updated_at: string;
   discipline?: Discipline;
+  is_pinned: boolean
+  color: string | null
 }
 
 export interface PomodoroSession {

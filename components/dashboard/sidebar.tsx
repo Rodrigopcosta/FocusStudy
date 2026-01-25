@@ -43,7 +43,7 @@ import {
 const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Tarefas", href: "/dashboard/tasks", icon: CheckSquare },
-  { title: "Notas", href: "/dashboard/notes", icon: FileText },
+  { title: "Anotações", href: "/dashboard/notes", icon: FileText },
   { title: "Disciplinas", href: "/dashboard/disciplines", icon: GraduationCap },
   { title: "Pomodoro", href: "/dashboard/pomodoro", icon: Timer },
 ]
