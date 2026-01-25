@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, Timer, Calendar, Clock, Pin, PinOff } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Timer, Calendar, Clock, Pin, PinOff, CheckCheck } from "lucide-react"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TaskSort, type SortOption } from "./task-sort"
 import Link from "next/link"
@@ -59,7 +59,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   }, [initialTasks])
 
   const processedTasks = useMemo(() => {
-    // 1. Filtros (URL Search Params)
     let result = localTasks.filter((task) => {
       const statusF = searchParams.get("status") || "all"
       const discF = searchParams.get("discipline") || "all"
@@ -71,19 +70,10 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
       return true
     })
 
-    // 2. Lógica de Ordenação com Hierarquia
     return result.sort((a, b) => {
-      // REGRA 1: Status (Pendentes no topo, Concluídas em baixo)
-      if (a.status !== b.status) {
-        return a.status === "pending" ? -1 : 1
-      }
+      if (a.status !== b.status) return a.status === "pending" ? -1 : 1
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
 
-      // REGRA 2: Fixados (Dentro do seu grupo de status, os fixados sobem)
-      if (a.is_pinned !== b.is_pinned) {
-        return a.is_pinned ? -1 : 1
-      }
-
-      // REGRA 3: Ordenação dinâmica escolhida pelo usuário
       switch (sortBy) {
         case "priority-desc":
           return priorityWeight[b.priority as keyof typeof priorityWeight] - priorityWeight[a.priority as keyof typeof priorityWeight]
@@ -103,7 +93,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     const updatedStatus = completed ? "completed" : "pending"
     isUpdating.current = true
     
-    // Update local state and remove pin if completed
     setLocalTasks(prev => prev.map(t => 
       t.id === taskId ? { ...t, status: updatedStatus, is_pinned: completed ? false : t.is_pinned } : t
     ))
@@ -112,9 +101,35 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     await supabase.from("tasks").update({
       status: updatedStatus,
       completed_at: completed ? new Date().toISOString() : null,
-      is_pinned: completed ? false : undefined // Remove pin if completing
+      is_pinned: completed ? false : undefined
     }).eq("id", taskId)
     
+    router.refresh()
+    setTimeout(() => { isUpdating.current = false }, 800)
+  }
+
+  const handleMarkAllAsCompleted = async () => {
+    const pendingTasks = processedTasks.filter(t => t.status === "pending")
+    if (pendingTasks.length === 0) return
+    
+    if (!confirm(`Deseja marcar as ${pendingTasks.length} tarefas filtradas como concluídas?`)) return
+
+    const pendingIds = pendingTasks.map(t => t.id)
+    const now = new Date().toISOString()
+
+    isUpdating.current = true
+    
+    // Update local state
+    setLocalTasks(prev => prev.map(t => 
+      pendingIds.includes(t.id) ? { ...t, status: "completed", is_pinned: false, completed_at: now } : t
+    ))
+
+    const supabase = createClient()
+    await supabase
+      .from("tasks")
+      .update({ status: "completed", completed_at: now, is_pinned: false })
+      .in("id", pendingIds)
+
     router.refresh()
     setTimeout(() => { isUpdating.current = false }, 800)
   }
@@ -136,7 +151,19 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
   return (
     <>
-      <TaskSort value={sortBy} onValueChange={setSortBy} />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleMarkAllAsCompleted}
+          disabled={!processedTasks.some(t => t.status === "pending")}
+          className="text-xs h-8 gap-2"
+        >
+          <CheckCheck className="h-3.5 w-3.5" />
+          Marcar visíveis como concluídas
+        </Button>
+        <TaskSort value={sortBy} onValueChange={setSortBy} />
+      </div>
 
       <div className="space-y-3">
         {processedTasks.map((task) => (
