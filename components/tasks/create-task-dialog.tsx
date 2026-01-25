@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Calendar as CalendarIcon, Clock } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon, Clock, AlertCircle } from "lucide-react"
 import { DisciplineManager } from "./discipline-manager"
+import { toast } from "sonner"
 
 interface CreateTaskDialogProps {
   disciplines: Discipline[]
@@ -23,24 +24,39 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Estados básicos
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [disciplineId, setDisciplineId] = useState<string>("")
   const [type, setType] = useState<TaskType>("theory")
   const [priority, setPriority] = useState<TaskPriority>("medium")
-  
-  // Alterado para formato de tempo HH:mm
   const [estimatedTime, setEstimatedTime] = useState("00:30")
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0])
-  const [dueDate, setDueDate] = useState("")
 
+  // Estados de Data e Hora Separados
   const today = new Date().toISOString().split("T")[0]
+  const [startDate, setStartDate] = useState(today)
+  const [startTime, setStartTime] = useState("08:00")
+  const [dueDate, setDueDate] = useState("")
+  const [dueTime, setDueTime] = useState("09:00")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Combinação das strings para validação e banco
+    const startFull = `${startDate}T${startTime}`
+    const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
+
+    // Validação de consistência
+    if (dueFull && new Date(dueFull) <= new Date(startFull)) {
+      toast.error("O término deve ser após o início", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />,
+      })
+      return
+    }
+
     setIsLoading(true)
 
-    // Converte HH:mm para minutos totais para o banco
     const [hours, minutes] = estimatedTime.split(":").map(Number)
     const totalMinutes = (hours * 60) + minutes
 
@@ -49,7 +65,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
 
     if (!user) return
 
-    await supabase.from("tasks").insert({
+    const { error } = await supabase.from("tasks").insert({
       user_id: user.id,
       title,
       description: description || null,
@@ -57,15 +73,20 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
       type,
       priority,
       estimated_minutes: totalMinutes || 30,
-      start_date: startDate || today,
-      due_date: dueDate || null,
+      start_date: startFull,
+      due_date: dueFull,
       status: "pending"
     })
 
+    if (error) {
+      toast.error("Erro ao salvar tarefa")
+    } else {
+      toast.success("Tarefa agendada com sucesso!")
+      setOpen(false)
+      resetForm()
+      router.refresh()
+    }
     setIsLoading(false)
-    setOpen(false)
-    resetForm()
-    router.refresh()
   }
 
   const resetForm = () => {
@@ -76,41 +97,43 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     setPriority("medium")
     setEstimatedTime("00:30")
     setStartDate(today)
+    setStartTime("08:00")
     setDueDate("")
+    setDueTime("09:00")
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      {/* onInteractOutside impede fechar ao clicar nos selects no mobile */}
       <DialogContent 
-        className="max-w-md overflow-y-auto max-h-[90vh]" 
+        className="w-[95vw] max-w-md rounded-lg overflow-y-auto max-h-[95vh] p-4 sm:p-6" 
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Nova Tarefa</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {/* Título */}
           <div className="space-y-2">
             <Label htmlFor="title">Título da Tarefa *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Estudar Direito Constitucional"
+              placeholder="O que vamos estudar?"
               required
-              autoFocus={false} // Evita abrir teclado automaticamente
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Disciplina e Tipo - Grid Responsivo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Disciplina</Label>
                 <DisciplineManager disciplines={disciplines} />
               </div>
               <Select value={disciplineId} onValueChange={setDisciplineId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,11 +145,10 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label>Tipo de Tarefa</Label>
+              <Label>Tipo</Label>
               <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,22 +160,22 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Prioridade e Tempo Estimado */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low" className="text-blue-500">Baixa (Azul)</SelectItem>
-                  <SelectItem value="medium" className="text-yellow-500">Média (Amarela)</SelectItem>
-                  <SelectItem value="high" className="text-orange-500">Alta (Laranja)</SelectItem>
-                  <SelectItem value="urgent" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="urgent">Urgente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="estimatedTime" className="flex items-center gap-1">
                 <Clock className="h-3 w-3" /> Tempo Estimado
@@ -168,47 +190,62 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Data de Início</Label>
+          <hr className="border-muted" />
+
+          {/* Seção de Início - Mobile First (Stacked on small, Row on large) */}
+          <div className="space-y-2">
+            <Label className="text-primary font-bold">Início do Estudo</Label>
+            <div className="grid grid-cols-2 gap-2">
               <Input 
-                id="startDate" 
                 type="date" 
-                min={today}
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)} 
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Conclusão Prevista</Label>
               <Input 
-                id="dueDate" 
+                type="time" 
+                value={startTime} 
+                onChange={(e) => setStartTime(e.target.value)} 
+              />
+            </div>
+          </div>
+
+          {/* Seção de Término */}
+          <div className="space-y-2">
+            <Label className="text-primary font-bold">Término Previsto</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
                 type="date" 
-                min={startDate || today} // Validação: não permite antes do início
                 value={dueDate} 
+                min={startDate}
                 onChange={(e) => setDueDate(e.target.value)} 
+              />
+              <Input 
+                type="time" 
+                value={dueTime} 
+                onChange={(e) => setDueTime(e.target.value)} 
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição / Observações</Label>
+            <Label htmlFor="description">Descrição (Opcional)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="O que você precisa estudar hoje?"
+              placeholder="Detalhes da meta..."
+              className="resize-none"
               rows={2}
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
+            <Button type="submit" disabled={isLoading} className="sm:w-auto">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar Tarefa
+              Criar Tarefa
             </Button>
           </div>
         </form>
