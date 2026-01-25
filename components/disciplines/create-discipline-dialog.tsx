@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
 const ICONS = ["📚", "⚖️", "📊", "🏛️", "💼", "🔬", "📝", "🎯", "💡", "🗂️", "🧮", "🌍", "📖", "💻", "🎨"]
@@ -28,52 +29,104 @@ export function CreateDisciplineDialog({ children, studyType }: CreateDiscipline
   const [icon, setIcon] = useState(ICONS[0])
   const [course, setCourse] = useState("")
   const [subject, setSubject] = useState("")
+  
+  // UX: Estado para exibir erro de duplicidade no formulário
+  const [duplicateError, setDuplicateError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!name.trim()) return
+    
+    setDuplicateError(null)
     setIsLoading(true)
-
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
 
-    if (!user) return
+    // 1. Validação de Duplicidade (Case Insensitive)
+    const { data: existing } = await supabase
+      .from("disciplines")
+      .select("id, name")
+      .eq("user_id", user.id)
+      .ilike("name", name.trim())
+      .maybeSingle()
 
-    await supabase.from("disciplines").insert({
+    if (existing) {
+      const errorMsg = `A disciplina "${name.trim()}" já existe!`
+      setDuplicateError(errorMsg)
+      toast.error(errorMsg, {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />,
+      })
+      setIsLoading(false)
+      return
+    }
+
+    // 2. Inserção
+    const { error } = await supabase.from("disciplines").insert({
       user_id: user.id,
-      name,
+      name: name.trim(),
       color,
       icon,
       course: studyType === "college" ? course || null : null,
       subject: studyType === "college" ? subject || null : null,
     })
 
+    if (error) {
+      toast.error("Erro ao criar disciplina.")
+    } else {
+      toast.success("Disciplina criada!")
+      setOpen(false)
+      setName("")
+      setCourse("")
+      setSubject("")
+      setDuplicateError(null)
+      router.refresh()
+    }
+    
     setIsLoading(false)
-    setOpen(false)
-    setName("")
-    setCourse("")
-    setSubject("")
-    router.refresh()
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val)
+      if (!val) setDuplicateError(null) // Limpa erro ao fechar
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="max-w-md w-[95vw] rounded-lg"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Nova Disciplina</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome da disciplina *</Label>
+            <Label 
+              htmlFor="name" 
+              className={duplicateError ? "text-destructive" : ""}
+            >
+              Nome da disciplina *
+            </Label>
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (duplicateError) setDuplicateError(null) // Limpa erro ao digitar
+              }}
               placeholder={studyType === "college" ? "Ex: Cálculo I" : "Ex: Direito Constitucional"}
+              className={duplicateError ? "border-destructive focus-visible:ring-destructive" : ""}
               required
             />
+            {duplicateError && (
+              <p className="text-[11px] text-destructive font-medium flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="h-3 w-3" /> {duplicateError}
+              </p>
+            )}
           </div>
 
           {studyType === "college" && (
@@ -138,7 +191,7 @@ export function CreateDisciplineDialog({ children, studyType }: CreateDiscipline
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || !name}>
+            <Button type="submit" disabled={isLoading || !name.trim()}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar
             </Button>
