@@ -62,7 +62,6 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
     if (savedMode) setMode(savedMode)
     if (savedIsBreak) setIsBreak(true)
     
-    // Valida se a tarefa salva ainda existe na lista atual de tarefas
     if (savedTaskId && savedTaskId !== "none") {
       const taskExists = tasks.some(t => t.id === savedTaskId)
       if (taskExists) {
@@ -99,7 +98,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
     return () => window.removeEventListener('focus', syncTimer)
   }, [syncTimer])
 
-  // 3. SALVAMENTO DE SESSÃO
+  // 3. SALVAMENTO DE SESSÃO COM GAMIFICAÇÃO
   const saveSession = useCallback(async (status: "completed" | "interrupted") => {
     if (!startTimeRef.current || isSavingRef.current) return
     isSavingRef.current = true
@@ -112,21 +111,18 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
       const durationSeconds = Math.floor((now.getTime() - startTimeRef.current.getTime()) / 1000)
       const minutesStudied = Math.floor(durationSeconds / 60)
       
+      // Definição do bônus de XP (Pomodoro rende mais que tarefas avulsas)
       const xpGained = status === "completed" ? (minutesStudied * 15) : (minutesStudied * 5)
 
-      await supabase.from("pomodoro_sessions").insert({
+      // Registra a sessão para histórico e triggers de medalhas
+      await supabase.from("focus_sessions").insert({
         user_id: user.id,
-        task_id: (selectedTaskId && selectedTaskId !== "none") ? selectedTaskId : null,
-        discipline_id: tasks.find(t => t.id === selectedTaskId)?.discipline_id || null,
-        mode,
-        duration_seconds: durationSeconds,
-        completed_cycles: status === "completed" ? 1 : 0,
-        status,
-        started_at: startTimeRef.current.toISOString(),
-        ended_at: now.toISOString(),
+        duration_minutes: minutesStudied > 0 ? minutesStudied : 1, // Mínimo 1min para registro
+        completed_at: now.toISOString()
       })
 
       if (minutesStudied > 0) {
+        // RPC para atualizar XP e Tempo Total no perfil
         await supabase.rpc('increment_study_stats', { 
           user_id: user.id, 
           inc_xp: xpGained, 
@@ -134,16 +130,22 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
         })
         
         if (status === "completed") {
-          toast.success(`Ciclo concluído! +${xpGained} XP.`, { icon: <Trophy className="text-yellow-500" /> })
+          toast.success(`Ciclo concluído! +${xpGained} XP.`, { 
+            icon: <Trophy className="text-yellow-500 h-4 w-4" />,
+            description: `Você estudou por ${minutesStudied} minutos.`
+          })
         }
       }
+    } catch (error) {
+      console.error("Erro ao salvar sessão:", error)
     } finally {
       startTimeRef.current = null
       isSavingRef.current = false
       localStorage.removeItem("pomodoro_running")
       localStorage.removeItem("pomodoro_end_time")
+      localStorage.removeItem("pomodoro_start_actual")
     }
-  }, [selectedTaskId, mode, supabase, tasks])
+  }, [supabase])
 
   // 4. MOTOR DO TIMER
   useEffect(() => {

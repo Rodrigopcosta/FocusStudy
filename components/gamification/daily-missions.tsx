@@ -5,7 +5,7 @@ import { Target, CheckCircle2 } from "lucide-react"
 interface DailyMissionsProps {
   progress?: {
     tasks?: number;
-    pomodoros?: number;
+    focus?: number; // Alterado de pomodoros para focus para alinhar com a JornadaPage
     notes?: number;
   }
 }
@@ -13,7 +13,7 @@ interface DailyMissionsProps {
 export function DailyMissions({ progress }: DailyMissionsProps) {
   // Valores reais baseados no progresso passado via props, com fallback para 0
   const tasksDone = progress?.tasks || 0
-  const pomodorosDone = progress?.pomodoros || 0
+  const pomodorosDone = progress?.focus || 0
   const notesDone = progress?.notes || 0
 
   // Definição das missões diárias

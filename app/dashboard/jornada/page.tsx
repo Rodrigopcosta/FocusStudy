@@ -49,6 +49,7 @@ export default function JornadaPage() {
     level: 1, 
     streak: 0, 
     completedTasks: 0,
+    focusSessions: 0,
     id: ""
   })
   const [unlockedBadges, setUnlockedBadges] = useState<string[]>([])
@@ -101,11 +102,14 @@ export default function JornadaPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const [profileRes, badgesRes, tasksRes, rankingRes] = await Promise.all([
+        const today = new Date().toISOString().split('T')[0];
+
+        const [profileRes, badgesRes, tasksRes, rankingRes, focusRes] = await Promise.all([
           supabase.from('profiles').select('xp, level, streak_current').eq('id', user.id).maybeSingle(),
           supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
           supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed'),
-          supabase.from('profiles').select('id, full_name, avatar_url, xp, level, streak_current').order('level', { ascending: false }).order('xp', { ascending: false }).limit(10)
+          supabase.from('profiles').select('id, full_name, avatar_url, xp, level, streak_current').order('level', { ascending: false }).order('xp', { ascending: false }).limit(10),
+          supabase.from('focus_sessions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('completed_at', today)
         ])
 
         setUserData({
@@ -113,7 +117,8 @@ export default function JornadaPage() {
           xp: profileRes.data?.xp ?? 0,
           level: profileRes.data?.level ?? 1,
           streak: profileRes.data?.streak_current ?? 0,
-          completedTasks: tasksRes.count ?? 0
+          completedTasks: tasksRes.count ?? 0,
+          focusSessions: focusRes.count ?? 0
         })
 
         const badgeIds = (badgesRes.data as UserBadge[])?.map((b: UserBadge) => b.badge_id) || []
@@ -219,7 +224,10 @@ export default function JornadaPage() {
             </div>
 
             <div className="lg:col-span-4 space-y-6">
-              <DailyMissions progress={{ tasks: userData.completedTasks }} />
+              <DailyMissions progress={{ 
+                tasks: userData.completedTasks, 
+                focus: userData.focusSessions 
+              }} />
               <div className={`p-6 rounded-3xl border-2 transition-all duration-500 ${
                 userData.streak > 0 
                 ? 'bg-orange-500/10 border-orange-500/20 shadow-lg shadow-orange-500/5' 
@@ -232,7 +240,7 @@ export default function JornadaPage() {
                 <p className={`text-sm ${userData.streak > 0 ? 'text-orange-600/80' : 'text-muted-foreground/60'}`}>
                   {userData.streak > 0 
                     ? "Sua constância está multiplicando seu XP! Não pare agora." 
-                    : "Complete uma tarefa para iniciar sua sequência de vitórias."}
+                    : "Complete uma tarefa ou pomodoro para iniciar sua sequência."}
                 </p>
               </div>
             </div>
