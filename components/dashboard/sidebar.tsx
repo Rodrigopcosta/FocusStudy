@@ -38,6 +38,7 @@ import {
   Flame,
   GraduationCap,
   HelpCircle,
+  Trophy,
 } from "lucide-react"
 
 const menuItems = [
@@ -46,6 +47,7 @@ const menuItems = [
   { title: "Anotações", href: "/dashboard/notes", icon: FileText },
   { title: "Disciplinas", href: "/dashboard/disciplines", icon: GraduationCap },
   { title: "Pomodoro", href: "/dashboard/pomodoro", icon: Timer },
+  { title: "Jornada", href: "/dashboard/jornada", icon: Trophy },
 ]
 
 interface DashboardSidebarProps {

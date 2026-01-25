@@ -6,6 +6,7 @@ import { RecentNotes } from "@/components/dashboard/recent-notes"
 import { TasksChartClient } from "@/components/dashboard/tasks-chart-client"
 
 export default async function DashboardPage() {
+  
   const supabase = await createClient()
   const {
     data: { user },
