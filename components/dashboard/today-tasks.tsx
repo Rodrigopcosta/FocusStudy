@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react" // Adicionado para controle de estado local
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,19 +21,33 @@ const priorityColors = {
   high: "bg-destructive/20 text-destructive",
 }
 
-export function TodayTasks({ tasks }: TodayTasksProps) {
+export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
   const router = useRouter()
+  // Estado local para refletir a mudança instantaneamente
+  const [localTasks, setLocalTasks] = useState(initialTasks)
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
+    // 1. Atualização Otimista: Muda na interface antes de ir ao banco
+    const updatedStatus = completed ? "completed" : "pending"
+    setLocalTasks(prev => 
+      prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t)
+    )
+
     const supabase = createClient()
-    await supabase
+    const { error } = await supabase
       .from("tasks")
       .update({
-        status: completed ? "completed" : "pending",
+        status: updatedStatus,
         completed_at: completed ? new Date().toISOString() : null,
       })
       .eq("id", taskId)
-    router.refresh()
+    
+    if (error) {
+      // Reverte se houver erro no banco
+      setLocalTasks(initialTasks)
+    } else {
+      router.refresh()
+    }
   }
 
   return (
@@ -47,7 +62,7 @@ export function TodayTasks({ tasks }: TodayTasksProps) {
         </Button>
       </CardHeader>
       <CardContent>
-        {tasks.length === 0 ? (
+        {localTasks.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">Nenhuma tarefa pendente</p>
             <Button asChild>
@@ -59,18 +74,23 @@ export function TodayTasks({ tasks }: TodayTasksProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {tasks.map((task) => (
+            {localTasks.map((task) => (
               <div
                 key={task.id}
                 className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
-                <Checkbox
-                  checked={task.status === "completed"}
-                  onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
-                  className="mt-0.5"
-                />
+                {/* Div wrapper para aumentar área de clique conforme checklist */}
+                <div className="flex items-center justify-center min-w-6 min-h-6">
+                  <Checkbox
+                    checked={task.status === "completed"}
+                    onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
+                    className="h-5 w-5" // Aumentado de h-4 para h-5
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{task.title}</p>
+                  <p className={`font-medium truncate ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                    {task.title}
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     {task.discipline && (
                       <span
