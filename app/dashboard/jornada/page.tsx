@@ -6,8 +6,9 @@ import { UserStats } from "@/components/gamification/user-stats"
 import { BadgeCard } from "@/components/gamification/badge-card"
 import { DailyMissions } from "@/components/gamification/daily-missions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trophy, Medal, Brain, Flame, Zap, Award, Loader2, Target } from "lucide-react"
+import { Trophy, Medal, Flame, Zap, Loader2 } from "lucide-react"
 
+// Lista Mestra de Definições de Insígnias
 const BADGES_MASTER = [
   { id: 'primeiro-passo', name: 'Primeiro Passo', description: 'Criou sua primeira tarefa', icon: '🎯', category: 'consistency', target: 1 },
   { id: 'semana-ouro', name: 'Semana de Ouro', description: '7 dias de ofensiva seguidos', icon: '🔥', category: 'consistency', target: 7 },
@@ -40,21 +41,15 @@ export default function JornadaPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        // Buscando dados e forçando a não usar cache (pela natureza do client do supabase)
+        // Buscas paralelas para otimizar o carregamento
         const [profileRes, badgesRes, tasksRes] = await Promise.all([
-          supabase.from('profiles').select('xp, level, streak_current').eq('id', user.id).single(),
+          supabase.from('profiles').select('xp, level, streak_current').eq('id', user.id).maybeSingle(),
           supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
           supabase.from('tasks')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .eq('status', 'completed')
         ])
-
-        console.log("DEBUG USUÁRIO ZERO:", {
-          id: user.id,
-          tasksCount: tasksRes.count,
-          profile: profileRes.data
-        })
 
         setUserData({
           xp: profileRes.data?.xp ?? 0,
@@ -84,8 +79,10 @@ export default function JornadaPage() {
     )
   }
 
-  const xpCurrentLevel = userData.xp % 1000
-  const xpRemaining = Math.max(0, 1000 - xpCurrentLevel)
+  // Lógica de XP
+  const xpPerLevel = 1000
+  const xpCurrentLevel = userData.xp % xpPerLevel
+  const xpRemaining = Math.max(0, xpPerLevel - xpCurrentLevel)
 
   const renderBadgeGrid = (category?: string) => {
     const filtered = category 
@@ -114,6 +111,7 @@ export default function JornadaPage() {
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-400 mx-auto animate-in fade-in duration-500">
       
+      {/* Header da Jornada */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-5 md:p-8 rounded-3xl border shadow-sm border-primary/10">
         <div className="space-y-1 text-center lg:text-left">
           <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase text-foreground italic">Jornada</h1>
@@ -124,7 +122,7 @@ export default function JornadaPage() {
           <div className="text-left lg:text-right">
             <p className="text-[10px] font-black text-primary uppercase tracking-widest">Nível {userData.level}</p>
             <p className="font-black text-lg md:text-2xl text-primary leading-none">
-               {xpRemaining} XP restantes
+               {xpRemaining} XP para o Nível {userData.level + 1}
             </p>
           </div>
           <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -134,6 +132,7 @@ export default function JornadaPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        {/* Coluna Principal */}
         <div className="lg:col-span-8 space-y-6 md:space-y-8">
           <UserStats 
             xp={userData.xp} 
@@ -150,9 +149,9 @@ export default function JornadaPage() {
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="grid grid-cols-2 md:flex bg-secondary/30 p-1 mb-6 gap-1 h-auto md:w-auto">
                 <TabsTrigger value="all" className="font-bold py-2 md:px-6">Todas</TabsTrigger>
-                <TabsTrigger value="consistency" className="font-bold py-2 md:px-6 data-[state=active]:text-orange-500">Foco</TabsTrigger>
-                <TabsTrigger value="discipline" className="font-bold py-2 md:px-6 data-[state=active]:text-blue-500">Estudo</TabsTrigger>
-                <TabsTrigger value="speed" className="font-bold py-2 md:px-6 data-[state=active]:text-purple-500">Performance</TabsTrigger>
+                <TabsTrigger value="consistency" className="font-bold py-2 md:px-6 data-[state=active]:text-orange-500 text-xs">Foco</TabsTrigger>
+                <TabsTrigger value="discipline" className="font-bold py-2 md:px-6 data-[state=active]:text-blue-500 text-xs">Estudo</TabsTrigger>
+                <TabsTrigger value="speed" className="font-bold py-2 md:px-6 data-[state=active]:text-purple-500 text-xs">Performance</TabsTrigger>
               </TabsList>
               <TabsContent value="all">{renderBadgeGrid()}</TabsContent>
               <TabsContent value="consistency">{renderBadgeGrid('consistency')}</TabsContent>
@@ -162,18 +161,35 @@ export default function JornadaPage() {
           </div>
         </div>
 
+        {/* Barra Lateral */}
         <div className="lg:col-span-4 space-y-6">
           <DailyMissions progress={{ tasks: userData.completedTasks }} />
-          <div className="bg-linear-to-br from-primary/10 via-background to-secondary/10 border-2 border-primary/10 p-6 md:p-8 rounded-3xl relative overflow-hidden group">
-            <Zap className="absolute -right-2 -bottom-2 h-20 w-20 opacity-5 -rotate-12" />
-            <h3 className="font-black text-lg md:text-xl text-foreground uppercase tracking-tight mb-4">Dica de Mestre</h3>
+          
+          <div className={`bg-linear-to-br border-2 p-6 md:p-8 rounded-3xl relative overflow-hidden group transition-all duration-500 ${
+            userData.streak > 0 
+              ? 'from-orange-500/10 via-background to-orange-500/5 border-orange-500/20' 
+              : 'from-primary/10 via-background to-secondary/10 border-primary/10'
+          }`}>
+            <Zap className={`absolute -right-2 -bottom-2 h-20 w-20 opacity-5 -rotate-12 transition-transform ${
+              userData.streak > 0 ? 'text-orange-500' : 'text-primary'
+            }`} />
+            
+            <h3 className="font-black text-lg md:text-xl text-foreground uppercase tracking-tight mb-4">
+              {userData.streak > 0 ? "🔥 Ofensiva Ativa!" : "💡 Dica de Mestre"}
+            </h3>
+
             <div className="space-y-4 relative z-10">
                <div className="flex gap-3">
-                 <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                   <Flame className="h-3 w-3 text-primary" />
+                 <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 mt-1 ${
+                   userData.streak > 0 ? 'bg-orange-500/20' : 'bg-primary/20'
+                 }`}>
+                   <Flame className={`h-3 w-3 ${userData.streak > 0 ? 'text-orange-500' : 'text-primary'}`} />
                  </div>
                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                   Sua ofensiva de <strong>{userData.streak} dias</strong> libera bônus de XP!
+                   {userData.streak > 0 
+                    ? `Incrível! Você está há ${userData.streak} dias focado. Continue assim para multiplicar seu bônus de XP!`
+                    : `Complete sua primeira tarefa do dia para iniciar sua ofensiva e ganhar bônus de XP!`
+                   }
                  </p>
                </div>
             </div>
