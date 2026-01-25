@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Profile, PomodoroMode, Theme } from "@/types/database"
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Save, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
+import { toast } from "sonner"
 
 interface SettingsFormProps {
   profile: Profile | null
@@ -20,36 +21,47 @@ interface SettingsFormProps {
 
 export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
   const router = useRouter()
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  
   const [isLoading, setIsLoading] = useState(false)
   const [name, setName] = useState(profile?.name || "")
   const [pomodoroMode, setPomodoroMode] = useState<PomodoroMode>(profile?.pomodoro_mode || "25/5")
-  const [theme, setThemeState] = useState<Theme>(profile?.theme || "light")
   const [notificationsEnabled, setNotificationsEnabled] = useState(profile?.notifications_enabled ?? true)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSave = async () => {
     setIsLoading(true)
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
 
-    await supabase
+    const { error } = await supabase
       .from("profiles")
       .update({
         name,
         pomodoro_mode: pomodoroMode,
-        theme,
+        theme: theme as Theme, 
         notifications_enabled: notificationsEnabled,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id)
 
-    setTheme(theme)
+    if (error) {
+      toast.error("Erro ao salvar configurações")
+    } else {
+      toast.success("Configurações atualizadas!")
+      router.refresh()
+    }
+    
     setIsLoading(false)
-    router.refresh()
   }
 
   const handleSignOut = async () => {
@@ -58,10 +70,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
     router.push("/login")
   }
 
-  const handleThemeChange = (value: Theme) => {
-    setThemeState(value)
-    setTheme(value)
-  }
+  if (!mounted) return null
 
   return (
     <div className="space-y-6">
@@ -94,7 +103,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
               <Label>Tema</Label>
               <p className="text-sm text-muted-foreground">Escolha a aparência do app</p>
             </div>
-            <Select value={theme} onValueChange={handleThemeChange}>
+            <Select value={theme} onValueChange={(value) => setTheme(value)}>
               <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
