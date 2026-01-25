@@ -20,7 +20,7 @@ interface CreateTaskDialogProps {
   children: React.ReactNode
 }
 
-export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ disciplines = [], children }: CreateTaskDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -40,6 +40,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
   const [dueTime, setDueTime] = useState("09:00")
 
   const [timeError, setTimeError] = useState<string | null>(null)
+  const [duplicateError, setDuplicateError] = useState<string | null>(null)
 
   useEffect(() => {
     if (startDate && startTime) {
@@ -57,37 +58,19 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     setTitle(""); setDescription(""); setDisciplineId(""); setType("theory");
     setPriority("medium"); setEstimatedTime("00:30"); setStartDate(today);
     setStartTime("08:00"); setDueDate(""); setDueTime("09:00");
-    setTimeError(null)
+    setTimeError(null); setDuplicateError(null);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Se o modal de disciplina estiver aberto, não faz nada aqui
-    if (isInnerModalOpen) return
+    if (isInnerModalOpen || isLoading) return
 
-    if (!title.trim()) {
-      toast.error("O título da tarefa é obrigatório")
-      return
-    }
+    const cleanTitle = title.trim()
+    if (!cleanTitle) return
 
-    if (timeError) {
-      toast.error("Ajuste o horário de início antes de salvar")
-      return
-    }
-
-    const startFull = `${startDate}T${startTime}`
-    const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
-
-    if (dueFull && new Date(dueFull) <= new Date(startFull)) {
-      toast.error("O término deve ser após o horário de início")
-      return
-    }
-
+    setDuplicateError(null)
     setIsLoading(true)
-    const [hours, minutes] = estimatedTime.split(":").map(Number)
-    const totalMinutes = (hours * 60) + minutes
-
+    
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -96,9 +79,37 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
       return
     }
 
-    const { error } = await supabase.from("tasks").insert({
+    // 1. BUSCA EXAUSTIVA DE DUPLICIDADE
+    const { data: existing, error: searchError } = await supabase
+      .from("tasks")
+      .select("title")
+      .eq("user_id", user.id)
+      .ilike("title", cleanTitle) // Case-insensitive
+      .maybeSingle()
+
+    if (existing) {
+      setDuplicateError(`A tarefa "${cleanTitle}" já existe.`)
+      toast.error("Título já cadastrado")
+      setIsLoading(false)
+      return
+    }
+
+    if (timeError) {
+      toast.error("Verifique os horários")
+      setIsLoading(false)
+      return
+    }
+
+    const startFull = `${startDate}T${startTime}`
+    const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
+
+    const [hours, minutes] = estimatedTime.split(":").map(Number)
+    const totalMinutes = (hours * 60) + minutes
+
+    // 2. INSERÇÃO
+    const { error: dbError } = await supabase.from("tasks").insert({
       user_id: user.id,
-      title: title.trim(),
+      title: cleanTitle,
       description: description || null,
       discipline_id: disciplineId || null,
       type,
@@ -109,10 +120,11 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
       status: "pending"
     })
 
-    if (error) {
+    if (dbError) {
       toast.error("Erro ao salvar tarefa")
+      console.error(dbError)
     } else {
-      toast.success("Tarefa agendada com sucesso!")
+      toast.success("Tarefa criada!")
       setOpen(false)
       resetForm()
       router.refresh()
@@ -124,6 +136,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     <Dialog open={open} onOpenChange={(val) => {
       if (!val && isInnerModalOpen) return 
       setOpen(val)
+      if (!val) setDuplicateError(null)
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent 
@@ -136,8 +149,25 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label htmlFor="title">Título da Tarefa *</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <Label htmlFor="title" className={duplicateError ? "text-destructive" : ""}>
+              Título da Tarefa *
+            </Label>
+            <Input 
+              id="title" 
+              value={title} 
+              autoComplete="off"
+              onChange={(e) => {
+                setTitle(e.target.value)
+                if (duplicateError) setDuplicateError(null)
+              }} 
+              required 
+              className={duplicateError ? "border-destructive focus-visible:ring-destructive" : ""}
+            />
+            {duplicateError && (
+              <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" /> {duplicateError}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -153,7 +183,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
               <SelectTrigger><SelectValue placeholder="Selecione uma disciplina..." /></SelectTrigger>
               <SelectContent>
                 {disciplines.length === 0 && (
-                  <div className="p-2 text-xs text-center text-muted-foreground">Nenhuma disciplina criada</div>
+                  <div className="p-2 text-xs text-center text-muted-foreground">Nenhuma disciplina</div>
                 )}
                 {disciplines.map((d) => (
                   <SelectItem key={d.id} value={d.id}>{d.icon} {d.name}</SelectItem>
@@ -221,7 +251,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={() => { setOpen(false); resetForm(); }}>Cancelar</Button>
-            <Button type="submit" disabled={isLoading || !!timeError}>
+            <Button type="submit" disabled={isLoading || !!timeError || !title.trim()}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Tarefa
             </Button>
