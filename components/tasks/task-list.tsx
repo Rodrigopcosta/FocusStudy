@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Pencil, Trash2, Timer, Calendar, Clock, Pin, PinOff } from "lucide-react"
 import { EditTaskDialog } from "./edit-task-dialog"
+import { TaskSort, type SortOption } from "./task-sort"
 import Link from "next/link"
 
 interface TaskListProps {
@@ -18,12 +19,18 @@ interface TaskListProps {
   disciplines: Discipline[]
 }
 
-// Mapeamento de cores sólidas para a borda baseada na prioridade
+const priorityWeight = {
+  urgent: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+}
+
 const priorityBorderColors = {
-  low: "#3b82f6",    // Azul
-  medium: "#eab308", // Amarelo
-  high: "#f97316",   // Laranja
-  urgent: "#ef4444", // Vermelho
+  low: "#3b82f6",
+  medium: "#eab308",
+  high: "#f97316",
+  urgent: "#ef4444",
 }
 
 const priorityColors = {
@@ -44,6 +51,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const searchParams = useSearchParams()
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [localTasks, setLocalTasks] = useState(initialTasks)
+  const [sortBy, setSortBy] = useState<SortOption>("newest")
   const isUpdating = useRef(false)
 
   useEffect(() => {
@@ -51,7 +59,8 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   }, [initialTasks])
 
   const processedTasks = useMemo(() => {
-    let filtered = localTasks.filter((task) => {
+    // 1. Filtros (URL Search Params)
+    let result = localTasks.filter((task) => {
       const statusF = searchParams.get("status") || "all"
       const discF = searchParams.get("discipline") || "all"
       const prioF = searchParams.get("priority") || "all"
@@ -62,23 +71,48 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
       return true
     })
 
-    return filtered.sort((a, b) => {
-      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
-      if (a.status !== b.status) return a.status === "pending" ? -1 : 1
-      return 0
+    // 2. Lógica de Ordenação com Hierarquia
+    return result.sort((a, b) => {
+      // REGRA 1: Status (Pendentes no topo, Concluídas em baixo)
+      if (a.status !== b.status) {
+        return a.status === "pending" ? -1 : 1
+      }
+
+      // REGRA 2: Fixados (Dentro do seu grupo de status, os fixados sobem)
+      if (a.is_pinned !== b.is_pinned) {
+        return a.is_pinned ? -1 : 1
+      }
+
+      // REGRA 3: Ordenação dinâmica escolhida pelo usuário
+      switch (sortBy) {
+        case "priority-desc":
+          return priorityWeight[b.priority as keyof typeof priorityWeight] - priorityWeight[a.priority as keyof typeof priorityWeight]
+        case "priority-asc":
+          return priorityWeight[a.priority as keyof typeof priorityWeight] - priorityWeight[b.priority as keyof typeof priorityWeight]
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        default:
+          return 0
+      }
     })
-  }, [localTasks, searchParams])
+  }, [localTasks, searchParams, sortBy])
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     const updatedStatus = completed ? "completed" : "pending"
     isUpdating.current = true
-    setLocalTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t))
+    
+    // Update local state and remove pin if completed
+    setLocalTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, status: updatedStatus, is_pinned: completed ? false : t.is_pinned } : t
+    ))
 
     const supabase = createClient()
     await supabase.from("tasks").update({
       status: updatedStatus,
       completed_at: completed ? new Date().toISOString() : null,
-      is_pinned: false
+      is_pinned: completed ? false : undefined // Remove pin if completing
     }).eq("id", taskId)
     
     router.refresh()
@@ -102,6 +136,8 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
   return (
     <>
+      <TaskSort value={sortBy} onValueChange={setSortBy} />
+
       <div className="space-y-3">
         {processedTasks.map((task) => (
           <Card 
@@ -110,9 +146,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
               task.status === "completed" ? "opacity-60 bg-muted/30" : "bg-card hover:shadow-md"
             }`}
             style={{ 
-              // Borda: Cor da Prioridade
               borderLeftColor: priorityBorderColors[task.priority as keyof typeof priorityBorderColors] || "#gray",
-              // Fundo: Leve tom da cor da Disciplina para contexto
               backgroundColor: task.status !== "completed" && task.discipline?.color 
                 ? `${task.discipline.color}08` 
                 : undefined 
@@ -141,14 +175,16 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleTogglePin(task)}
-                      >
-                        {task.is_pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                      </Button>
+                      {task.status !== "completed" && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleTogglePin(task)}
+                        >
+                          {task.is_pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                        </Button>
+                      )}
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
