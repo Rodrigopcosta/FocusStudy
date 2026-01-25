@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation"
 const pageNames: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/dashboard/tasks": "Tarefas",
-  "/dashboard/notes": "Notas",
+  "/dashboard/notes": "Anotações",
   "/dashboard/pomodoro": "Pomodoro",
   "/dashboard/settings": "Configuracoes",
 }
