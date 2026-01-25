@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react" // Adicionado useEffect
+import { useState, useEffect, useRef } from "react" // Adicionado useRef
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Task, Discipline } from "@/types/database"
@@ -35,13 +35,15 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  
-  // Estado local para resposta instantânea
   const [localTasks, setLocalTasks] = useState(initialTasks)
+  
+  // Trava para evitar que o refresh do servidor atropele o clique no celular
+  const isUpdating = useRef(false)
 
-  // Sincroniza estado local quando as props mudarem (ex: após router.refresh)
   useEffect(() => {
-    setLocalTasks(initialTasks)
+    if (!isUpdating.current) {
+      setLocalTasks(initialTasks)
+    }
   }, [initialTasks])
 
   const statusFilter = searchParams.get("status") || "all"
@@ -57,8 +59,8 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     const updatedStatus = completed ? "completed" : "pending"
+    isUpdating.current = true
     
-    // 1. Atualização Otimista
     setLocalTasks(prev => 
       prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t)
     )
@@ -73,16 +75,19 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
       .eq("id", taskId)
     
     if (error) {
-      setLocalTasks(initialTasks) // Reverte em caso de erro
+      isUpdating.current = false
+      setLocalTasks(initialTasks)
     } else {
       router.refresh()
+      // Pequena folga para o servidor estabilizar antes de liberar a trava
+      setTimeout(() => {
+        isUpdating.current = false
+      }, 800)
     }
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    // Confirmação simples conforme checklist item 4
     if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return
-
     const supabase = createClient()
     await supabase.from("tasks").delete().eq("id", taskId)
     router.refresh()
@@ -109,7 +114,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
           <Card key={task.id} className={task.status === "completed" ? "opacity-60" : ""}>
             <CardContent className="py-4">
               <div className="flex items-start gap-4">
-                {/* Wrapper para aumentar área de clique (Checklist item 1) */}
                 <div className="flex items-center justify-center min-w-6 min-h-6 mt-1">
                   <Checkbox
                     checked={task.status === "completed"}
@@ -151,7 +155,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  {/* ... Restante do código (Badges e Metadados) mantido exatamente igual */}
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     {task.discipline && (
                       <span
@@ -165,9 +168,9 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                       </span>
                     )}
                     <Badge variant="outline" className="text-xs">
-                      {typeLabels[task.type]}
+                      {typeLabels[task.type as keyof typeof typeLabels]}
                     </Badge>
-                    <Badge variant="secondary" className={`text-xs ${priorityColors[task.priority]}`}>
+                    <Badge variant="secondary" className={`text-xs ${priorityColors[task.priority as keyof typeof priorityColors]}`}>
                       {task.priority === "high" ? "Alta" : task.priority === "medium" ? "Média" : "Baixa"}
                     </Badge>
                     {task.due_date && (
