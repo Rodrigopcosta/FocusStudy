@@ -1,24 +1,26 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ArrowLeft } from "lucide-react"
+import { Target, ArrowLeft, Lock, Fingerprint, EyeOff } from "lucide-react"
 
 export const metadata = {
-  title: "Política de Privacidade",
-  description: "Política de privacidade do FocusStudy - Planejador de Estudos",
+  title: "Política de Privacidade | FocusStudy",
+  description: "Entenda como o FocusStudy protege e trata seus dados pessoais em conformidade com a LGPD.",
 }
 
 export default function PrivacyPage() {
+  const lastUpdate = "25 de Janeiro de 2026"
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-primary-foreground" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-3 transition-transform">
+              <Target className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg">FocusStudy</span>
+            <span className="font-black text-xl tracking-tighter italic uppercase">FocusStudy</span>
           </Link>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild className="font-bold uppercase italic text-xs tracking-widest">
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
@@ -27,121 +29,108 @@ export default function PrivacyPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-8">Política de Privacidade</h1>
-        <p className="text-muted-foreground mb-6">Última atualização: Janeiro de 2026</p>
+      <main className="container mx-auto px-4 py-16 max-w-4xl">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-border/40 pb-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+              <Lock className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Conformidade LGPD</span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none">
+              Política de <span className="text-primary">Privacidade</span>
+            </h1>
+          </div>
+          <p className="text-muted-foreground font-bold uppercase italic text-[10px] tracking-[0.2em]">
+            Última atualização: {lastUpdate}
+          </p>
+        </div>
 
-        <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-          <section>
-            <h2 className="text-xl font-semibold mb-4">1. Introdução</h2>
-            <p className="text-muted-foreground">
-              O FocusStudy respeita sua privacidade e está comprometido em proteger seus dados pessoais. Esta política
-              de privacidade explica como coletamos, usamos e protegemos suas informações quando você usa nosso serviço.
+        <div className="prose prose-neutral dark:prose-invert max-w-none space-y-12">
+          
+          <section className="bg-card/50 p-8 rounded-4xl border border-border/40">
+            <h2 className="text-xl font-black uppercase italic mb-4 flex items-center gap-2">
+              <Fingerprint className="text-primary h-5 w-5" /> 1. Compromisso com a Transparência
+            </h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              O <strong>FocusStudy</strong> (doravante "Plataforma") entende que seus dados de estudo são parte da sua propriedade intelectual e privacidade. Esta Política detalha como tratamos suas informações em estrita observância à Lei Geral de Proteção de Dados (Lei nº 13.709/18).
             </p>
           </section>
 
-          <section>
-            <h2 className="text-xl font-semibold mb-4">2. Dados que Coletamos</h2>
-            <p className="text-muted-foreground mb-2">Coletamos os seguintes tipos de informações:</p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1">
-              <li>
-                <strong>Dados de cadastro:</strong> nome, e-mail, data de nascimento, gênero
-              </li>
-              <li>
-                <strong>Dados de uso:</strong> tarefas, notas, sessões de Pomodoro, estatísticas de estudo
-              </li>
-              <li>
-                <strong>Dados técnicos:</strong> endereço IP, tipo de navegador, dispositivo utilizado
-              </li>
-              <li>
-                <strong>Cookies:</strong> para melhorar sua experiência e manter sua sessão ativa
-              </li>
+          <section className="space-y-6">
+            <h2 className="text-xl font-black uppercase italic border-l-4 border-primary pl-4">2. Coleta de Dados e Finalidade</h2>
+            <div className="grid gap-6">
+              <div className="space-y-2">
+                <h3 className="font-bold text-foreground uppercase italic text-sm">2.1. Dados de Identificação</h3>
+                <p className="text-muted-foreground text-sm italic">
+                  E-mail e informações de perfil técnico para criação de conta e autenticação via Supabase Auth.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-foreground uppercase italic text-sm">2.2. Dados de Pagamento (Stripe)</h3>
+                <p className="text-muted-foreground text-sm italic">
+                  O FocusStudy <strong>não armazena</strong> dados de cartão de crédito em seus servidores. Todas as transações são processadas pelo Stripe, que possui certificação PCI-DSS Nível 1. Coletamos apenas o status do pagamento para liberação dos recursos Premium.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-foreground uppercase italic text-sm">2.3. Conteúdo de Estudo e IA</h3>
+                <p className="text-muted-foreground text-sm italic">
+                  Suas notas e cronogramas são processados para gerar resumos via Inteligência Artificial. Estes dados são utilizados apenas para a prestação do serviço contratado e não são compartilhados para treinamento de modelos públicos de terceiros.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <h2 className="text-xl font-black uppercase italic border-l-4 border-primary pl-4">3. Compartilhamento com Terceiros</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Seus dados são compartilhados estritamente com parceiros operacionais necessários para o funcionamento do SaaS:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground text-xs font-bold uppercase italic space-y-2 tracking-wide">
+              <li><span className="text-primary">Stripe:</span> Processamento de pagamentos e assinaturas.</li>
+              <li><span className="text-primary">Supabase:</span> Armazenamento de banco de dados e autenticação.</li>
+              <li><span className="text-primary">Vercel:</span> Hospedagem da infraestrutura da plataforma.</li>
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-xl font-semibold mb-4">3. Como Usamos seus Dados</h2>
-            <p className="text-muted-foreground mb-2">Utilizamos suas informações para:</p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1">
-              <li>Fornecer e manter o serviço FocusStudy</li>
-              <li>Personalizar sua experiência de usuário</li>
-              <li>Enviar comunicações importantes sobre o serviço</li>
-              <li>Melhorar e desenvolver novos recursos</li>
-              <li>Garantir a segurança do serviço</li>
-            </ul>
+          <section className="space-y-6">
+            <h2 className="text-xl font-black uppercase italic border-l-4 border-primary pl-4">4. Seus Direitos (Art. 18 LGPD)</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Você possui controle total sobre seus dados. A qualquer momento, através do seu painel ou suporte, você pode solicitar:
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 text-[10px] font-black uppercase italic tracking-widest text-center">Acesso e Correção</div>
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 text-[10px] font-black uppercase italic tracking-widest text-center">Exclusão Definitiva</div>
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 text-[10px] font-black uppercase italic tracking-widest text-center">Revogação de Consentimento</div>
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 text-[10px] font-black uppercase italic tracking-widest text-center">Portabilidade dos Dados</div>
+            </div>
           </section>
 
-          <section>
-            <h2 className="text-xl font-semibold mb-4">4. Compartilhamento de Dados</h2>
-            <p className="text-muted-foreground">
-              Não vendemos, alugamos ou compartilhamos seus dados pessoais com terceiros para fins de marketing. Podemos
-              compartilhar dados com provedores de serviços que nos auxiliam na operação do FocusStudy, sempre sob
-              obrigações de confidencialidade.
+          <section className="space-y-6">
+            <h2 className="text-xl font-black uppercase italic border-l-4 border-primary pl-4">5. Segurança e Criptografia</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Utilizamos criptografia <strong>AES-256</strong> em repouso e <strong>TLS 1.3</strong> em trânsito. O acesso ao banco de dados é restrito via RLS (Row Level Security) do Supabase, garantindo que nenhum usuário consiga acessar dados de outros.
             </p>
           </section>
 
-          <section>
-            <h2 className="text-xl font-semibold mb-4">5. Segurança dos Dados</h2>
-            <p className="text-muted-foreground">
-              Implementamos medidas de segurança técnicas e organizacionais para proteger seus dados, incluindo
-              criptografia SSL/TLS, armazenamento seguro em servidores protegidos e controle de acesso restrito.
+          <section className="space-y-6">
+            <h2 className="text-xl font-black uppercase italic border-l-4 border-primary pl-4">6. Retenção de Dados</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Dados de usuários inativos (sem login por mais de 24 meses) podem ser anonimizados ou excluídos. Em caso de cancelamento da assinatura, seus dados permanecem salvos por 60 dias para permitir a reativação antes da exclusão permanente.
             </p>
           </section>
 
-          <section>
-            <h2 className="text-xl font-semibold mb-4">6. Seus Direitos</h2>
-            <p className="text-muted-foreground mb-2">
-              De acordo com a Lei Geral de Proteção de Dados (LGPD), você tem direito a:
+          <section className="bg-primary/5 p-8 rounded-4xl border border-primary/20 text-center">
+            <h2 className="text-xl font-black uppercase italic mb-4 flex items-center justify-center gap-2">
+              <EyeOff className="text-primary h-5 w-5" /> Encarregado de Dados (DPO)
+            </h2>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6 italic">
+              Para qualquer requisição de privacidade, nossa equipe está pronta para atender dentro dos prazos legais.
             </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1">
-              <li>Acessar seus dados pessoais</li>
-              <li>Corrigir dados incompletos ou desatualizados</li>
-              <li>Solicitar a exclusão de seus dados</li>
-              <li>Revogar o consentimento para tratamento de dados</li>
-              <li>Portabilidade dos dados para outro serviço</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">7. Cookies</h2>
-            <p className="text-muted-foreground">
-              Utilizamos cookies essenciais para o funcionamento do serviço e cookies de preferências para lembrar suas
-              configurações. Você pode gerenciar suas preferências de cookies através das configurações do seu
-              navegador.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">8. Retenção de Dados</h2>
-            <p className="text-muted-foreground">
-              Mantemos seus dados enquanto sua conta estiver ativa. Após a exclusão da conta, seus dados serão removidos
-              em até 30 dias, exceto quando houver obrigação legal de retenção.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">9. Menores de Idade</h2>
-            <p className="text-muted-foreground">
-              O FocusStudy não é destinado a menores de 13 anos. Se tomarmos conhecimento de que coletamos dados de uma
-              criança menor de 13 anos, tomaremos medidas para excluir essas informações.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">10. Alterações nesta Política</h2>
-            <p className="text-muted-foreground">
-              Podemos atualizar esta política periodicamente. Notificaremos sobre mudanças significativas por e-mail ou
-              através de um aviso em nosso serviço.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">11. Contato</h2>
-            <p className="text-muted-foreground">
-              Para exercer seus direitos ou esclarecer dúvidas sobre esta política, entre em contato pelo e-mail:
+            <p className="text-primary font-black italic uppercase tracking-tighter text-2xl">
               privacidade@focusstudy.com.br
             </p>
           </section>
+
         </div>
       </main>
     </div>
