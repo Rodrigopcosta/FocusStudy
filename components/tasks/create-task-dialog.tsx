@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Discipline, TaskType, TaskPriority } from "@/types/database"
@@ -33,34 +33,44 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
   const [priority, setPriority] = useState<TaskPriority>("medium")
   const [estimatedTime, setEstimatedTime] = useState("00:30")
 
-  // Estados de Data e Hora Separados
+  // Estados de Data e Hora
   const today = new Date().toISOString().split("T")[0]
   const [startDate, setStartDate] = useState(today)
   const [startTime, setStartTime] = useState("08:00")
   const [dueDate, setDueDate] = useState("")
   const [dueTime, setDueTime] = useState("09:00")
 
+  // Estado de Erro de Validação
+  const [timeError, setTimeError] = useState<string | null>(null)
+
+  // Validação em Tempo Real (Início não pode ser no passado)
+  useEffect(() => {
+    if (startDate && startTime) {
+      const selectedDateTime = new Date(`${startDate}T${startTime}`)
+      const now = new Date()
+
+      if (selectedDateTime < now) {
+        setTimeError("O horário de início não pode ser anterior ao atual")
+      } else {
+        setTimeError(null)
+      }
+    }
+  }, [startDate, startTime])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Combinação das strings para validação e banco
-    const startFull = `${startDate}T${startTime}`
-    const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
-    const now = new Date()
-
-    // 1. Validação: Início não pode ser no passado
-    if (new Date(startFull) < now) {
-      toast.error("O início não pode ser anterior ao horário atual", {
-        icon: <AlertCircle className="h-4 w-4 text-destructive" />,
-      })
+    if (timeError) {
+      toast.error("Ajuste o horário de início antes de salvar")
       return
     }
-      
-    // 2. Validação: Conclusão não pode ser anterior ao início
+
+    const startFull = `${startDate}T${startTime}`
+    const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
+
+    // Validação de Término
     if (dueFull && new Date(dueFull) <= new Date(startFull)) {
-      toast.error("O término deve ser após o horário de início", {
-        icon: <AlertCircle className="h-4 w-4 text-destructive" />,
-      })
+      toast.error("O término deve ser após o horário de início")
       return
     }
 
@@ -72,7 +82,10 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return
+    if (!user) {
+      toast.error("Sessão expirada. Faça login novamente.")
+      return
+    }
 
     const { error } = await supabase.from("tasks").insert({
       user_id: user.id,
@@ -109,10 +122,14 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     setStartTime("08:00")
     setDueDate("")
     setDueTime("09:00")
+    setTimeError(null)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val)
+      if (!val) resetForm()
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent 
         className="w-[95vw] max-w-md rounded-lg overflow-y-auto max-h-[95vh] p-4 sm:p-6" 
@@ -122,7 +139,6 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
           <DialogTitle>Nova Tarefa</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {/* Título */}
           <div className="space-y-2">
             <Label htmlFor="title">Título da Tarefa *</Label>
             <Input
@@ -134,7 +150,6 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             />
           </div>
 
-          {/* Disciplina e Tipo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -169,7 +184,6 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             </div>
           </div>
 
-          {/* Prioridade e Tempo Estimado */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Prioridade</Label>
@@ -201,25 +215,33 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
 
           <hr className="border-muted" />
 
-          {/* Início do Estudo */}
+          {/* Início com Alerta de Erro */}
           <div className="space-y-2">
-            <Label className="text-primary font-bold">Início do Estudo</Label>
+            <Label className={`font-bold ${timeError ? "text-destructive" : "text-primary"}`}>
+              Início do Estudo
+            </Label>
             <div className="grid grid-cols-2 gap-2">
               <Input 
                 type="date" 
                 value={startDate} 
                 min={today}
+                className={timeError ? "border-destructive focus-visible:ring-destructive" : ""}
                 onChange={(e) => setStartDate(e.target.value)} 
               />
               <Input 
                 type="time" 
                 value={startTime} 
+                className={timeError ? "border-destructive focus-visible:ring-destructive" : ""}
                 onChange={(e) => setStartTime(e.target.value)} 
               />
             </div>
+            {timeError && (
+              <p className="text-[11px] text-destructive font-medium flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {timeError}
+              </p>
+            )}
           </div>
 
-          {/* Término Previsto */}
           <div className="space-y-2">
             <Label className="text-primary font-bold">Término Previsto</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -253,7 +275,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="sm:w-auto font-medium">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading} className="sm:w-auto font-bold shadow-sm">
+            <Button type="submit" disabled={isLoading || !!timeError} className="sm:w-auto font-bold shadow-sm">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Tarefa
             </Button>
