@@ -33,11 +33,14 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
   const [priority, setPriority] = useState<TaskPriority>("medium")
   const [estimatedTime, setEstimatedTime] = useState("00:30")
 
-  // Estados de Data e Hora Separados
+  // Estados de Data e Hora
   const [startDate, setStartDate] = useState("")
   const [startTime, setStartTime] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [dueTime, setDueTime] = useState("")
+
+  // Estado de Erro de Validação
+  const [timeError, setTimeError] = useState<string | null>(null)
 
   const today = new Date().toISOString().split("T")[0]
 
@@ -52,7 +55,6 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
     if (!isoStr) return { date: "", time: "" }
     try {
       const d = new Date(isoStr)
-      // Ajuste para o fuso horário local do navegador para exibição no input
       const offset = d.getTimezoneOffset() * 60000
       const localDate = new Date(d.getTime() - offset)
       const parts = localDate.toISOString().split("T")
@@ -64,6 +66,20 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
       return { date: "", time: "" }
     }
   }
+
+  // Validação em Tempo Real
+  useEffect(() => {
+    if (startDate && startTime) {
+      const selectedDateTime = new Date(`${startDate}T${startTime}`)
+      const now = new Date()
+
+      if (selectedDateTime < now) {
+        setTimeError("A data/hora de início não pode ser anterior à atual")
+      } else {
+        setTimeError(null)
+      }
+    }
+  }, [startDate, startTime])
 
   useEffect(() => {
     if (open && task) {
@@ -81,30 +97,23 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
       const due = splitISOString(task.due_date)
       setDueDate(due.date)
       setDueTime(due.time)
+      setTimeError(null)
     }
   }, [task, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const startFull = startDate && startTime ? `${startDate}T${startTime}` : null
-    const dueFull = dueDate && dueTime ? `${dueDate}T${dueTime}` : null
-    const now = new Date()
-
-    // 1. Validação: Se alterado, o início não pode ser anterior ao agora
-    // Nota: Só validamos contra o 'now' se a data/hora original foi alterada para evitar erro em tarefas antigas
-    if (startFull && new Date(startFull) < now && startFull !== task.start_date) {
-      toast.error("O novo horário de início não pode ser no passado", {
-        icon: <AlertCircle className="h-4 w-4 text-destructive" />
-      })
+    if (timeError) {
+      toast.error("Corrija o horário antes de salvar")
       return
     }
 
-    // 2. Validação: Consistência entre início e fim
+    const startFull = startDate && startTime ? `${startDate}T${startTime}` : null
+    const dueFull = dueDate && dueTime ? `${dueDate}T${dueTime}` : null
+
     if (startFull && dueFull && new Date(dueFull) <= new Date(startFull)) {
-      toast.error("O término deve ser após o horário de início", {
-        icon: <AlertCircle className="h-4 w-4 text-destructive" />
-      })
+      toast.error("O término deve ser após o início")
       return
     }
 
@@ -132,7 +141,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
     if (error) {
       toast.error("Erro ao atualizar tarefa")
     } else {
-      toast.success("Tarefa atualizada com sucesso!")
+      toast.success("Tarefa atualizada!")
       onOpenChange(false)
       router.refresh()
     }
@@ -145,6 +154,8 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
       <DialogContent 
         className="w-[95vw] max-w-md rounded-lg overflow-y-auto max-h-[95vh] p-4 sm:p-6"
         onInteractOutside={(e) => e.preventDefault()}
+        // Evita que o teclado abra sozinho ao carregar o diálogo no mobile
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Editar Tarefa</DialogTitle>
@@ -153,26 +164,17 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <Label htmlFor="edit-title">Título da Tarefa *</Label>
-            <Input 
-              id="edit-title" 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-              required 
-            />
+            <Input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Disciplina</Label>
               <Select value={disciplineId} onValueChange={setDisciplineId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {disciplines.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.icon} {d.name}
-                    </SelectItem>
+                    <SelectItem key={d.id} value={d.id}>{d.icon} {d.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -181,9 +183,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
             <div className="space-y-2">
               <Label>Tipo de Tarefa</Label>
               <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="theory">Teoria</SelectItem>
                   <SelectItem value="review">Revisão</SelectItem>
@@ -197,9 +197,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Baixa</SelectItem>
                   <SelectItem value="medium">Média</SelectItem>
@@ -225,22 +223,31 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
 
           <hr className="border-muted" />
 
-          {/* Seção Início */}
+          {/* Seção Início com Erro Visual */}
           <div className="space-y-2">
-            <Label className="text-primary font-bold">Início do Estudo</Label>
+            <Label className={`font-bold ${timeError ? "text-destructive" : "text-primary"}`}>
+              Início do Estudo
+            </Label>
             <div className="grid grid-cols-2 gap-2">
               <Input 
                 type="date" 
                 value={startDate} 
                 min={today}
+                className={timeError ? "border-destructive focus-visible:ring-destructive" : ""}
                 onChange={(e) => setStartDate(e.target.value)} 
               />
               <Input 
                 type="time" 
                 value={startTime} 
+                className={timeError ? "border-destructive focus-visible:ring-destructive" : ""}
                 onChange={(e) => setStartTime(e.target.value)} 
               />
             </div>
+            {timeError && (
+              <p className="text-[11px] text-destructive font-medium flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" /> {timeError}
+              </p>
+            )}
           </div>
 
           {/* Seção Conclusão */}
@@ -267,17 +274,16 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
               id="edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Notas adicionais sobre a tarefa..."
               className="resize-none"
               rows={2}
             />
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="sm:w-auto">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading} className="sm:w-auto font-bold shadow-sm">
+            <Button type="submit" disabled={isLoading || !!timeError}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Alterações
             </Button>
