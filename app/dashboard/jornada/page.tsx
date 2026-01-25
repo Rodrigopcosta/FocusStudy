@@ -104,11 +104,16 @@ export default function JornadaPage() {
 
         const today = new Date().toISOString().split('T')[0];
 
+        // CORREÇÃO: A ordenação múltipla deve ser feita chamando .order() sucessivas vezes ou garantindo que as colunas existam.
         const [profileRes, badgesRes, tasksRes, rankingRes, focusRes] = await Promise.all([
           supabase.from('profiles').select('xp, level, streak_current').eq('id', user.id).maybeSingle(),
           supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
           supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed'),
-          supabase.from('profiles').select('id, full_name, avatar_url, xp, level, streak_current').order('level', { ascending: false }).order('xp', { ascending: false }).limit(10),
+          supabase.from('profiles')
+            .select('id, full_name, avatar_url, xp, level, streak_current')
+            .order('level', { ascending: false })
+            .order('xp', { ascending: false }) // Encadeamento de ordenação correto
+            .limit(10),
           supabase.from('focus_sessions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('completed_at', today)
         ])
 
