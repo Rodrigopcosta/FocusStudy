@@ -36,24 +36,25 @@ export interface Discipline {
 }
 
 export interface Task {
-  id: string;
-  user_id: string;
-  discipline_id: string | null;
-  title: string;
-  description: string | null;
-  type: TaskType;
-  priority: TaskPriority;
-  status: TaskStatus;
-  estimated_minutes: number;
-  actual_minutes: number;
-  start_date: string | null;
-  due_date: string | null;
-  completed_at: string | null;
-  reminder_at: string | null;
-  position: number;
-  created_at: string;
-  updated_at: string;
-  discipline?: Discipline;
+  id: string
+  user_id: string
+  discipline_id: string | null
+  title: string
+  description: string | null
+  type: TaskType
+  priority: TaskPriority
+  status: TaskStatus
+  estimated_minutes: number
+  actual_minutes: number
+  start_date: string | null
+  due_date: string | null
+  completed_at: string | null
+  reminder_at: string | null
+  position: number
+  is_pinned: boolean
+  created_at: string
+  updated_at: string
+  discipline?: Discipline
 }
 
 export interface Note {
