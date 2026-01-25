@@ -31,6 +31,13 @@ interface TaskListProps {
 
 const priorityWeight = { urgent: 4, high: 3, medium: 2, low: 1 }
 
+const priorityLabels: Record<string, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+  urgent: "Urgente",
+}
+
 const priorityColors = {
   low: "bg-blue-500/10 text-blue-500 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400",
   medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400",
@@ -69,7 +76,10 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
       if (statusF !== "all" && task.status !== statusF) return false
       if (discF !== "all" && task.discipline_id !== discF) return false
-      if (prioF !== "all" && task.priority !== prioF) return false
+      
+      // Filtro de prioridade agora aceita match exato baseado nos novos SelectItems
+      if (prioF !== "all" && task.priority.toLowerCase() !== prioF.toLowerCase()) return false
+      
       return true
     })
 
@@ -79,9 +89,9 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
       switch (sortBy) {
         case "priority-desc":
-          return priorityWeight[b.priority as keyof typeof priorityWeight] - priorityWeight[a.priority as keyof typeof priorityWeight]
+          return (priorityWeight[b.priority as keyof typeof priorityWeight] || 0) - (priorityWeight[a.priority as keyof typeof priorityWeight] || 0)
         case "priority-asc":
-          return priorityWeight[a.priority as keyof typeof priorityWeight] - priorityWeight[b.priority as keyof typeof priorityWeight]
+          return (priorityWeight[a.priority as keyof typeof priorityWeight] || 0) - (priorityWeight[b.priority as keyof typeof priorityWeight] || 0)
         case "newest":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         case "oldest":
@@ -237,7 +247,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                       {typeLabels[task.type as keyof typeof typeLabels]}
                     </Badge>
                     <Badge className={`text-[10px] px-2 py-0.5 border-transparent shadow-sm ${priorityColors[task.priority as keyof typeof priorityColors]}`}>
-                      {task.priority.toUpperCase()}
+                      {priorityLabels[task.priority] || task.priority}
                     </Badge>
                   </div>
 
@@ -271,7 +281,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         )}
       </div>
 
-      {/* AlertDialog de Exclusão Única */}
       <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -292,7 +301,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AlertDialog de Conclusão em Massa */}
       <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
