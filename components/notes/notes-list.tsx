@@ -64,6 +64,7 @@ function SortableNoteCard({
   index,
   isLastInGroup
 }: any) {
+  const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: note.id,
     disabled: typeof window !== 'undefined' && window.innerWidth < 768
@@ -79,6 +80,7 @@ function SortableNoteCard({
   const router = useRouter();
 
   const handleNoteClick = (e: React.MouseEvent) => {
+    // Se o usuário estiver tentando clicar em botões, não navega
     if (isDraggingAny || isReorderMode) {
       e.preventDefault();
       return;
@@ -98,7 +100,7 @@ function SortableNoteCard({
           {/* Topo: Título e Ações de Fixar/Menu */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0 z-30 relative" onClick={handleNoteClick}>
-              <h3 className="font-black text-xs md:text-sm uppercase leading-tight whitespace-normal break-words group-hover:text-primary transition-colors">
+              <h3 className="font-black text-xs md:text-sm uppercase leading-tight whitespace-normal wrap-break-word group-hover:text-primary transition-colors">
                 {note.title}
               </h3>
             </div>
@@ -107,9 +109,10 @@ function SortableNoteCard({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className={`h-8 w-8 rounded-full ${note.is_pinned ? 'text-primary bg-primary/10' : 'text-muted-foreground opacity-50'}`}
+                className={`h-9 w-9 rounded-full active:scale-95 transition-transform ${note.is_pinned ? 'text-primary bg-primary/10' : 'text-muted-foreground opacity-50'}`}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   handleUpdateNote(note.id, { is_pinned: !note.is_pinned });
                 }}
               >
@@ -118,11 +121,16 @@ function SortableNoteCard({
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 rounded-full hover:bg-black/5 active:bg-black/10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenuItem asChild><Link href={`/dashboard/notes/${note.id}`}><Pencil className="mr-2 h-4 w-4" /> Editar</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setNoteToDelete(note.id)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
@@ -138,25 +146,38 @@ function SortableNoteCard({
             </p>
           </div>
 
-          {/* Rodapé: Data e Seletor de Cores (Paleta) */}
+          {/* Rodapé: Data e Seletor de Cores */}
           <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/5 z-40 relative">
             <span className="text-[9px] font-bold opacity-40 uppercase tracking-tighter">
               {new Date(note.updated_at || note.created_at).toLocaleDateString("pt-BR")}
             </span>
             
-            <DropdownMenu>
+            <DropdownMenu open={colorMenuOpen} onOpenChange={setColorMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-black/5">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hover:bg-black/5 active:bg-black/10"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Palette className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="p-2 grid grid-cols-3 gap-2" align="end">
+              <DropdownMenuContent 
+                className="p-3 grid grid-cols-3 gap-3" 
+                align="end" 
+                onClick={(e) => e.stopPropagation()}
+              >
                 {noteColors.map((c) => (
                   <button 
                     key={c.value} 
                     title={c.name}
-                    onClick={() => handleUpdateNote(note.id, { color: c.value })} 
-                    className={`h-6 w-6 rounded-full border border-black/10 transition-transform active:scale-110 ${c.value} ${note.color === c.value ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateNote(note.id, { color: c.value });
+                      setColorMenuOpen(false); // Fecha o menu após selecionar
+                    }} 
+                    className={`h-7 w-7 rounded-full border border-black/10 transition-transform active:scale-125 ${c.value} ${note.color === c.value ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                   />
                 ))}
               </DropdownMenuContent>
@@ -251,7 +272,7 @@ export function NotesList({ notes: initialNotes, disciplines }: NotesListProps) 
 
         <div className="flex gap-2">
           <Select value={orderBy} onValueChange={(v: OrderType) => setOrderBy(v)}>
-            <SelectTrigger className="w-[180px] h-11">
+            <SelectTrigger className="w-45 h-11">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
