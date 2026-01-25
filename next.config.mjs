@@ -37,7 +37,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none';",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none';",
           },
           {
             key: "Referrer-Policy",
