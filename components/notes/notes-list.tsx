@@ -15,12 +15,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Trash2, Search, Pin, PinOff, Pencil, Move, ArrowUpDown } from "lucide-react"
+import { MoreHorizontal, Trash2, Search, Pin, PinOff, Pencil, Move, ArrowUpDown, Palette } from "lucide-react"
 
 import {
   DndContext,
@@ -29,7 +28,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -96,40 +94,36 @@ function SortableNoteCard({
         className={`relative h-full transition-all border-2 ${note.color || 'bg-card'} 
         ${note.is_pinned ? 'ring-2 ring-primary border-primary/40' : 'border-border'}`}
       >
-        {note.is_pinned && (
-          <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground p-1.5 rounded-full shadow-md z-40">
-            <Pin className="h-3 w-3 fill-current" />
-          </div>
-        )}
-
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0 z-30 relative">
-              <div onClick={handleNoteClick} className="block group cursor-pointer">
-                <h3 className="font-black text-sm uppercase truncate pr-4 group-hover:text-primary transition-colors">
-                  {note.title}
-                </h3>
-              </div>
+        <CardContent className="p-4 md:p-5 flex flex-col h-full">
+          {/* Topo: Título e Ações de Fixar/Menu */}
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex-1 min-w-0 z-30 relative" onClick={handleNoteClick}>
+              <h3 className="font-black text-xs md:text-sm uppercase leading-tight whitespace-normal break-words group-hover:text-primary transition-colors">
+                {note.title}
+              </h3>
             </div>
             
-            <div className="z-40 relative">
+            <div className="flex items-center gap-1 z-40 relative shrink-0">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`h-8 w-8 rounded-full ${note.is_pinned ? 'text-primary bg-primary/10' : 'text-muted-foreground opacity-50'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateNote(note.id, { is_pinned: !note.is_pinned });
+                }}
+              >
+                {note.is_pinned ? <Pin className="h-4 w-4 fill-current" /> : <PinOff className="h-4 w-4" />}
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2 rounded-full hover:bg-black/5">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild><Link href={`/dashboard/notes/${note.id}`}><Pencil className="mr-2 h-4 w-4" /> Editar</Link></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleUpdateNote(note.id, { is_pinned: !note.is_pinned })}>
-                    {note.is_pinned ? <><PinOff className="mr-2 h-4 w-4" /> Desafixar</> : <><Pin className="mr-2 h-4 w-4" /> Fixar</>}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="grid grid-cols-6 gap-2 p-2">
-                    {noteColors.map((c) => (
-                      <button key={c.value} onClick={() => handleUpdateNote(note.id, { color: c.value })} className={`h-6 w-6 rounded-full border border-black/10 ${c.value}`} />
-                    ))}
-                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setNoteToDelete(note.id)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -137,19 +131,41 @@ function SortableNoteCard({
             </div>
           </div>
 
-          <div onClick={handleNoteClick} className="block z-30 relative mt-2 cursor-pointer">
-            <p className="text-xs text-muted-foreground line-clamp-3 mb-4 min-h-12">
+          {/* Conteúdo Meio */}
+          <div onClick={handleNoteClick} className="flex-1 z-30 relative cursor-pointer mb-4">
+            <p className="text-xs text-muted-foreground line-clamp-3">
               {note.content || "Sem descrição..."}
             </p>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/5 z-30 relative">
-            <span className="text-[9px] font-bold opacity-40">{new Date(note.updated_at || note.created_at).toLocaleDateString("pt-BR")}</span>
+          {/* Rodapé: Data e Seletor de Cores (Paleta) */}
+          <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/5 z-40 relative">
+            <span className="text-[9px] font-bold opacity-40 uppercase tracking-tighter">
+              {new Date(note.updated_at || note.created_at).toLocaleDateString("pt-BR")}
+            </span>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-black/5">
+                  <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="p-2 grid grid-cols-3 gap-2" align="end">
+                {noteColors.map((c) => (
+                  <button 
+                    key={c.value} 
+                    title={c.name}
+                    onClick={() => handleUpdateNote(note.id, { color: c.value })} 
+                    className={`h-6 w-6 rounded-full border border-black/10 transition-transform active:scale-110 ${c.value} ${note.color === c.value ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                  />
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
 
-      {/* Botão Único entre as notas (Mobile Only) */}
+      {/* Reordenador Mobile */}
       {isReorderMode && !isLastInGroup && (
         <div className="flex justify-center -mb-6 mt-2 z-60 relative md:hidden">
           <Button 
@@ -235,7 +251,7 @@ export function NotesList({ notes: initialNotes, disciplines }: NotesListProps) 
 
         <div className="flex gap-2">
           <Select value={orderBy} onValueChange={(v: OrderType) => setOrderBy(v)}>
-            <SelectTrigger className="w-45 h-11">
+            <SelectTrigger className="w-[180px] h-11">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -265,7 +281,6 @@ export function NotesList({ notes: initialNotes, disciplines }: NotesListProps) 
         collisionDetection={closestCenter} 
         onDragEnd={(e) => {
           const { active, over } = e;
-          // Verificação de segurança: checa se 'over' existe antes de acessar propriedades
           if (over && active.id !== over.id) {
             const oldIndex = processedNotes.findIndex(n => n.id === active.id);
             const newIndex = processedNotes.findIndex(n => n.id === over.id);
