@@ -11,6 +11,7 @@ import {
   Trophy, Medal, Flame, Zap, Loader2, 
   Crown, Users, LayoutDashboard 
 } from "lucide-react"
+import confetti from "canvas-confetti"
 
 // Interface para as medalhas vindo do banco
 interface UserBadge {
@@ -54,6 +55,46 @@ export default function JornadaPage() {
   const [topUsers, setTopUsers] = useState<RankingUser[]>([])
   const supabase = createClient()
 
+  // Lógica de Multiplicador Visual
+  const getMultiplier = (streak: number) => {
+    if (streak >= 15) return { label: "2.0x", color: "text-purple-500", bg: "bg-purple-500/10" };
+    if (streak >= 7) return { label: "1.5x", color: "text-orange-500", bg: "bg-orange-500/10" };
+    if (streak >= 3) return { label: "1.2x", color: "text-blue-500", bg: "bg-blue-500/10" };
+    return { label: "1.0x", color: "text-muted-foreground", bg: "bg-secondary/50" };
+  };
+
+  const bonus = getMultiplier(userData.streak);
+
+  // Efeito de Confetti ao subir de nível
+  useEffect(() => {
+    if (!loading && userData.level > 1) {
+      const duration = 3 * 1000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#3b82f6', '#22c55e']
+        });
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#3b82f6', '#22c55e']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [userData.level, loading]);
+
   useEffect(() => {
     async function loadJornadaData() {
       try {
@@ -75,7 +116,6 @@ export default function JornadaPage() {
           completedTasks: tasksRes.count ?? 0
         })
 
-        // CORREÇÃO DO ERRO DE TIPO (b: UserBadge)
         const badgeIds = (badgesRes.data as UserBadge[])?.map((b: UserBadge) => b.badge_id) || []
         setUnlockedBadges(badgeIds)
         setTopUsers(rankingRes.data as RankingUser[] || [])
@@ -118,15 +158,21 @@ export default function JornadaPage() {
   }
 
   return (
-    // CORREÇÃO DO TAILWIND (max-w-350 em vez de max-w-[1400px])
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-350 mx-auto animate-in fade-in duration-500">
       
+      {/* Header com Bônus de XP */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 md:p-8 rounded-3xl border shadow-sm border-primary/10">
         <div className="space-y-1 text-center lg:text-left">
           <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase text-foreground italic flex items-center justify-center lg:justify-start gap-3">
             <Trophy className="h-8 w-8 text-primary" /> Jornada
           </h1>
-          <p className="text-sm text-muted-foreground font-medium italic">"A constância vence a inteligência."</p>
+          <div className="flex items-center justify-center lg:justify-start gap-2">
+            <p className="text-sm text-muted-foreground font-medium italic">"A constância vence a inteligência."</p>
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border border-current/20 text-[10px] font-bold uppercase tracking-tighter ${bonus.bg} ${bonus.color}`}>
+              <Zap className="h-3 w-3 fill-current" />
+              Bônus {bonus.label}
+            </div>
+          </div>
         </div>
         
         <div className="flex items-center justify-between lg:justify-end gap-4 bg-primary/5 px-4 py-3 rounded-2xl border border-primary/20">
@@ -174,11 +220,20 @@ export default function JornadaPage() {
 
             <div className="lg:col-span-4 space-y-6">
               <DailyMissions progress={{ tasks: userData.completedTasks }} />
-              <div className="bg-orange-500/10 border-2 border-orange-500/20 p-6 rounded-3xl">
-                <h3 className="font-black text-orange-600 uppercase flex items-center gap-2 mb-2">
-                  <Flame className="h-5 w-5" /> Ofensiva {userData.streak} Dias
+              <div className={`p-6 rounded-3xl border-2 transition-all duration-500 ${
+                userData.streak > 0 
+                ? 'bg-orange-500/10 border-orange-500/20 shadow-lg shadow-orange-500/5' 
+                : 'bg-secondary/20 border-border'
+              }`}>
+                <h3 className={`font-black uppercase flex items-center gap-2 mb-2 ${userData.streak > 0 ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                  <Flame className={`h-5 w-5 ${userData.streak > 0 ? 'animate-pulse' : ''}`} /> 
+                  Ofensiva {userData.streak} Dias
                 </h3>
-                <p className="text-sm text-orange-600/80">Continue firme! Sua consistência é sua maior arma.</p>
+                <p className={`text-sm ${userData.streak > 0 ? 'text-orange-600/80' : 'text-muted-foreground/60'}`}>
+                  {userData.streak > 0 
+                    ? "Sua constância está multiplicando seu XP! Não pare agora." 
+                    : "Complete uma tarefa para iniciar sua sequência de vitórias."}
+                </p>
               </div>
             </div>
           </div>
@@ -192,21 +247,25 @@ export default function JornadaPage() {
             </div>
             <div className="divide-y divide-border/40">
               {topUsers.map((user, index) => (
-                <div key={user.id} className={`flex items-center justify-between p-5 ${user.id === userData.id ? "bg-primary/10" : ""}`}>
+                <div key={user.id} className={`flex items-center justify-between p-5 transition-colors ${user.id === userData.id ? "bg-primary/10" : "hover:bg-secondary/5"}`}>
                   <div className="flex items-center gap-4">
                     <span className="w-6 text-center font-black text-muted-foreground">{index + 1}</span>
-                    <Avatar>
+                    <Avatar className="border-2 border-background shadow-sm">
                       <AvatarImage src={user.avatar_url || ""} />
-                      <AvatarFallback>{user.full_name?.charAt(0) || "U"}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 font-bold">{user.full_name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-bold">{user.full_name || "Estudante"} {user.id === userData.id && "(Você)"}</p>
-                      <p className="text-[10px] uppercase font-bold text-orange-500">🔥 {user.streak_current}d de ofensiva</p>
+                      <p className={`font-bold ${user.id === userData.id ? "text-primary" : ""}`}>
+                        {user.full_name || "Estudante"} {user.id === userData.id && "(Você)"}
+                      </p>
+                      <p className="text-[10px] uppercase font-bold text-orange-500 flex items-center gap-1">
+                        <Flame className="h-3 w-3" /> {user.streak_current}d de ofensiva
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-black text-lg">LVL {user.level}</p>
-                    <p className="text-xs text-muted-foreground">{user.xp} XP</p>
+                    <p className="text-xs text-muted-foreground uppercase font-medium">{user.xp} XP</p>
                   </div>
                 </div>
               ))}
