@@ -1,9 +1,9 @@
 "use client"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowUpDown } from "lucide-react"
+import { ArrowUpDown, ListOrdered } from "lucide-react"
 
-export type SortOption = "priority-desc" | "priority-asc" | "newest" | "oldest"
+export type SortOption = "priority-desc" | "priority-asc" | "newest" | "oldest" | "manual"
 
 interface TaskSortProps {
   value: string
@@ -17,7 +17,7 @@ export function TaskSort({ value, onValueChange }: TaskSortProps) {
         <ArrowUpDown className="h-3 w-3" /> Ordenar por:
       </span>
       <Select value={value} onValueChange={(v) => onValueChange(v as SortOption)}>
-        <SelectTrigger className="w-47.5 h-9 text-xs bg-background shadow-sm">
+        <SelectTrigger className="w-50 h-9 text-xs bg-background shadow-sm border-muted-foreground/20">
           <SelectValue placeholder="Selecione a ordem..." />
         </SelectTrigger>
         <SelectContent>
@@ -32,6 +32,12 @@ export function TaskSort({ value, onValueChange }: TaskSortProps) {
           </SelectItem>
           <SelectItem value="priority-asc" className="text-xs font-medium">
             Prioridade: Baixa para Alta
+          </SelectItem>
+          <SelectItem value="manual" className="text-xs font-medium">
+            <div className="flex items-center gap-2">
+              <ListOrdered className="h-3 w-3 text-primary" />
+              <span>Ordem Personalizada</span>
+            </div>
           </SelectItem>
         </SelectContent>
       </Select>
