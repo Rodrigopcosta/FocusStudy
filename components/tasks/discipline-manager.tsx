@@ -152,7 +152,7 @@ export function DisciplineManager({ disciplines, mode = "manage", onOpenChange }
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full transition-all hover:scale-110 flex-shrink-0 ${
+                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full transition-all hover:scale-110 shrink-0 ${
                       color === c ? "ring-2 ring-offset-2 ring-primary scale-110" : "opacity-70 hover:opacity-100"
                     }`}
                     style={{ backgroundColor: c }}
@@ -169,7 +169,7 @@ export function DisciplineManager({ disciplines, mode = "manage", onOpenChange }
                     key={i}
                     type="button"
                     onClick={() => setIcon(i)}
-                    className={`w-11 h-11 sm:w-10 sm:h-10 rounded-lg text-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                    className={`w-11 h-11 sm:w-10 sm:h-10 rounded-lg text-xl flex items-center justify-center transition-all shrink-0 ${
                       icon === i ? "bg-primary/20 ring-2 ring-primary scale-110" : "bg-muted hover:bg-muted/80 opacity-70"
                     }`}
                   >
