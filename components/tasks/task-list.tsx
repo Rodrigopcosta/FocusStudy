@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import {
@@ -25,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { MoreHorizontal, Trash2, Pencil, Move, ArrowUpDown, Pin, PinOff, Play, Calendar, Clock, CheckCheck, Filter, ChevronDown, ChevronUp, XCircle, Save } from "lucide-react"
+import { MoreHorizontal, Trash2, Pencil, Move, ArrowUpDown, Pin, PinOff, Play, Calendar, Clock, CheckCheck, Filter, ChevronDown, ChevronUp, XCircle, Save, Search, GripVertical } from "lucide-react"
 
 import {
   DndContext,
@@ -53,31 +54,24 @@ interface TaskListProps {
 }
 
 const priorityWeight: Record<string, number> = {
-  urgent: 4, urgente: 4,
-  high: 3, alta: 3,
-  medium: 2, média: 2, media: 2,
-  low: 1, baixa: 1
+  urgent: 4, high: 3, medium: 2, low: 1,
+  urgente: 4, alta: 3, média: 2, media: 2, baixa: 1
 }
 
 const priorityLabels: Record<string, string> = { 
-  low: "Baixa", baixa: "Baixa",
-  medium: "Média", média: "Média", media: "Média",
-  high: "Alta", alta: "Alta",
-  urgent: "Urgente", urgente: "Urgente" 
+  low: "Baixa", medium: "Média", high: "Alta", urgent: "Urgente",
+  baixa: "Baixa", média: "Média", media: "Média", alta: "Alta", urgente: "Urgente" 
 }
 
 const priorityColors: Record<string, string> = {
-  low: "bg-blue-500/10 text-blue-500 border-blue-500/20", baixa: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", média: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", media: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  high: "bg-orange-500/10 text-orange-600 border-orange-500/20", alta: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  urgent: "bg-red-500/10 text-red-600 border-red-500/20 font-bold", urgente: "bg-red-500/10 text-red-600 border-red-500/20 font-bold",
+  low: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  high: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  urgent: "bg-red-500/10 text-red-600 border-red-500/20 font-bold",
 }
 
 const priorityBorderColors: Record<string, string> = { 
-  low: "border-l-blue-500", baixa: "border-l-blue-500",
-  medium: "border-l-yellow-500", média: "border-l-yellow-500", media: "border-l-yellow-500",
-  high: "border-l-orange-500", alta: "border-l-orange-500",
-  urgent: "border-l-red-500", urgente: "border-l-red-500" 
+  low: "border-l-blue-500", medium: "border-l-yellow-500", high: "border-l-orange-500", urgent: "border-l-red-500" 
 }
 
 const typeLabels = { theory: "Teoria", review: "Revisão", questions: "Questões" }
@@ -235,6 +229,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -251,7 +246,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const currentDiscipline = searchParams.get("discipline") || "all"
   const currentPriority = searchParams.get("priority") || "all"
 
-  const hasActiveFilters = currentStatus !== "all" || currentDiscipline !== "all" || currentPriority !== "all"
+  const hasActiveFilters = currentStatus !== "all" || currentDiscipline !== "all" || currentPriority !== "all" || searchQuery !== ""
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -261,11 +256,13 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   }
 
   const clearFilters = () => {
+    setSearchQuery("")
     router.push("/dashboard/tasks")
   }
 
   const processedTasks = useMemo(() => {
     let result = [...localTasks].filter((task) => {
+      if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
       if (currentStatus !== "all" && task.status !== currentStatus) return false
       if (currentDiscipline !== "all" && task.discipline_id !== currentDiscipline) return false
       if (currentPriority !== "all" && task.priority.toLowerCase() !== currentPriority.toLowerCase()) return false
@@ -288,7 +285,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         default: return (a.position || 0) - (b.position || 0)
       }
     })
-  }, [localTasks, currentStatus, currentDiscipline, currentPriority, sortBy, isReorderMode])
+  }, [localTasks, currentStatus, currentDiscipline, currentPriority, sortBy, isReorderMode, searchQuery])
 
   const saveNewOrder = async (newOrder: Task[]) => {
     setLocalTasks(newOrder);
@@ -312,68 +309,18 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     router.refresh()
   }
 
-  const FiltersContent = () => (
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="flex-1">
-        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Status</label>
-        <Select value={currentStatus} onValueChange={(v) => updateFilter("status", v)}>
-          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            <SelectItem value="pending">Pendentes</SelectItem>
-            <SelectItem value="completed">Concluídas</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex-1">
-        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Disciplina</label>
-        <Select value={currentDiscipline} onValueChange={(v) => updateFilter("discipline", v)}>
-          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Disciplina" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas Disciplinas</SelectItem>
-            {disciplines.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex-1">
-        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Prioridade</label>
-        <Select value={currentPriority} onValueChange={(v) => updateFilter("priority", v)}>
-          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Prioridade" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas Prioridades</SelectItem>
-            <SelectItem value="low">Baixa</SelectItem>
-            <SelectItem value="medium">Média</SelectItem>
-            <SelectItem value="high">Alta</SelectItem>
-            <SelectItem value="urgent">Urgente</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      {hasActiveFilters && (
-        <div className="flex items-end pb-0.5 sm:pb-0">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={clearFilters} 
-            className="h-10 w-full sm:w-auto px-3 text-destructive hover:bg-destructive/10 gap-2 font-bold text-xs"
-          >
-            <XCircle className="h-4 w-4" /> Limpar Filtros
-          </Button>
-        </div>
-      )}
-    </div>
-  )
-
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3">
-        {/* Mobile: Collapsible Filters */}
-        <div className="sm:hidden">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
+      <div className="flex flex-col gap-4">
+        
+        {/* MOBILE FILTERS */}
+        <div className="sm:hidden w-full">
           <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen} className="bg-secondary/30 rounded-xl border border-border/60 overflow-hidden shadow-sm transition-all">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full flex items-center justify-between px-4 h-12 hover:bg-transparent">
                 <div className="flex items-center gap-2 font-bold text-xs uppercase text-foreground">
                   <Filter className="h-4 w-4 text-primary" />
-                  Filtrar Tarefas
+                  Filtrar e Buscar
                 </div>
                 <div className="flex items-center gap-2">
                   {hasActiveFilters && <Badge variant="default" className="h-5 px-1.5 text-[10px]">Ativo</Badge>}
@@ -381,53 +328,153 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                 </div>
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4 border-t border-border/40">
-               <div className="pt-4">
-                 <FiltersContent />
+            <CollapsibleContent className="px-3 pb-4 border-t border-border/40">
+               <div className="pt-4 flex flex-col gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Encontrar tarefa..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 h-10 bg-background border-border/60"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={currentStatus} onValueChange={(v) => updateFilter("status", v)}>
+                      <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos Status</SelectItem>
+                        <SelectItem value="pending">Pendentes</SelectItem>
+                        <SelectItem value="completed">Concluídas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={currentPriority} onValueChange={(v) => updateFilter("priority", v)}>
+                      <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Prioridades</SelectItem>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Select value={currentDiscipline} onValueChange={(v) => updateFilter("discipline", v)}>
+                    <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Disciplina" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Disciplinas</SelectItem>
+                      {disciplines.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-destructive h-9 gap-2 font-bold text-xs">
+                      <XCircle className="h-4 w-4" /> Limpar Filtros
+                    </Button>
+                  )}
                </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
 
-        {/* Desktop: Grid Filters */}
-        <div className="hidden sm:block">
-           <FiltersContent />
+        {/* DESKTOP BAR (COM SEPARAÇÃO VISUAL FORTE) */}
+        <div className="hidden sm:flex flex-row items-center gap-4 w-full bg-secondary/20 p-2.5 rounded-xl border border-border shadow-sm">
+           {/* Seção Pesquisa */}
+           <div className="flex-1 min-w-37.5 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Pesquisar tarefas..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10 bg-background border-border/40 focus-visible:ring-primary shadow-inner"
+              />
+           </div>
+
+           <GripVertical className="h-6 w-6 text-border shrink-0" />
+
+           {/* Seção Filtros (Visual de Pílulas) */}
+           <div className="flex items-center gap-2 shrink-0">
+              <Select value={currentStatus} onValueChange={(v) => updateFilter("status", v)}>
+                <SelectTrigger className="h-10 w-30 bg-background border-border/60 text-xs font-semibold rounded-full hover:border-primary transition-colors"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="completed">Concluídas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={currentDiscipline} onValueChange={(v) => updateFilter("discipline", v)}>
+                <SelectTrigger className="h-10 w-35 bg-background border-border/60 text-xs font-semibold rounded-full hover:border-primary transition-colors"><SelectValue placeholder="Disciplina" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Disciplinas</SelectItem>
+                  {disciplines.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
+              <Select value={currentPriority} onValueChange={(v) => updateFilter("priority", v)}>
+                <SelectTrigger className="h-10 w-30 bg-background border-border/60 text-xs font-semibold rounded-full hover:border-primary transition-colors"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Prioridades</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="urgent">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+           </div>
+
+           <GripVertical className="h-6 w-6 text-border shrink-0" />
+
+           {/* Seção Ordenação */}
+           <div className="shrink-0">
+              {!isReorderMode && <TaskSort value={sortBy} onValueChange={setSortBy} />}
+           </div>
+
+           {/* Seção Botões (Cores e Estilos Contrastantes) */}
+           <div className="flex items-center gap-3 shrink-0 ml-auto pl-4 border-l-2 border-primary/10">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => setIsBulkConfirmOpen(true)} 
+                disabled={!processedTasks.some(t => t.status === "pending")} 
+                className="h-10 px-4 gap-2 font-black uppercase text-[10px] bg-primary hover:bg-primary/90 text-white shadow-md active:scale-95 transition-all"
+              >
+                <CheckCheck className="h-4 w-4" /> 
+                CONCLUIR LISTA
+              </Button>
+              <Button 
+                variant={isReorderMode ? "destructive" : "outline"} 
+                size="sm" 
+                onClick={() => setIsReorderMode(!isReorderMode)} 
+                className={cn(
+                  "h-10 px-4 gap-2 font-black uppercase text-[10px] shadow-sm transition-all border-2 active:scale-95",
+                  isReorderMode 
+                    ? "bg-red-600 border-red-700 text-white" 
+                    : "bg-background border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
+                )}
+              >
+                {isReorderMode ? <Save className="h-4 w-4" /> : <Move className="h-4 w-4" />}
+                {isReorderMode ? "SALVAR" : "REORDENAR"}
+              </Button>
+           </div>
+
+           {hasActiveFilters && (
+             <Button variant="ghost" size="icon" onClick={clearFilters} className="h-10 w-10 text-destructive shrink-0 hover:bg-destructive/10 rounded-full ml-1">
+               <XCircle className="h-5 w-5" />
+             </Button>
+           )}
         </div>
 
-        {/* Action Buttons & Sort */}
-        <div className="flex flex-col gap-3 p-3 sm:p-0 bg-secondary/20 sm:bg-transparent rounded-xl border border-border/50 sm:border-none">
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setIsBulkConfirmOpen(true)} 
-              disabled={!processedTasks.some(t => t.status === "pending")} 
-              className="flex-1 text-[10px] sm:text-[11px] h-9 gap-1.5 font-bold uppercase shadow-sm bg-background hover:bg-secondary"
-            >
-              <CheckCheck className="h-3.5 w-3.5 text-primary" /> 
-              <span>Concluir</span>
-            </Button>
-            <Button 
-              variant={isReorderMode ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setIsReorderMode(!isReorderMode)} 
-              className={cn(
-                "flex-1 text-[10px] sm:text-[11px] h-9 gap-1.5 font-bold uppercase shadow-sm transition-all",
-                isReorderMode 
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                  : "bg-background hover:bg-secondary"
-              )}
-            >
-              {isReorderMode ? <Save className="h-3.5 w-3.5" /> : <Move className="h-3.5 w-3.5" />}
-              {isReorderMode ? "Salvar" : "Reordenar"}
-            </Button>
-          </div>
-
-          {!isReorderMode && (
-            <div className="w-full pt-1 border-t border-border/40 sm:border-none sm:pt-0">
-               <TaskSort value={sortBy} onValueChange={setSortBy} />
-            </div>
-          )}
+        {/* Mobile Action Bar */}
+        <div className="sm:hidden flex flex-col gap-2 p-3 bg-secondary/15 rounded-xl border border-border/40">
+           <div className="flex gap-2">
+              <Button variant="default" size="sm" onClick={() => setIsBulkConfirmOpen(true)} className="flex-1 h-11 text-[10px] font-black uppercase gap-2 bg-primary text-white shadow-sm">
+                <CheckCheck className="h-4 w-4" /> CONCLUIR LISTA
+              </Button>
+              <Button variant={isReorderMode ? "destructive" : "outline"} size="sm" onClick={() => setIsReorderMode(!isReorderMode)} className="flex-1 h-11 text-[10px] font-black uppercase gap-2 border-2">
+                {isReorderMode ? <Save className="h-4 w-4" /> : <Move className="h-4 w-4" />} {isReorderMode ? "SALVAR" : "REORDENAR"}
+              </Button>
+           </div>
+           {!isReorderMode && <TaskSort value={sortBy} onValueChange={setSortBy} />}
         </div>
       </div>
 
@@ -442,29 +489,36 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         }
       }}>
         <SortableContext items={processedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2.5 sm:space-y-3 pb-10">
-            {processedTasks.map((task, index) => {
-              const nextTask = processedTasks[index + 1];
-              const showMoveButton = nextTask && nextTask.is_pinned === task.is_pinned && nextTask.status === task.status;
-              return (
-                <SortableTaskCard 
-                  key={task.id} 
-                  task={task} 
-                  index={index}
-                  isReorderMode={isReorderMode}
-                  showMoveButton={showMoveButton}
-                  onMove={handleManualMove}
-                  handleUpdateTask={handleUpdateTask}
-                  setEditingTask={setEditingTask}
-                  setTaskToDelete={setTaskToDelete}
-                />
-              )
-            })}
+          <div className="space-y-3 pb-10 w-full">
+            {processedTasks.length > 0 ? (
+              processedTasks.map((task, index) => {
+                const nextTask = processedTasks[index + 1];
+                const showMoveButton = nextTask && nextTask.is_pinned === task.is_pinned && nextTask.status === task.status;
+                return (
+                  <SortableTaskCard 
+                    key={task.id} 
+                    task={task} 
+                    index={index}
+                    isReorderMode={isReorderMode}
+                    showMoveButton={showMoveButton}
+                    onMove={handleManualMove}
+                    handleUpdateTask={handleUpdateTask}
+                    setEditingTask={setEditingTask}
+                    setTaskToDelete={setTaskToDelete}
+                  />
+                )
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 opacity-60 border-2 border-dashed border-muted rounded-2xl">
+                <Search className="h-10 w-10 text-muted-foreground" />
+                <p className="text-sm font-medium">Nenhuma tarefa encontrada.</p>
+                {hasActiveFilters && <Button variant="link" onClick={clearFilters} className="text-primary text-xs">Limpar filtros</Button>}
+              </div>
+            )}
           </div>
         </SortableContext>
       </DndContext>
 
-      {/* Restante dos componentes de alerta e diálogo permanecem iguais */}
       <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Excluir Tarefa?</AlertDialogTitle></AlertDialogHeader>
@@ -475,23 +529,24 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
               setLocalTasks(prev => prev.filter(t => t.id !== taskToDelete));
               setTaskToDelete(null);
               router.refresh();
-            }} className="bg-destructive">Excluir</AlertDialogAction>
+            }} className="bg-destructive text-white hover:bg-destructive/90">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Concluir Visíveis?</AlertDialogTitle></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Concluir Lista Visível?</AlertDialogTitle></AlertDialogHeader>
+          <p className="text-sm text-muted-foreground">Isso marcará todas as tarefas pendentes mostradas atualmente como concluídas.</p>
           <AlertDialogFooter>
-            <AlertDialogCancel>Não</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={async () => {
               const pendingIds = processedTasks.filter(t => t.status === "pending").map(t => t.id);
               await supabase.from("tasks").update({ status: "completed", is_pinned: false }).in("id", pendingIds);
               setLocalTasks(prev => prev.map(t => pendingIds.includes(t.id) ? { ...t, status: "completed", is_pinned: false } : t));
               setIsBulkConfirmOpen(false);
               router.refresh();
-            }}>Sim, concluir</AlertDialogAction>
+            }} className="bg-primary text-white hover:bg-primary/90">Confirmar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
