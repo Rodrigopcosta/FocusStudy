@@ -45,14 +45,13 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
     audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleB0MLKfa+tq0QwYck83+4MI/Hzyk3v73tkgFFKnT/OO2SzgWudj/5LNLMyfH6Ofvnj4dKZre8OWgS0YVn8f/76w9Ei2k3v/ooEsEI6fX/OytQQ0krdj/8KIxKI3B/O+jJhOezf/vpSIVpt3/9aETJq/d//CeEy+s1v/xmRkyqdf/8ZYVO6bR/++SDjyn0P/0kAo/pcz/9YsJQaLI//WHBT+jw//2hQM/o77/+IIBP6K5//h/AD+htf/5fAA/obH/+XkAPqGt//l3AD6gqv/5dQA+oKf/+nMAP6Ck//pxAECgof/6cABBn5//+24AQZ+d//tsAEKem//7agBCnpn/+2gAQ56X//tmAESdlf/7ZQBEnZT/+2QARZ2S//tiAEack//7YQBGnJH/+2AARpuQ//teAEebj//7XQBHm47/+1wASJqM//taAEiajP/7WQBJmov/+1gASZmK//tXAEmZif/7VgBKmYj/+1UASpiH//tUAEuYhv/7UwBLl4X/+1IAS5eF//tRAEyWhP/7UABMloP/+08ATJaC//tOAE2Vgf/7TQBNlYH/+0wATpSA//tLAE6Uf//7SgBOlH//+0kAT5N+//tIAE+Tfv/7RwBQkn3/+0YAUJl9//tFAA==")
   }, [])
 
-  // 2. FUNÇÃO DE ÁUDIO (CORREÇÃO DO ERRO TS)
   const playSound = useCallback(() => {
     if (soundEnabled && audioRef.current) {
       audioRef.current.play().catch(() => {})
     }
   }, [soundEnabled])
 
-  // 3. SINCRONIZAÇÃO E PERSISTÊNCIA
+  // 2. SINCRONIZAÇÃO MELHORADA
   const syncTimer = useCallback(() => {
     const savedEndTime = localStorage.getItem("pomodoro_end_time")
     const savedIsRunning = localStorage.getItem("pomodoro_running") === "true"
@@ -62,7 +61,17 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
 
     if (savedMode) setMode(savedMode)
     if (savedIsBreak) setIsBreak(true)
-    if (savedTaskId) setSelectedTaskId(savedTaskId)
+    
+    // Valida se a tarefa salva ainda existe na lista atual de tarefas
+    if (savedTaskId && savedTaskId !== "none") {
+      const taskExists = tasks.some(t => t.id === savedTaskId)
+      if (taskExists) {
+        setSelectedTaskId(savedTaskId)
+      } else {
+        setSelectedTaskId("")
+        localStorage.removeItem("pomodoro_task_id")
+      }
+    }
 
     if (savedIsRunning && savedEndTime) {
       const end = parseInt(savedEndTime)
@@ -78,12 +87,11 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
         setIsRunning(false)
         setTimeLeft(0)
       }
-    } else if (!savedIsRunning && savedMode) {
-        // Se não está rodando, mas temos um modo salvo, ajusta o tempo parado
+    } else if (!savedIsRunning) {
         const currentMode = savedMode || defaultMode
         setTimeLeft(savedIsBreak ? MODES[currentMode].break : MODES[currentMode].work)
     }
-  }, [defaultMode])
+  }, [defaultMode, tasks])
 
   useEffect(() => {
     syncTimer()
@@ -91,7 +99,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
     return () => window.removeEventListener('focus', syncTimer)
   }, [syncTimer])
 
-  // 4. SALVAMENTO DE SESSÃO E XP
+  // 3. SALVAMENTO DE SESSÃO
   const saveSession = useCallback(async (status: "completed" | "interrupted") => {
     if (!startTimeRef.current || isSavingRef.current) return
     isSavingRef.current = true
@@ -104,12 +112,11 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
       const durationSeconds = Math.floor((now.getTime() - startTimeRef.current.getTime()) / 1000)
       const minutesStudied = Math.floor(durationSeconds / 60)
       
-      // XP: 15 por ciclo completo, 5 por minuto se interrompido
       const xpGained = status === "completed" ? (minutesStudied * 15) : (minutesStudied * 5)
 
       await supabase.from("pomodoro_sessions").insert({
         user_id: user.id,
-        task_id: selectedTaskId || null,
+        task_id: (selectedTaskId && selectedTaskId !== "none") ? selectedTaskId : null,
         discipline_id: tasks.find(t => t.id === selectedTaskId)?.discipline_id || null,
         mode,
         duration_seconds: durationSeconds,
@@ -138,7 +145,7 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
     }
   }, [selectedTaskId, mode, supabase, tasks])
 
-  // 5. MOTOR DO TIMER
+  // 4. MOTOR DO TIMER
   useEffect(() => {
     let interval: NodeJS.Timeout
 
@@ -226,9 +233,10 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
             <Select 
               value={mode} 
               onValueChange={(v) => { 
-                setMode(v as PomodoroMode); 
-                setTimeLeft(MODES[v as PomodoroMode].work);
-                localStorage.setItem("pomodoro_mode", v);
+                const newMode = v as PomodoroMode;
+                setMode(newMode); 
+                setTimeLeft(MODES[newMode].work);
+                localStorage.setItem("pomodoro_mode", newMode);
               }} 
               disabled={isRunning}
             >
@@ -289,11 +297,17 @@ export function PomodoroTimer({ defaultMode, tasks, disciplines, initialTask, is
 
           {!isFocusPage && (
             <div className="border-t pt-6">
-              <Select value={selectedTaskId} onValueChange={(v) => {
-                setSelectedTaskId(v);
-                localStorage.setItem("pomodoro_task_id", v);
-              }} disabled={isRunning}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Tarefa vinculada..." /></SelectTrigger>
+              <Select 
+                value={selectedTaskId || "none"} 
+                onValueChange={(v) => {
+                  setSelectedTaskId(v === "none" ? "" : v);
+                  localStorage.setItem("pomodoro_task_id", v);
+                }} 
+                disabled={isRunning}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tarefa vinculada..." />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma tarefa</SelectItem>
                   {tasks.map((task) => (
