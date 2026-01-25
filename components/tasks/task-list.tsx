@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // Adicionado useEffect
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Task, Discipline } from "@/types/database"
@@ -31,16 +31,24 @@ const typeLabels = {
   questions: "Questões",
 }
 
-export function TaskList({ tasks, disciplines }: TaskListProps) {
+export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  
+  // Estado local para resposta instantânea
+  const [localTasks, setLocalTasks] = useState(initialTasks)
+
+  // Sincroniza estado local quando as props mudarem (ex: após router.refresh)
+  useEffect(() => {
+    setLocalTasks(initialTasks)
+  }, [initialTasks])
 
   const statusFilter = searchParams.get("status") || "all"
   const disciplineFilter = searchParams.get("discipline") || "all"
   const priorityFilter = searchParams.get("priority") || "all"
 
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = localTasks.filter((task) => {
     if (statusFilter !== "all" && task.status !== statusFilter) return false
     if (disciplineFilter !== "all" && task.discipline_id !== disciplineFilter) return false
     if (priorityFilter !== "all" && task.priority !== priorityFilter) return false
@@ -48,18 +56,33 @@ export function TaskList({ tasks, disciplines }: TaskListProps) {
   })
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
+    const updatedStatus = completed ? "completed" : "pending"
+    
+    // 1. Atualização Otimista
+    setLocalTasks(prev => 
+      prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t)
+    )
+
     const supabase = createClient()
-    await supabase
+    const { error } = await supabase
       .from("tasks")
       .update({
-        status: completed ? "completed" : "pending",
+        status: updatedStatus,
         completed_at: completed ? new Date().toISOString() : null,
       })
       .eq("id", taskId)
-    router.refresh()
+    
+    if (error) {
+      setLocalTasks(initialTasks) // Reverte em caso de erro
+    } else {
+      router.refresh()
+    }
   }
 
   const handleDeleteTask = async (taskId: string) => {
+    // Confirmação simples conforme checklist item 4
+    if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return
+
     const supabase = createClient()
     await supabase.from("tasks").delete().eq("id", taskId)
     router.refresh()
@@ -70,7 +93,7 @@ export function TaskList({ tasks, disciplines }: TaskListProps) {
       <Card>
         <CardContent className="py-12 text-center">
           <p className="text-muted-foreground">
-            {tasks.length === 0
+            {localTasks.length === 0
               ? "Nenhuma tarefa criada ainda. Crie sua primeira tarefa!"
               : "Nenhuma tarefa encontrada com os filtros selecionados."}
           </p>
@@ -86,15 +109,20 @@ export function TaskList({ tasks, disciplines }: TaskListProps) {
           <Card key={task.id} className={task.status === "completed" ? "opacity-60" : ""}>
             <CardContent className="py-4">
               <div className="flex items-start gap-4">
-                <Checkbox
-                  checked={task.status === "completed"}
-                  onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
-                  className="mt-1"
-                />
+                {/* Wrapper para aumentar área de clique (Checklist item 1) */}
+                <div className="flex items-center justify-center min-w-6 min-h-6 mt-1">
+                  <Checkbox
+                    checked={task.status === "completed"}
+                    onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
+                    className="h-5 w-5" 
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className={`font-medium ${task.status === "completed" ? "line-through" : ""}`}>{task.title}</p>
+                      <p className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                        {task.title}
+                      </p>
                       {task.description && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
                       )}
@@ -123,6 +151,7 @@ export function TaskList({ tasks, disciplines }: TaskListProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+                  {/* ... Restante do código (Badges e Metadados) mantido exatamente igual */}
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     {task.discipline && (
                       <span
