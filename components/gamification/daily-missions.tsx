@@ -1,43 +1,103 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { CheckCircle2, Circle, Star } from "lucide-react"
+import { Target, CheckCircle2 } from "lucide-react"
 
-const MISSIONS = [
-  { id: 1, title: "Foco Total", desc: "Complete 2 sessões de Pomodoro", progress: 1, target: 2, xp: 100 },
-  { id: 2, title: "Escritor", desc: "Crie 3 novas anotações", progress: 3, target: 3, xp: 150, completed: true },
-  { id: 3, title: "Consistência", desc: "Conclua 5 tarefas de estudo", progress: 2, target: 5, xp: 200 },
-]
+interface DailyMissionsProps {
+  progress?: {
+    tasks?: number;
+    pomodoros?: number;
+    notes?: number;
+  }
+}
 
-export function DailyMissions() {
+export function DailyMissions({ progress }: DailyMissionsProps) {
+  // Valores reais baseados no progresso passado via props, com fallback para 0
+  const tasksDone = progress?.tasks || 0
+  const pomodorosDone = progress?.pomodoros || 0
+  const notesDone = progress?.notes || 0
+
+  // Definição das missões diárias
+  const missions = [
+    { 
+      title: "Completar 3 tarefas", 
+      current: tasksDone, 
+      target: 3, 
+      xp: 150,
+      id: "tasks"
+    },
+    { 
+      title: "2 sessões de Pomodoro", 
+      current: pomodorosDone, 
+      target: 2, 
+      xp: 100,
+      id: "pomodoro"
+    },
+    { 
+      title: "Criar 1 anotação", 
+      current: notesDone, 
+      target: 1, 
+      xp: 50,
+      id: "notes"
+    },
+  ]
+
   return (
-    <Card className="p-6 border-2 border-primary/10">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-black uppercase tracking-tight flex items-center gap-2">
-          <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+    <div className="bg-card p-6 rounded-3xl border border-border/60 shadow-sm space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold uppercase tracking-tight flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" /> 
           Missões Diárias
         </h3>
-        <span className="text-[10px] font-bold bg-secondary px-2 py-1 rounded">RESETA EM 14h</span>
       </div>
 
-      <div className="space-y-4">
-        {MISSIONS.map((m) => (
-          <div key={m.id} className={`p-3 rounded-xl border ${m.completed ? 'bg-primary/5 border-primary/20' : 'bg-background border-border'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                {m.completed ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
-                <div>
-                  <p className={`text-sm font-bold ${m.completed ? 'line-through opacity-50' : ''}`}>{m.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{m.desc}</p>
+      <div className="space-y-5">
+        {missions.map((mission, index) => {
+          const percent = Math.min((mission.current / mission.target) * 100, 100)
+          const isComplete = mission.current >= mission.target
+
+          return (
+            <div key={index} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {isComplete && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                  <span className={`text-sm font-medium transition-all ${
+                    isComplete ? "text-muted-foreground line-through" : "text-foreground"
+                  }`}>
+                    {mission.title}
+                  </span>
                 </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full transition-colors ${
+                  isComplete 
+                    ? "bg-green-500/10 text-green-500" 
+                    : "bg-primary/10 text-primary"
+                }`}>
+                  +{mission.xp} XP
+                </span>
               </div>
-              <span className="font-black text-xs text-primary">+{m.xp} XP</span>
+              
+              {/* Barra de Progresso */}
+              <div className="relative h-2.5 w-full bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-700 ease-out ${
+                    isComplete ? "bg-green-500" : "bg-primary"
+                  }`}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              
+              {/* Rodapé da Missão */}
+              <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-muted-foreground">
+                <span className={isComplete ? "text-green-500" : ""}>
+                  {isComplete ? "Missão Cumprida" : "Em progresso"}
+                </span>
+                <span>
+                  {mission.current} / {mission.target}
+                </span>
+              </div>
             </div>
-            <Progress value={(m.progress / m.target) * 100} className="h-1.5" />
-          </div>
-        ))}
+          )
+        })}
       </div>
-    </Card>
+    </div>
   )
 }
