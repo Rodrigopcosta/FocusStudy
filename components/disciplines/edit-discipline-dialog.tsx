@@ -32,6 +32,9 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
   const [course, setCourse] = useState(discipline.course || "")
   const [subject, setSubject] = useState(discipline.subject || "")
 
+  // UX: Estado para exibir erro de duplicidade no formulário
+  const [duplicateError, setDuplicateError] = useState<string | null>(null)
+
   // Sincroniza os estados quando o dialog abre com uma disciplina diferente
   useEffect(() => {
     if (open) {
@@ -40,6 +43,7 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
       setIcon(discipline.icon)
       setCourse(discipline.course || "")
       setSubject(discipline.subject || "")
+      setDuplicateError(null)
     }
   }, [open, discipline])
 
@@ -48,6 +52,7 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
     const trimmedName = name.trim()
     if (!trimmedName) return
 
+    setDuplicateError(null)
     setIsLoading(true)
     const supabase = createClient()
 
@@ -64,11 +69,13 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
       .select("id")
       .eq("user_id", user.id)
       .ilike("name", trimmedName)
-      .neq("id", discipline.id) // Garante que não barre a própria disciplina
+      .neq("id", discipline.id)
       .maybeSingle()
 
     if (existing) {
-      toast.error(`Já existe outra disciplina chamada "${trimmedName}"`, {
+      const errorMsg = `Já existe outra disciplina chamada "${trimmedName}"`
+      setDuplicateError(errorMsg)
+      toast.error(errorMsg, {
         icon: <AlertCircle className="h-4 w-4" />
       })
       setIsLoading(false)
@@ -109,13 +116,27 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">Nome da disciplina *</Label>
+            <Label 
+              htmlFor="edit-name"
+              className={duplicateError ? "text-destructive" : ""}
+            >
+              Nome da disciplina *
+            </Label>
             <Input 
               id="edit-name" 
               value={name} 
-              onChange={(e) => setName(e.target.value)} 
+              onChange={(e) => {
+                setName(e.target.value)
+                if (duplicateError) setDuplicateError(null)
+              }} 
+              className={duplicateError ? "border-destructive focus-visible:ring-destructive" : ""}
               required 
             />
+            {duplicateError && (
+              <p className="text-[11px] text-destructive font-medium flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="h-3 w-3" /> {duplicateError}
+              </p>
+            )}
           </div>
 
           {studyType === "college" && (
