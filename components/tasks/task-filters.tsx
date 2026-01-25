@@ -74,7 +74,8 @@ export function TaskFilters({ disciplines }: TaskFiltersProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas Prioridades</SelectItem>
-          <SelectItem value="high" className="text-red-500 font-medium">Urgente/Alta</SelectItem>
+          <SelectItem value="urgent" className="text-red-600 font-bold">Urgente</SelectItem>
+          <SelectItem value="high" className="text-orange-500 font-medium">Alta</SelectItem>
           <SelectItem value="medium" className="text-yellow-600">Média</SelectItem>
           <SelectItem value="low" className="text-blue-500">Baixa</SelectItem>
         </SelectContent>
