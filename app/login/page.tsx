@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { BookOpen, Loader2 } from "lucide-react"
+import { BookOpen, Loader2, ArrowLeft, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { theme, setTheme } = useTheme()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,96 +58,116 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-muted/30">
+    <div className="flex min-h-svh w-full flex-col items-center justify-center p-6 md:p-10 bg-background transition-colors duration-300">
       <div className="w-full max-w-sm">
+        {/* Header com Navegação e Toggle de Tema */}
+        <div className="mb-8 flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            asChild 
+            className="group px-4 border-muted-foreground/20 hover:border-primary/50 text-foreground shadow-sm transition-all"
+          >
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Voltar ao início
+            </Link>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="rounded-full border border-muted-foreground/20"
+          >
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Alternar tema</span>
+          </Button>
+        </div>
+
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-primary-foreground" />
+          <div className="flex flex-col items-center gap-2 mb-2">
+            <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <BookOpen className="h-7 w-7 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl">FocusStudy</span>
+            <span className="font-bold text-3xl tracking-tight text-foreground">FocusStudy</span>
           </div>
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
-              <CardDescription>Entre com sua conta para acessar o FocusStudy</CardDescription>
+          
+          <Card className="shadow-2xl border-muted/50 bg-card">
+            <CardHeader className="text-center space-y-1">
+              <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
+              <CardDescription>Acesse sua conta para continuar</CardDescription>
             </CardHeader>
             <CardContent>
               <Button
                 variant="outline"
                 type="button"
-                className="w-full mb-4"
+                className="w-full mb-6 py-6 border-muted-foreground/20 hover:bg-accent hover:text-accent-foreground"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading || isLoading}
               >
                 {isGoogleLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                  <svg className="mr-3 h-5 w-5" viewBox="0 0 488 512" xmlns="http://www.w3.org/2000/svg">
                     <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
                   </svg>
                 )}
-                Entrar com Google
+                Continuar com Google
               </Button>
 
-              <div className="relative mb-4">
+              <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <span className="w-full border-t border-muted" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Ou continue com e-mail</span>
+                  <span className="bg-card px-3 text-muted-foreground font-medium">Ou e-mail</span>
                 </div>
               </div>
 
-              <form onSubmit={handleLogin}>
-                <div className="flex flex-col gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                  {error && <p className="text-sm text-destructive text-center">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Entrando...
-                      </>
-                    ) : (
-                      "Entrar"
-                    )}
-                  </Button>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="exemplo@email.com"
+                    className="h-11 bg-background"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-                <div className="mt-4 text-center text-sm">
-                  Não tem uma conta?{" "}
-                  <Link href="/register" className="text-primary underline underline-offset-4 hover:text-primary/80">
-                    Criar conta
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Senha</Label>
+                    <Link href="#" className="text-xs text-primary hover:underline font-medium">Esqueceu a senha?</Link>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    className="h-11 bg-background"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                {error && <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md">{error}</p>}
+                <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading || isGoogleLoading}>
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...</>
+                  ) : "Acessar Plataforma"}
+                </Button>
+                
+                <div className="pt-2 text-center text-sm">
+                  <span className="text-muted-foreground">Novo por aqui?</span>{" "}
+                  <Link href="/register" className="text-primary font-bold hover:underline underline-offset-4">
+                    Crie sua conta
                   </Link>
                 </div>
               </form>
             </CardContent>
           </Card>
-          <div className="text-center">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              Voltar para a página inicial
-            </Link>
-          </div>
         </div>
       </div>
     </div>
