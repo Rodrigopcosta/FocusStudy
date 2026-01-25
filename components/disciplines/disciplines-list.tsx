@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { EditDisciplineDialog } from "./edit-discipline-dialog"
+import { toast } from "sonner"
 
 interface DisciplinesListProps {
   disciplines: Discipline[]
@@ -34,9 +35,15 @@ export function DisciplinesList({ disciplines, studyType }: DisciplinesListProps
     if (!deletingDiscipline) return
 
     const supabase = createClient()
-    await supabase.from("disciplines").delete().eq("id", deletingDiscipline.id)
-    setDeletingDiscipline(null)
-    router.refresh()
+    const { error } = await supabase.from("disciplines").delete().eq("id", deletingDiscipline.id)
+    
+    if (error) {
+      toast.error("Erro ao excluir disciplina")
+    } else {
+      toast.success("Disciplina excluída com sucesso")
+      setDeletingDiscipline(null)
+      router.refresh()
+    }
   }
 
   if (disciplines.length === 0) {
@@ -105,7 +112,10 @@ export function DisciplinesList({ disciplines, studyType }: DisciplinesListProps
       )}
 
       <AlertDialog open={!!deletingDiscipline} onOpenChange={(open) => !open && setDeletingDiscipline(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent 
+          /** Evita que o foco automático no botão de cancelar cause comportamentos estranhos no mobile **/
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir disciplina?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -115,7 +125,7 @@ export function DisciplinesList({ disciplines, studyType }: DisciplinesListProps
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Discipline, StudyType } from "@/types/database"
@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
 const ICONS = ["📚", "⚖️", "📊", "🏛️", "💼", "🔬", "📝", "🎯", "💡", "🗂️", "🧮", "🌍", "📖", "💻", "🎨"]
@@ -24,21 +25,61 @@ interface EditDisciplineDialogProps {
 export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange }: EditDisciplineDialogProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  
   const [name, setName] = useState(discipline.name)
   const [color, setColor] = useState(discipline.color)
   const [icon, setIcon] = useState(discipline.icon)
   const [course, setCourse] = useState(discipline.course || "")
   const [subject, setSubject] = useState(discipline.subject || "")
 
+  // Sincroniza os estados quando o dialog abre com uma disciplina diferente
+  useEffect(() => {
+    if (open) {
+      setName(discipline.name)
+      setColor(discipline.color)
+      setIcon(discipline.icon)
+      setCourse(discipline.course || "")
+      setSubject(discipline.subject || "")
+    }
+  }, [open, discipline])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    const trimmedName = name.trim()
+    if (!trimmedName) return
 
+    setIsLoading(true)
     const supabase = createClient()
-    await supabase
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
+    // 1. Validação de Duplicidade:
+    // Busca se existe OUTRA disciplina (id diferente) com o mesmo nome (ilike)
+    const { data: existing } = await supabase
+      .from("disciplines")
+      .select("id")
+      .eq("user_id", user.id)
+      .ilike("name", trimmedName)
+      .neq("id", discipline.id) // Garante que não barre a própria disciplina
+      .maybeSingle()
+
+    if (existing) {
+      toast.error(`Já existe outra disciplina chamada "${trimmedName}"`, {
+        icon: <AlertCircle className="h-4 w-4" />
+      })
+      setIsLoading(false)
+      return
+    }
+
+    // 2. Atualização
+    const { error } = await supabase
       .from("disciplines")
       .update({
-        name,
+        name: trimmedName,
         color,
         icon,
         course: studyType === "college" ? course || null : null,
@@ -46,21 +87,35 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
       })
       .eq("id", discipline.id)
 
+    if (error) {
+      toast.error("Erro ao atualizar disciplina")
+    } else {
+      toast.success("Disciplina atualizada!")
+      onOpenChange(false)
+      router.refresh()
+    }
+    
     setIsLoading(false)
-    onOpenChange(false)
-    router.refresh()
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="max-w-md w-[95vw] rounded-lg"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Editar Disciplina</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="edit-name">Nome da disciplina *</Label>
-            <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input 
+              id="edit-name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              required 
+            />
           </div>
 
           {studyType === "college" && (
@@ -125,7 +180,7 @@ export function EditDisciplineDialog({ discipline, studyType, open, onOpenChange
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading || !name}>
+            <Button type="submit" disabled={isLoading || !name.trim()}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar
             </Button>
