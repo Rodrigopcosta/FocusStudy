@@ -18,6 +18,14 @@ interface TaskListProps {
   disciplines: Discipline[]
 }
 
+// Mapeamento de cores sólidas para a borda baseada na prioridade
+const priorityBorderColors = {
+  low: "#3b82f6",    // Azul
+  medium: "#eab308", // Amarelo
+  high: "#f97316",   // Laranja
+  urgent: "#ef4444", // Vermelho
+}
+
 const priorityColors = {
   low: "bg-blue-500/20 text-blue-500",
   medium: "bg-yellow-500/20 text-yellow-600",
@@ -42,7 +50,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     if (!isUpdating.current) setLocalTasks(initialTasks)
   }, [initialTasks])
 
-  // Lógica de Ordenação e Filtro combinada
   const processedTasks = useMemo(() => {
     let filtered = localTasks.filter((task) => {
       const statusF = searchParams.get("status") || "all"
@@ -55,7 +62,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
       return true
     })
 
-    // Ordenação: 1º Pinned, 2º Pendentes, 3º Concluídas
     return filtered.sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
       if (a.status !== b.status) return a.status === "pending" ? -1 : 1
@@ -66,14 +72,13 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     const updatedStatus = completed ? "completed" : "pending"
     isUpdating.current = true
-    
     setLocalTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t))
 
     const supabase = createClient()
     await supabase.from("tasks").update({
       status: updatedStatus,
       completed_at: completed ? new Date().toISOString() : null,
-      is_pinned: false // Desafixa ao concluir (opcional, comum em apps de produtividade)
+      is_pinned: false
     }).eq("id", taskId)
     
     router.refresh()
@@ -83,7 +88,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const handleTogglePin = async (task: Task) => {
     const supabase = createClient()
     const newPinStatus = !task.is_pinned
-    
     setLocalTasks(prev => prev.map(t => t.id === task.id ? { ...t, is_pinned: newPinStatus } : t))
     await supabase.from("tasks").update({ is_pinned: newPinStatus }).eq("id", task.id)
     router.refresh()
@@ -102,8 +106,17 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         {processedTasks.map((task) => (
           <Card 
             key={task.id} 
-            className={`transition-all border-l-4 ${task.status === "completed" ? "opacity-60 bg-accent/30" : "bg-card hover:shadow-md"}`}
-            style={{ borderLeftColor: task.discipline?.color || "transparent" }}
+            className={`transition-all border-l-[6px] ${
+              task.status === "completed" ? "opacity-60 bg-muted/30" : "bg-card hover:shadow-md"
+            }`}
+            style={{ 
+              // Borda: Cor da Prioridade
+              borderLeftColor: priorityBorderColors[task.priority as keyof typeof priorityBorderColors] || "#gray",
+              // Fundo: Leve tom da cor da Disciplina para contexto
+              backgroundColor: task.status !== "completed" && task.discipline?.color 
+                ? `${task.discipline.color}08` 
+                : undefined 
+            }}
           >
             <CardContent className="py-4">
               <div className="flex items-start gap-4">
@@ -164,7 +177,8 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                     {task.discipline && (
                       <Badge 
                         variant="secondary"
-                        style={{ backgroundColor: `${task.discipline.color}15`, color: task.discipline.color, border: `1px solid ${task.discipline.color}30` }}
+                        style={{ backgroundColor: `${task.discipline.color}15`, color: task.discipline.color }}
+                        className="border-none"
                       >
                         {task.discipline.icon} {task.discipline.name}
                       </Badge>
@@ -173,7 +187,9 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                       {typeLabels[task.type as keyof typeof typeLabels]}
                     </Badge>
                     <Badge className={`text-[10px] uppercase ${priorityColors[task.priority as keyof typeof priorityColors]}`}>
-                      {task.priority}
+                      {task.priority === 'urgent' ? 'Urgente' : 
+                       task.priority === 'high' ? 'Alta' : 
+                       task.priority === 'medium' ? 'Média' : 'Baixa'}
                     </Badge>
                     
                     <div className="ml-auto flex items-center gap-3 text-muted-foreground">

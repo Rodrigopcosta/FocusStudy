@@ -148,7 +148,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
                   <SelectItem value="low" className="text-blue-500">Baixa (Azul)</SelectItem>
                   <SelectItem value="medium" className="text-yellow-500">Média (Amarela)</SelectItem>
                   <SelectItem value="high" className="text-orange-500">Alta (Laranja)</SelectItem>
-                  <SelectItem value="high" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
+                  <SelectItem value="urgent" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

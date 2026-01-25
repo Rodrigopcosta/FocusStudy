@@ -149,8 +149,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
                   <SelectItem value="low" className="text-blue-500">Baixa (Azul)</SelectItem>
                   <SelectItem value="medium" className="text-yellow-500">Média (Amarela)</SelectItem>
                   <SelectItem value="high" className="text-orange-500">Alta (Laranja)</SelectItem>
-                  {/* Urgente pode ser mapeado para High ou nova categoria se preferir */}
-                  <SelectItem value="high" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
+                  <SelectItem value="urgent" className="text-red-500 font-bold">Urgente (Vermelho)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
