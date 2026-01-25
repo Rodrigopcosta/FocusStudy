@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Calendar as CalendarIcon, Clock, AlertCircle } from "lucide-react"
+import { Loader2, Clock, AlertCircle } from "lucide-react"
 import { DisciplineManager } from "./discipline-manager"
 import { toast } from "sonner"
 
@@ -46,10 +46,19 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
     // Combinação das strings para validação e banco
     const startFull = `${startDate}T${startTime}`
     const dueFull = dueDate ? `${dueDate}T${dueTime}` : null
+    const now = new Date()
 
-    // Validação de consistência
+    // 1. Validação: Início não pode ser no passado
+    if (new Date(startFull) < now) {
+      toast.error("O início não pode ser anterior ao horário atual", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />,
+      })
+      return
+    }
+      
+    // 2. Validação: Conclusão não pode ser anterior ao início
     if (dueFull && new Date(dueFull) <= new Date(startFull)) {
-      toast.error("O término deve ser após o início", {
+      toast.error("O término deve ser após o horário de início", {
         icon: <AlertCircle className="h-4 w-4 text-destructive" />,
       })
       return
@@ -125,7 +134,7 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             />
           </div>
 
-          {/* Disciplina e Tipo - Grid Responsivo */}
+          {/* Disciplina e Tipo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -192,13 +201,14 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
 
           <hr className="border-muted" />
 
-          {/* Seção de Início - Mobile First (Stacked on small, Row on large) */}
+          {/* Início do Estudo */}
           <div className="space-y-2">
             <Label className="text-primary font-bold">Início do Estudo</Label>
             <div className="grid grid-cols-2 gap-2">
               <Input 
                 type="date" 
                 value={startDate} 
+                min={today}
                 onChange={(e) => setStartDate(e.target.value)} 
               />
               <Input 
@@ -209,14 +219,14 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
             </div>
           </div>
 
-          {/* Seção de Término */}
+          {/* Término Previsto */}
           <div className="space-y-2">
             <Label className="text-primary font-bold">Término Previsto</Label>
             <div className="grid grid-cols-2 gap-2">
               <Input 
                 type="date" 
                 value={dueDate} 
-                min={startDate}
+                min={startDate || today}
                 onChange={(e) => setDueDate(e.target.value)} 
               />
               <Input 
@@ -240,10 +250,10 @@ export function CreateTaskDialog({ disciplines, children }: CreateTaskDialogProp
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="sm:w-auto">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="sm:w-auto font-medium">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading} className="sm:w-auto">
+            <Button type="submit" disabled={isLoading} className="sm:w-auto font-bold shadow-sm">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Tarefa
             </Button>

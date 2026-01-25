@@ -39,6 +39,8 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
   const [dueDate, setDueDate] = useState("")
   const [dueTime, setDueTime] = useState("")
 
+  const today = new Date().toISOString().split("T")[0]
+
   // Funções de conversão
   const formatMinutesToTime = (totalMinutes: number) => {
     const hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
@@ -50,8 +52,9 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
     if (!isoStr) return { date: "", time: "" }
     try {
       const d = new Date(isoStr)
-      // Ajuste para o fuso horário local
-      const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      // Ajuste para o fuso horário local do navegador para exibição no input
+      const offset = d.getTimezoneOffset() * 60000
+      const localDate = new Date(d.getTime() - offset)
       const parts = localDate.toISOString().split("T")
       return { 
         date: parts[0], 
@@ -86,10 +89,21 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
 
     const startFull = startDate && startTime ? `${startDate}T${startTime}` : null
     const dueFull = dueDate && dueTime ? `${dueDate}T${dueTime}` : null
+    const now = new Date()
 
+    // 1. Validação: Se alterado, o início não pode ser anterior ao agora
+    // Nota: Só validamos contra o 'now' se a data/hora original foi alterada para evitar erro em tarefas antigas
+    if (startFull && new Date(startFull) < now && startFull !== task.start_date) {
+      toast.error("O novo horário de início não pode ser no passado", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />
+      })
+      return
+    }
+
+    // 2. Validação: Consistência entre início e fim
     if (startFull && dueFull && new Date(dueFull) <= new Date(startFull)) {
-      toast.error("O término deve ser após o início", {
-        icon: <AlertCircle className="h-4 w-4" />
+      toast.error("O término deve ser após o horário de início", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />
       })
       return
     }
@@ -118,7 +132,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
     if (error) {
       toast.error("Erro ao atualizar tarefa")
     } else {
-      toast.success("Tarefa atualizada!")
+      toast.success("Tarefa atualizada com sucesso!")
       onOpenChange(false)
       router.refresh()
     }
@@ -211,46 +225,39 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
 
           <hr className="border-muted" />
 
-          {/* Início - Grid 2 colunas no mobile também */}
+          {/* Seção Início */}
           <div className="space-y-2">
-            <Label className="text-primary font-semibold">Início do Estudo</Label>
+            <Label className="text-primary font-bold">Início do Estudo</Label>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Input 
-                  type="date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-1">
-                <Input 
-                  type="time" 
-                  value={startTime} 
-                  onChange={(e) => setStartTime(e.target.value)} 
-                />
-              </div>
+              <Input 
+                type="date" 
+                value={startDate} 
+                min={today}
+                onChange={(e) => setStartDate(e.target.value)} 
+              />
+              <Input 
+                type="time" 
+                value={startTime} 
+                onChange={(e) => setStartTime(e.target.value)} 
+              />
             </div>
           </div>
 
-          {/* Conclusão */}
+          {/* Seção Conclusão */}
           <div className="space-y-2">
-            <Label className="text-primary font-semibold">Término Previsto</Label>
+            <Label className="text-primary font-bold">Término Previsto</Label>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Input 
-                  type="date" 
-                  value={dueDate} 
-                  min={startDate}
-                  onChange={(e) => setDueDate(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-1">
-                <Input 
-                  type="time" 
-                  value={dueTime} 
-                  onChange={(e) => setDueTime(e.target.value)} 
-                />
-              </div>
+              <Input 
+                type="date" 
+                value={dueDate} 
+                min={startDate || today}
+                onChange={(e) => setDueDate(e.target.value)} 
+              />
+              <Input 
+                type="time" 
+                value={dueTime} 
+                onChange={(e) => setDueTime(e.target.value)} 
+              />
             </div>
           </div>
 
@@ -260,16 +267,17 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
               id="edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Notas adicionais sobre a tarefa..."
               className="resize-none"
               rows={2}
             />
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="sm:w-auto font-bold shadow-sm">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Alterações
             </Button>

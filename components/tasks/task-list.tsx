@@ -62,9 +62,12 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     })
 
     return result.sort((a, b) => {
+      // 1. Status pendente primeiro
       if (a.status !== b.status) return a.status === "pending" ? -1 : 1
+      // 2. Fixados primeiro
       if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
 
+      // 3. Ordenação Granular Escolhida (Data + Horário via getTime())
       switch (sortBy) {
         case "priority-desc":
           return priorityWeight[b.priority as keyof typeof priorityWeight] - priorityWeight[a.priority as keyof typeof priorityWeight]
@@ -80,7 +83,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     })
   }, [localTasks, searchParams, sortBy])
 
-  // Helper para formatar data de forma amigável
   const formatTaskDate = (dateStr: string) => {
     const date = new Date(dateStr)
     const today = new Date()
@@ -190,14 +192,13 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                 />
                 
                 <div className="flex-1 min-w-0">
-                  {/* Cabeçalho do Card */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={`font-bold text-sm sm:text-base leading-tight truncate ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>
                           {task.title}
                         </span>
-                        {task.is_pinned && <Pin className="h-3 w-3 fill-primary text-primary flex-shrink-0" />}
+                        {task.is_pinned && <Pin className="h-3 w-3 fill-primary text-primary shrink-0" />}
                       </div>
                       {task.description && (
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 italic">
@@ -233,7 +234,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                     </div>
                   </div>
 
-                  {/* Badges e Disciplina */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-3">
                     {task.discipline && (
                       <Badge 
@@ -252,7 +252,6 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
                     </Badge>
                   </div>
 
-                  {/* Data e Tempo - Rodapé do Card */}
                   <div className="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-muted">
                     <div className="flex items-center gap-3 text-muted-foreground">
                       {task.start_date && (
