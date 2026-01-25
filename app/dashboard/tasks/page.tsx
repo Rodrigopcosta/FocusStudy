@@ -5,18 +5,32 @@ import { CreateTaskDialog } from "@/components/tasks/create-task-dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return null
 
+  const sort = (searchParams.sort as string) || "created_at"
+  const order = (searchParams.order as string) || "desc"
+
+  let query = supabase
+    .from("tasks")
+    .select("*, discipline:disciplines(*)")
+    .eq("user_id", user.id)
+    
+  // Prioriza tarefas fixadas (is_pinned), depois tarefas não concluídas, depois a ordenação escolhida
+  query = query
+    .order("is_pinned", { ascending: false })
+    .order("status", { ascending: false }) // 'pending' vem antes de 'completed' alfabeticamente? Não, melhor tratar no front.
+    .order(sort, { ascending: order === "asc" })
+
   const [tasksRes, disciplinesRes] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("*, discipline:disciplines(*)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false }),
+    query,
     supabase
       .from("disciplines")
       .select("*")
@@ -35,7 +49,7 @@ export default async function TasksPage() {
           <p className="text-muted-foreground">Gerencie suas tarefas de estudo</p>
         </div>
         <CreateTaskDialog disciplines={disciplines}>
-          <Button>
+          <Button className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
           </Button>

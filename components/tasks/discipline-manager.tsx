@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -10,10 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Loader2, Settings2 } from "lucide-react"
+import { Plus, Trash2, Loader2, Settings2, AlertCircle } from "lucide-react"
+import { toast } from "sonner" // Assumindo que você usa sonner, se não, use seu sistema de toast
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
-
 const ICONS = ["📚", "⚖️", "📊", "🏛️", "💼", "🔬", "📝", "🎯", "💡", "🗂️"]
 
 interface DisciplineManagerProps {
@@ -27,59 +26,100 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
   const [name, setName] = useState("")
   const [color, setColor] = useState(COLORS[0])
   const [icon, setIcon] = useState(ICONS[0])
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    // Validação de Duplicidade (Case Insensitive)
+    const isDuplicate = disciplines.some(
+      (d) => d.name.toLowerCase().trim() === name.toLowerCase().trim()
+    )
+
+    if (isDuplicate) {
+      setError("Já existe uma disciplina com este nome.")
+      toast.error("Erro ao criar", { description: "Nome de disciplina já existe." })
+      return
+    }
+
     setIsLoading(true)
-
     const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
 
-    await supabase.from("disciplines").insert({
+    const { error: dbError } = await supabase.from("disciplines").insert({
       user_id: user.id,
-      name,
+      name: name.trim(),
       color,
       icon,
     })
 
+    if (dbError) {
+      toast.error("Erro no banco de dados")
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(false)
     setName("")
+    toast.success("Disciplina criada com sucesso!")
     router.refresh()
   }
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Isso excluirá a disciplina e poderá afetar tarefas vinculadas. Continuar?")) return
+    
     const supabase = createClient()
-    await supabase.from("disciplines").delete().eq("id", id)
-    router.refresh()
+    const { error } = await supabase.from("disciplines").delete().eq("id", id)
+    
+    if (error) {
+      toast.error("Não foi possível excluir")
+    } else {
+      toast.success("Disciplina removida")
+      router.refresh()
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val)
+      if (!val) setError(null) // Limpa erro ao fechar
+    }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
           <Settings2 className="h-3 w-3 mr-1" />
           Gerenciar
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Gerenciar Disciplinas</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Formulário de criação */}
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
-              <Label>Nome da disciplina</Label>
+              <Label htmlFor="discipline-name">Nome da disciplina</Label>
               <Input
+                id="discipline-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (error) setError(null)
+                }}
                 placeholder="Ex: Direito Constitucional"
                 required
+                className={error ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {error && (
+                <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3" /> {error}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -90,8 +130,8 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
-                    className={`w-8 h-8 rounded-full transition-transform ${
-                      color === c ? "ring-2 ring-offset-2 ring-primary scale-110" : ""
+                    className={`w-8 h-8 rounded-full transition-all hover:scale-110 ${
+                      color === c ? "ring-2 ring-offset-2 ring-primary scale-110" : "opacity-70 hover:opacity-100"
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -107,8 +147,8 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
                     key={i}
                     type="button"
                     onClick={() => setIcon(i)}
-                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-transform ${
-                      icon === i ? "bg-primary/20 ring-2 ring-primary scale-110" : "bg-muted hover:bg-muted/80"
+                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all ${
+                      icon === i ? "bg-primary/20 ring-2 ring-primary scale-110" : "bg-muted hover:bg-muted/80 opacity-70"
                     }`}
                   >
                     {i}
@@ -117,29 +157,30 @@ export function DisciplineManager({ disciplines }: DisciplineManagerProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !!error}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Adicionar Disciplina
             </Button>
           </form>
 
-          {/* Disciplinas existentes */}
           {disciplines.length > 0 && (
             <div className="border-t pt-4">
-              <Label className="text-sm text-muted-foreground mb-2 block">Disciplinas existentes</Label>
-              <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground mb-3 block uppercase tracking-wider">
+                Minhas Disciplinas ({disciplines.length})
+              </Label>
+              <div className="space-y-2 max-h-50 overflow-y-auto pr-2">
                 {disciplines.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
-                      <span>
+                  <div key={d.id} className="flex items-center justify-between p-2 rounded-lg bg-accent/50 border border-transparent hover:border-accent transition-colors">
+                    <div className="flex items-center gap-3">
+                      <span className="w-2 h-6 rounded-full" style={{ backgroundColor: d.color }} />
+                      <span className="text-sm font-medium">
                         {d.icon} {d.name}
                       </span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleDelete(d.id)}
                     >
                       <Trash2 className="h-4 w-4" />

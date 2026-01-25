@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Task, Discipline, TaskType, TaskPriority } from "@/types/database"
@@ -12,7 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
+import { Loader2, Clock, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 interface EditTaskDialogProps {
   task: Task
@@ -24,20 +24,97 @@ interface EditTaskDialogProps {
 export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTaskDialogProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [title, setTitle] = useState(task.title)
-  const [description, setDescription] = useState(task.description || "")
-  const [disciplineId, setDisciplineId] = useState(task.discipline_id || "")
-  const [type, setType] = useState<TaskType>(task.type)
-  const [priority, setPriority] = useState<TaskPriority>(task.priority)
-  const [estimatedMinutes, setEstimatedMinutes] = useState(task.estimated_minutes.toString())
-  const [dueDate, setDueDate] = useState(task.due_date || "")
+  
+  // Estados básicos
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [disciplineId, setDisciplineId] = useState("")
+  const [type, setType] = useState<TaskType>("theory")
+  const [priority, setPriority] = useState<TaskPriority>("medium")
+  const [estimatedTime, setEstimatedTime] = useState("00:30")
+
+  // Estados de Data e Hora Separados
+  const [startDate, setStartDate] = useState("")
+  const [startTime, setStartTime] = useState("")
+  const [dueDate, setDueDate] = useState("")
+  const [dueTime, setDueTime] = useState("")
+
+  const today = new Date().toISOString().split("T")[0]
+
+  // Funções de conversão
+  const formatMinutesToTime = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
+    const mins = (totalMinutes % 60).toString().padStart(2, '0')
+    return `${hours}:${mins}`
+  }
+
+  const splitISOString = (isoStr: string | null) => {
+    if (!isoStr) return { date: "", time: "" }
+    try {
+      const d = new Date(isoStr)
+      // Ajuste para o fuso horário local do navegador para exibição no input
+      const offset = d.getTimezoneOffset() * 60000
+      const localDate = new Date(d.getTime() - offset)
+      const parts = localDate.toISOString().split("T")
+      return { 
+        date: parts[0], 
+        time: parts[1].slice(0, 5) 
+      }
+    } catch (e) {
+      return { date: "", time: "" }
+    }
+  }
+
+  useEffect(() => {
+    if (open && task) {
+      setTitle(task.title)
+      setDescription(task.description || "")
+      setDisciplineId(task.discipline_id || "")
+      setType(task.type)
+      setPriority(task.priority)
+      setEstimatedTime(formatMinutesToTime(task.estimated_minutes))
+
+      const start = splitISOString(task.start_date)
+      setStartDate(start.date)
+      setStartTime(start.time)
+
+      const due = splitISOString(task.due_date)
+      setDueDate(due.date)
+      setDueTime(due.time)
+    }
+  }, [task, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const startFull = startDate && startTime ? `${startDate}T${startTime}` : null
+    const dueFull = dueDate && dueTime ? `${dueDate}T${dueTime}` : null
+    const now = new Date()
+
+    // 1. Validação: Se alterado, o início não pode ser anterior ao agora
+    // Nota: Só validamos contra o 'now' se a data/hora original foi alterada para evitar erro em tarefas antigas
+    if (startFull && new Date(startFull) < now && startFull !== task.start_date) {
+      toast.error("O novo horário de início não pode ser no passado", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />
+      })
+      return
+    }
+
+    // 2. Validação: Consistência entre início e fim
+    if (startFull && dueFull && new Date(dueFull) <= new Date(startFull)) {
+      toast.error("O término deve ser após o horário de início", {
+        icon: <AlertCircle className="h-4 w-4 text-destructive" />
+      })
+      return
+    }
+
     setIsLoading(true)
 
+    const [hours, minutes] = estimatedTime.split(":").map(Number)
+    const totalMinutes = (hours * 60) + minutes
+
     const supabase = createClient()
-    await supabase
+    const { error } = await supabase
       .from("tasks")
       .update({
         title,
@@ -45,41 +122,46 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
         discipline_id: disciplineId || null,
         type,
         priority,
-        estimated_minutes: Number.parseInt(estimatedMinutes) || 30,
-        due_date: dueDate || null,
+        estimated_minutes: totalMinutes || 30,
+        start_date: startFull,
+        due_date: dueFull,
         updated_at: new Date().toISOString(),
       })
       .eq("id", task.id)
 
+    if (error) {
+      toast.error("Erro ao atualizar tarefa")
+    } else {
+      toast.success("Tarefa atualizada com sucesso!")
+      onOpenChange(false)
+      router.refresh()
+    }
+    
     setIsLoading(false)
-    onOpenChange(false)
-    router.refresh()
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent 
+        className="w-[95vw] max-w-md rounded-lg overflow-y-auto max-h-[95vh] p-4 sm:p-6"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Editar Tarefa</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label htmlFor="edit-title">Título *</Label>
-            <Input id="edit-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-description">Descrição</Label>
-            <Textarea
-              id="edit-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+            <Label htmlFor="edit-title">Título da Tarefa *</Label>
+            <Input 
+              id="edit-title" 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} 
+              required 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Disciplina</Label>
               <Select value={disciplineId} onValueChange={setDisciplineId}>
@@ -97,7 +179,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
             </div>
 
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>Tipo de Tarefa</Label>
               <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -111,7 +193,7 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Prioridade</Label>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
@@ -122,34 +204,82 @@ export function EditTaskDialog({ task, disciplines, open, onOpenChange }: EditTa
                   <SelectItem value="low">Baixa</SelectItem>
                   <SelectItem value="medium">Média</SelectItem>
                   <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="urgent">Urgente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-estimatedMinutes">Tempo (min)</Label>
+              <Label htmlFor="edit-estimatedTime" className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Tempo Estimado
+              </Label>
               <Input
-                id="edit-estimatedMinutes"
-                type="number"
-                value={estimatedMinutes}
-                onChange={(e) => setEstimatedMinutes(e.target.value)}
-                min="1"
+                id="edit-estimatedTime"
+                type="time"
+                value={estimatedTime}
+                onChange={(e) => setEstimatedTime(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <hr className="border-muted" />
+
+          {/* Seção Início */}
+          <div className="space-y-2">
+            <Label className="text-primary font-bold">Início do Estudo</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                type="date" 
+                value={startDate} 
+                min={today}
+                onChange={(e) => setStartDate(e.target.value)} 
+              />
+              <Input 
+                type="time" 
+                value={startTime} 
+                onChange={(e) => setStartTime(e.target.value)} 
+              />
+            </div>
+          </div>
+
+          {/* Seção Conclusão */}
+          <div className="space-y-2">
+            <Label className="text-primary font-bold">Término Previsto</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                type="date" 
+                value={dueDate} 
+                min={startDate || today}
+                onChange={(e) => setDueDate(e.target.value)} 
+              />
+              <Input 
+                type="time" 
+                value={dueTime} 
+                onChange={(e) => setDueTime(e.target.value)} 
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-dueDate">Data de conclusão</Label>
-            <Input id="edit-dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <Label htmlFor="edit-description">Descrição</Label>
+            <Textarea
+              id="edit-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Notas adicionais sobre a tarefa..."
+              className="resize-none"
+              rows={2}
+            />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="sm:w-auto font-bold shadow-sm">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar
+              Salvar Alterações
             </Button>
           </div>
         </form>
