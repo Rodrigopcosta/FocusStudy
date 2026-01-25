@@ -9,18 +9,23 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Trash2, Pencil, Move, ArrowUpDown, Pin, PinOff, Play, Calendar, Clock, CheckCheck } from "lucide-react"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { MoreHorizontal, Trash2, Pencil, Move, ArrowUpDown, Pin, PinOff, Play, Calendar, Clock, CheckCheck, Filter, ChevronDown, ChevronUp, XCircle, Save } from "lucide-react"
 
 import {
   DndContext,
@@ -47,7 +52,6 @@ interface TaskListProps {
   disciplines: Discipline[]
 }
 
-// Suporte bilingue para os pesos e estilos
 const priorityWeight: Record<string, number> = {
   urgent: 4, urgente: 4,
   high: 3, alta: 3,
@@ -115,7 +119,7 @@ function SortableTaskCard({
           isReorderMode && "cursor-move select-none"
         )}
       >
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           <div className="flex items-start gap-3">
             {!isReorderMode && (
               <Checkbox
@@ -133,10 +137,10 @@ function SortableTaskCard({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1 flex items-center gap-2">
                   {task.is_pinned && task.status === "pending" && (
-                    <Pin className="h-4 w-4 text-primary fill-current shrink-0" />
+                    <Pin className="h-3.5 w-3.5 text-primary fill-current shrink-0" />
                   )}
                   <span className={cn(
-                    "font-bold text-base leading-tight truncate block",
+                    "font-bold text-sm sm:text-base leading-tight truncate block",
                     task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"
                   )}>
                     {task.title}
@@ -149,8 +153,8 @@ function SortableTaskCard({
                       variant="ghost" 
                       size="icon" 
                       className={cn(
-                        "h-8 w-8 rounded-full transition-all active:scale-90",
-                        task.is_pinned ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground opacity-40 hover:opacity-100 hover:bg-accent"
+                        "h-7 w-7 sm:h-8 sm:w-8 rounded-full transition-all",
+                        task.is_pinned ? "text-primary bg-primary/10" : "text-muted-foreground opacity-40 hover:opacity-100"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -163,7 +167,7 @@ function SortableTaskCard({
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5"><MoreHorizontal className="h-5 w-5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"><MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => setEditingTask(task)}><Pencil className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
@@ -174,27 +178,27 @@ function SortableTaskCard({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 mt-3">
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {task.discipline && (
-                  <Badge variant="secondary" style={{ backgroundColor: `${task.discipline.color}15`, color: task.discipline.color }} className="text-[10px] font-bold border-none">
+                  <Badge variant="secondary" style={{ backgroundColor: `${task.discipline.color}15`, color: task.discipline.color }} className="text-[9px] sm:text-[10px] font-bold border-none px-1.5 py-0">
                     <span className="mr-1">{task.discipline.icon}</span>{task.discipline.name}
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-background/50">{typeLabels[task.type as keyof typeof typeLabels]}</Badge>
-                <Badge className={cn("text-[10px] border-transparent shadow-sm", priorityColors[priorityKey])}>
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] uppercase tracking-wider px-1.5 py-0">{typeLabels[task.type as keyof typeof typeLabels]}</Badge>
+                <Badge className={cn("text-[9px] sm:text-[10px] border-transparent px-1.5 py-0", priorityColors[priorityKey])}>
                   {priorityLabels[priorityKey] || task.priority}
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-dashed border-muted">
-                <div className="flex items-center gap-3 text-muted-foreground text-[11px]">
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-dashed border-muted">
+                <div className="flex items-center gap-2 text-muted-foreground text-[10px] sm:text-[11px]">
                   {task.start_date && <div className="flex items-center gap-1 font-medium"><Calendar className="h-3 w-3 text-primary" />{new Date(task.start_date).toLocaleDateString("pt-BR")}</div>}
                   <div className="flex items-center gap-1 font-bold text-foreground bg-secondary/50 px-2 py-0.5 rounded-full"><Clock className="h-3 w-3 text-primary" />{Math.floor(task.estimated_minutes / 60)}h{task.estimated_minutes % 60}m</div>
                 </div>
 
                 {task.status === "pending" && !isReorderMode && (
-                  <Button variant="default" size="icon" asChild className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 text-white shadow-md active:scale-95 transition-all">
-                    <Link href={`/dashboard/pomodoro?task=${task.id}`}><Play className="h-4 w-4 fill-current ml-0.5" /></Link>
+                  <Button variant="default" size="icon" asChild className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary text-white shadow-sm active:scale-95 transition-all">
+                    <Link href={`/dashboard/pomodoro?task=${task.id}`}><Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current ml-0.5" /></Link>
                   </Button>
                 )}
               </div>
@@ -204,12 +208,12 @@ function SortableTaskCard({
       </Card>
 
       {isReorderMode && showMoveButton && (
-        <div className="flex justify-center -mb-6 mt-2 z-50 relative">
+        <div className="flex justify-center -mb-5 mt-1 z-50 relative">
           <Button 
-            variant="secondary" size="icon" className="rounded-full h-10 w-10 shadow-xl border-2 border-primary bg-background hover:bg-secondary animate-in zoom-in duration-200"
+            variant="secondary" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10 shadow-lg border-2 border-primary bg-background"
             onClick={() => onMove(index, index + 1)}
           >
-            <ArrowUpDown className="h-5 w-5 text-primary" />
+            <ArrowUpDown className="h-4 w-4 text-primary" />
           </Button>
         </div>
       )}
@@ -230,6 +234,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -238,51 +243,52 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
 
   useEffect(() => { setLocalTasks(initialTasks) }, [initialTasks])
 
-  // Quando ativa reorder, forçamos o select a mostrar "Ordem Personalizada" (manual)
   useEffect(() => {
     if (isReorderMode) setSortBy("manual")
   }, [isReorderMode])
 
+  const currentStatus = searchParams.get("status") || "all"
+  const currentDiscipline = searchParams.get("discipline") || "all"
+  const currentPriority = searchParams.get("priority") || "all"
+
+  const hasActiveFilters = currentStatus !== "all" || currentDiscipline !== "all" || currentPriority !== "all"
+
+  const updateFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === "all") params.delete(key)
+    else params.set(key, value)
+    router.push(`?${params.toString()}`)
+  }
+
+  const clearFilters = () => {
+    router.push("/dashboard/tasks")
+  }
+
   const processedTasks = useMemo(() => {
     let result = [...localTasks].filter((task) => {
-      const statusF = searchParams.get("status") || "all"
-      const discF = searchParams.get("discipline") || "all"
-      const prioF = searchParams.get("priority") || "all"
-      if (statusF !== "all" && task.status !== statusF) return false
-      if (discF !== "all" && task.discipline_id !== discF) return false
-      if (prioF !== "all" && task.priority.toLowerCase() !== prioF.toLowerCase()) return false
+      if (currentStatus !== "all" && task.status !== currentStatus) return false
+      if (currentDiscipline !== "all" && task.discipline_id !== currentDiscipline) return false
+      if (currentPriority !== "all" && task.priority.toLowerCase() !== currentPriority.toLowerCase()) return false
       return true
     })
 
     return result.sort((a, b) => {
-      // 1. Grupo Status (Pendentes primeiro)
       if (a.status !== b.status) return a.status === "pending" ? -1 : 1
-      
-      // 2. Grupo Fixados
       if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
-
-      // 3. Lógica de Ordenação Específica
-      if (isReorderMode || sortBy === "manual") {
-        return (a.position || 0) - (b.position || 0)
-      }
+      if (isReorderMode || sortBy === "manual") return (a.position || 0) - (b.position || 0)
 
       const weightA = priorityWeight[a.priority.toLowerCase()] || 0
       const weightB = priorityWeight[b.priority.toLowerCase()] || 0
 
       switch (sortBy) {
-        case "priority-desc":
-          return weightB - weightA
-        case "priority-asc":
-          return weightA - weightB
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case "newest":
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        default:
-          return (a.position || 0) - (b.position || 0)
+        case "priority-desc": return weightB - weightA
+        case "priority-asc": return weightA - weightB
+        case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        default: return (a.position || 0) - (b.position || 0)
       }
     })
-  }, [localTasks, searchParams, sortBy, isReorderMode])
+  }, [localTasks, currentStatus, currentDiscipline, currentPriority, sortBy, isReorderMode])
 
   const saveNewOrder = async (newOrder: Task[]) => {
     setLocalTasks(newOrder);
@@ -306,18 +312,123 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
     router.refresh()
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsBulkConfirmOpen(true)} disabled={!processedTasks.some(t => t.status === "pending")} className="text-[11px] h-9 gap-2 border-dashed font-bold uppercase">
-            <CheckCheck className="h-4 w-4 text-primary" /> Concluir Visíveis
-          </Button>
-          <Button variant={isReorderMode ? "default" : "outline"} size="sm" onClick={() => setIsReorderMode(!isReorderMode)} className="text-[11px] h-9 gap-2 font-bold uppercase">
-            <Move className="h-4 w-4" /> {isReorderMode ? "Salvar Ordem" : "Reordenar"}
+  const FiltersContent = () => (
+    <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex-1">
+        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Status</label>
+        <Select value={currentStatus} onValueChange={(v) => updateFilter("status", v)}>
+          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos Status</SelectItem>
+            <SelectItem value="pending">Pendentes</SelectItem>
+            <SelectItem value="completed">Concluídas</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex-1">
+        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Disciplina</label>
+        <Select value={currentDiscipline} onValueChange={(v) => updateFilter("discipline", v)}>
+          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Disciplina" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas Disciplinas</SelectItem>
+            {disciplines.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex-1">
+        <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block ml-1">Prioridade</label>
+        <Select value={currentPriority} onValueChange={(v) => updateFilter("priority", v)}>
+          <SelectTrigger className="h-10 bg-background"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas Prioridades</SelectItem>
+            <SelectItem value="low">Baixa</SelectItem>
+            <SelectItem value="medium">Média</SelectItem>
+            <SelectItem value="high">Alta</SelectItem>
+            <SelectItem value="urgent">Urgente</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {hasActiveFilters && (
+        <div className="flex items-end pb-0.5 sm:pb-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearFilters} 
+            className="h-10 w-full sm:w-auto px-3 text-destructive hover:bg-destructive/10 gap-2 font-bold text-xs"
+          >
+            <XCircle className="h-4 w-4" /> Limpar Filtros
           </Button>
         </div>
-        {!isReorderMode && <TaskSort value={sortBy} onValueChange={setSortBy} />}
+      )}
+    </div>
+  )
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3">
+        {/* Mobile: Collapsible Filters */}
+        <div className="sm:hidden">
+          <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen} className="bg-secondary/30 rounded-xl border border-border/60 overflow-hidden shadow-sm transition-all">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full flex items-center justify-between px-4 h-12 hover:bg-transparent">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase text-foreground">
+                  <Filter className="h-4 w-4 text-primary" />
+                  Filtrar Tarefas
+                </div>
+                <div className="flex items-center gap-2">
+                  {hasActiveFilters && <Badge variant="default" className="h-5 px-1.5 text-[10px]">Ativo</Badge>}
+                  {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4 border-t border-border/40">
+               <div className="pt-4">
+                 <FiltersContent />
+               </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* Desktop: Grid Filters */}
+        <div className="hidden sm:block">
+           <FiltersContent />
+        </div>
+
+        {/* Action Buttons & Sort */}
+        <div className="flex flex-col gap-3 p-3 sm:p-0 bg-secondary/20 sm:bg-transparent rounded-xl border border-border/50 sm:border-none">
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsBulkConfirmOpen(true)} 
+              disabled={!processedTasks.some(t => t.status === "pending")} 
+              className="flex-1 text-[10px] sm:text-[11px] h-9 gap-1.5 font-bold uppercase shadow-sm bg-background hover:bg-secondary"
+            >
+              <CheckCheck className="h-3.5 w-3.5 text-primary" /> 
+              <span>Concluir</span>
+            </Button>
+            <Button 
+              variant={isReorderMode ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setIsReorderMode(!isReorderMode)} 
+              className={cn(
+                "flex-1 text-[10px] sm:text-[11px] h-9 gap-1.5 font-bold uppercase shadow-sm transition-all",
+                isReorderMode 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-background hover:bg-secondary"
+              )}
+            >
+              {isReorderMode ? <Save className="h-3.5 w-3.5" /> : <Move className="h-3.5 w-3.5" />}
+              {isReorderMode ? "Salvar" : "Reordenar"}
+            </Button>
+          </div>
+
+          {!isReorderMode && (
+            <div className="w-full pt-1 border-t border-border/40 sm:border-none sm:pt-0">
+               <TaskSort value={sortBy} onValueChange={setSortBy} />
+            </div>
+          )}
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => {
@@ -331,11 +442,10 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         }
       }}>
         <SortableContext items={processedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3 pb-10">
+          <div className="space-y-2.5 sm:space-y-3 pb-10">
             {processedTasks.map((task, index) => {
               const nextTask = processedTasks[index + 1];
               const showMoveButton = nextTask && nextTask.is_pinned === task.is_pinned && nextTask.status === task.status;
-
               return (
                 <SortableTaskCard 
                   key={task.id} 
@@ -354,6 +464,7 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
         </SortableContext>
       </DndContext>
 
+      {/* Restante dos componentes de alerta e diálogo permanecem iguais */}
       <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Excluir Tarefa?</AlertDialogTitle></AlertDialogHeader>
