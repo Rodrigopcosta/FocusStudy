@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Note, Discipline } from "@/types/database"
@@ -29,8 +29,8 @@ const noteColors = [
 
 export function NoteEditor({ note, disciplines }: NoteEditorProps) {
   const router = useRouter()
+  const titleRef = useRef<HTMLTextAreaElement>(null)
   
-  // Estados locais inicializados com os valores vindos do banco (note)
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content || "")
   const [disciplineId, setDisciplineId] = useState(note.discipline_id || "")
@@ -43,12 +43,22 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
-  // Função centralizada para salvar no Supabase
+  // Ajusta a altura do título automaticamente conforme o texto cresce
+  const adjustTitleHeight = useCallback(() => {
+    if (titleRef.current) {
+      titleRef.current.style.height = "auto"
+      titleRef.current.style.height = `${titleRef.current.scrollHeight}px`
+    }
+  }, [])
+
+  useEffect(() => {
+    adjustTitleHeight()
+  }, [title, adjustTitleHeight])
+
   const saveNote = useCallback(async (manualUpdates?: any) => {
     setIsSaving(true)
     const supabase = createClient()
     
-    // Unifica o estado local com atualizações disparadas por clique (como cor ou pin)
     const dataToSave = {
       title,
       content,
@@ -68,17 +78,15 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
     if (!error) {
       setLastSaved(new Date())
       setHasUnsavedChanges(false)
-      router.refresh() // Força a atualização dos dados do servidor para manter o F5 íntegro
+      router.refresh()
     }
     setIsSaving(false)
   }, [note.id, title, content, disciplineId, topic, isImportant, isPinned, color, router])
 
-  // Debounce para evitar excesso de requisições ao digitar
   const debouncedSave = useDebouncedCallback(() => {
     saveNote()
   }, 2000)
 
-  // Handler para inputs de texto
   const handleChange = (type: string, value: any) => {
     setHasUnsavedChanges(true)
     if (type === 'title') setTitle(value)
@@ -86,115 +94,101 @@ export function NoteEditor({ note, disciplines }: NoteEditorProps) {
     debouncedSave()
   }
 
-  // Handler para troca de cor com salvamento imediato
-  const handleColorChange = (newColor: string) => {
-    setColor(newColor)
-    saveNote({ color: newColor })
-  }
-
   return (
-    <div className={`min-h-[calc(100vh-10rem)] flex flex-col transition-all duration-500 rounded-xl p-4 md:p-8 border-2 shadow-sm ${color}`}>
+    <div className={`min-h-[calc(100vh-8rem)] flex flex-col transition-all duration-500 rounded-xl p-4 md:p-8 border-2 shadow-sm ${color}`}>
       
-      {/* Toolbar Superior */}
-      <div className="flex items-center justify-between gap-4 pb-6 border-b border-black/10 dark:border-white/10">
-        <div className="flex items-center gap-2 flex-1">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 hover:bg-black/5 cursor-pointer">
-            <Link href="/dashboard/notes"><ArrowLeft className="h-4 w-4" /></Link>
-          </Button>
-          <Input
-            value={title}
-            onChange={(e) => handleChange('title', e.target.value)}
-            className="text-2xl font-black border-none shadow-none focus-visible:ring-0 px-0 h-auto bg-transparent uppercase placeholder:opacity-30 cursor-text"
-            placeholder="Título da Anotação"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Status de Salvamento */}
-          <div className="hidden md:flex flex-col items-end mr-2">
-            {isSaving ? (
-              <span className="text-[10px] font-black text-primary flex items-center gap-1 uppercase">
-                <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
-              </span>
-            ) : hasUnsavedChanges ? (
-              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">Alterações pendentes</span>
-            ) : lastSaved && (
-              <span className="text-[10px] font-black text-muted-foreground uppercase opacity-40">Salvo às {lastSaved.toLocaleTimeString("pt-BR")}</span>
-            )}
+      {/* Cabeçalho */}
+      <div className="flex flex-col gap-4 pb-4 border-b border-black/10 dark:border-white/10">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          
+          <div className="flex items-start gap-2 flex-1 min-w-0">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 h-10 w-10 mt-1">
+              <Link href="/dashboard/notes"><ArrowLeft className="h-5 w-5" /></Link>
+            </Button>
+            
+            {/* Título com Quebra de Linha Automática */}
+            <textarea
+              ref={titleRef}
+              rows={1}
+              value={title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              className="w-full text-xl md:text-3xl font-black border-none shadow-none focus:outline-none bg-transparent uppercase placeholder:opacity-30 resize-none overflow-hidden py-1 leading-tight"
+              placeholder="TÍTULO DA ANOTAÇÃO"
+              style={{ minHeight: '40px' }}
+            />
           </div>
 
-          <Button 
-            variant={hasUnsavedChanges ? "default" : "outline"} 
-            size="sm" 
-            onClick={() => saveNote()}
-            disabled={isSaving}
-            className="h-9 font-bold uppercase text-[10px] px-4 shadow-sm cursor-pointer"
-          >
-            {isSaving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : hasUnsavedChanges ? <Save className="h-3 w-3 mr-1" /> : <Check className="h-3 w-3 mr-1 text-green-500" />}
-            {hasUnsavedChanges ? "Salvar Agora" : "Sincronizado"}
-          </Button>
+          <div className="flex items-center justify-end gap-1 md:gap-2 shrink-0 bg-black/5 dark:bg-white/5 p-1 rounded-lg md:bg-transparent">
+             <Button 
+              variant={hasUnsavedChanges ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => saveNote()}
+              disabled={isSaving}
+              className="h-9 font-bold uppercase text-[10px] px-3"
+            >
+              {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : hasUnsavedChanges ? <Save className="h-3 w-3 mr-1" /> : <Check className="h-3 w-3 mr-1 text-green-500" />}
+              <span className="xs:inline ml-1">{hasUnsavedChanges ? "Salvar" : "Salvo"}</span>
+            </Button>
 
-          <div className="h-6 w-px bg-black/10 dark:bg-white/10 mx-2" />
+            <div className="w-px h-4 bg-black/10 dark:bg-white/10 mx-1 md:hidden" />
 
-          {/* Seletor de Cores */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-black/5 cursor-pointer"><Palette className="h-5 w-5" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="p-3 grid grid-cols-3 gap-3" align="end">
-              {noteColors.map((c) => (
-                <button
-                  key={c.value}
-                  title={c.name}
-                  onClick={() => handleColorChange(c.value)}
-                  className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer ${c.value} ${color === c.value ? 'border-primary shadow-md' : 'border-transparent'}`}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9"><Palette className="h-5 w-5" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="p-3 grid grid-cols-3 gap-3" align="end">
+                {noteColors.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => { setColor(c.value); saveNote({ color: c.value }) }}
+                    className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${c.value} ${color === c.value ? 'border-primary shadow-md' : 'border-transparent'}`}
+                  />
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* Fixar e Importante */}
-          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-black/5 cursor-pointer" onClick={() => { setIsPinned(!isPinned); saveNote({ is_pinned: !isPinned }) }}>
-            <Pin className={`h-5 w-5 ${isPinned ? "text-primary fill-primary" : "text-muted-foreground"}`} />
-          </Button>
-          
-          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-black/5 cursor-pointer" onClick={() => { setIsImportant(!isImportant); saveNote({ is_important: !isImportant }) }}>
-            <Star className={`h-5 w-5 ${isImportant ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`} />
-          </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setIsPinned(!isPinned); saveNote({ is_pinned: !isPinned }) }}>
+              <Pin className={`h-5 w-5 ${isPinned ? "text-primary fill-primary" : "text-muted-foreground"}`} />
+            </Button>
+            
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setIsImportant(!isImportant); saveNote({ is_important: !isImportant }) }}>
+              <Star className={`h-5 w-5 ${isImportant ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`} />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Meta Dados */}
-      <div className="flex flex-wrap items-center gap-8 py-6 border-b border-black/5 dark:border-white/5">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Disciplina</span>
+      <div className="grid grid-cols-1 md:flex md:flex-wrap items-center gap-4 md:gap-8 py-4 md:py-6 border-b border-black/5 dark:border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+          <span className="text-[9px] md:text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Disciplina</span>
           <Select value={disciplineId} onValueChange={(v) => { setDisciplineId(v); saveNote({ discipline_id: v || null }) }}>
-            <SelectTrigger className="w-48 h-9 bg-white/50 dark:bg-black/30 border-black/5 font-bold text-xs rounded-lg cursor-pointer">
+            <SelectTrigger className="w-full md:w-48 h-9 bg-white/40 dark:bg-black/20 border-black/5 font-bold text-xs rounded-lg">
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
-              {disciplines.map((d) => <SelectItem key={d.id} value={d.id} className="cursor-pointer">{d.icon} {d.name}</SelectItem>)}
+              {disciplines.map((d) => <SelectItem key={d.id} value={d.id}>{d.icon} {d.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Tópico</span>
+        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+          <span className="text-[9px] md:text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Tópico</span>
           <Input
             value={topic}
             onChange={(e) => { setTopic(e.target.value); setHasUnsavedChanges(true); debouncedSave() }}
-            className="h-9 w-64 bg-white/50 dark:bg-black/30 border-black/5 font-bold text-xs rounded-lg cursor-text"
+            className="h-9 w-full md:w-64 bg-white/40 dark:bg-black/20 border-black/5 font-bold text-xs rounded-lg"
             placeholder="Assunto da anotação..."
           />
         </div>
       </div>
 
-      {/* Área do Conteúdo */}
-      <div className="flex-1 py-8">
+      {/* Conteúdo */}
+      <div className="flex-1 py-4 md:py-8">
         <Textarea
           value={content}
           onChange={(e) => handleChange('content', e.target.value)}
-          placeholder="Comece a escrever seu conhecimento aqui..."
-          className="h-full min-h-100 resize-none border-none shadow-none focus-visible:ring-0 text-xl leading-relaxed bg-transparent font-medium placeholder:opacity-20 cursor-text"
+          placeholder="Comece a escrever..."
+          className="h-full min-h-75 md:min-h-100 resize-none border-none shadow-none focus-visible:ring-0 text-base md:text-xl leading-relaxed bg-transparent font-medium placeholder:opacity-20"
         />
       </div>
     </div>
