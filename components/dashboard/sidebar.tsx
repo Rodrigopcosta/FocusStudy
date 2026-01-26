@@ -39,6 +39,7 @@ import {
   GraduationCap,
   HelpCircle,
   Trophy,
+  Layers, // ADICIONADO AQUI
 } from "lucide-react"
 
 const menuItems = [
@@ -48,6 +49,7 @@ const menuItems = [
   { title: "Disciplinas", href: "/dashboard/disciplines", icon: GraduationCap },
   { title: "Pomodoro", href: "/dashboard/pomodoro", icon: Timer },
   { title: "Jornada", href: "/dashboard/jornada", icon: Trophy },
+  { title: "Flashcards", href: "/dashboard/flashcards", icon: Layers }, // AGORA FUNCIONA
 ]
 
 interface DashboardSidebarProps {
