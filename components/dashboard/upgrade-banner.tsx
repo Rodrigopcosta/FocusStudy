@@ -5,47 +5,74 @@ import { Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 export function UpgradeBanner() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState<string | null>(null)
 
-  const handleUpgrade = async () => {
-    setIsLoading(true)
+  const handleUpgrade = async (planType: 'monthly' | 'yearly') => {
+    setIsLoading(planType)
+    
+    // IDs vindos do seu .env.local
+    const priceId = planType === 'monthly' 
+      ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID 
+      : process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
+
     try {
-      // Chamada para a sua API de checkout que já configuramos anteriormente
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          // Certifique-onse de que este ID de preço está no seu .env.local
-          priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID 
-        }),
+        body: JSON.stringify({ priceId }),
       })
       
       const data = await response.json()
-      
       if (data.url) {
         window.location.href = data.url
-      } else {
-        console.error("URL de checkout não retornada")
       }
     } catch (error) {
-      console.error("Erro ao iniciar checkout", error)
+      console.error("Erro ao processar upgrade:", error)
     } finally {
-      setIsLoading(false)
+      setIsLoading(null)
     }
   }
 
   return (
-    <Button 
-      onClick={handleUpgrade} 
-      disabled={isLoading}
-      className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-none shadow-lg animate-pulse hover:animate-none"
-    >
-      {isLoading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <Sparkles className="mr-2 h-4 w-4" />
-      )}
-      Ativar IA & Resumos (7 dias grátis)
-    </Button>
+    <div className="flex flex-col sm:flex-row items-center gap-4 bg-card p-4 rounded-xl border border-amber-500/20 shadow-md">
+      <div className="flex-1 text-center sm:text-left">
+        <p className="text-sm font-bold flex items-center justify-center sm:justify-start gap-2">
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          Turbine seus estudos com IA
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Assine agora e ganhe 7 dias de acesso total grátis.
+        </p>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button 
+          size="sm"
+          variant="outline"
+          onClick={() => handleUpgrade('monthly')} 
+          disabled={!!isLoading}
+          className="cursor-pointer font-medium"
+        >
+          {isLoading === 'monthly' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Mensal"
+          )}
+        </Button>
+        
+        <Button 
+          size="sm"
+          className="bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer shadow-sm transition-all active:scale-95"
+          onClick={() => handleUpgrade('yearly')} 
+          disabled={!!isLoading}
+        >
+          {isLoading === 'yearly' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Anual (Economize)"
+          )}
+        </Button>
+      </div>
+    </div>
   )
 }
