@@ -1,12 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { Check, Zap, ShieldCheck, Trophy, Rocket, Briefcase, Crown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 const plans = [
   {
     name: "Starter",
     price: "R$ 0",
+    priceId: null, // Plano grátis não precisa de Stripe
     description: "Recursos essenciais para organizar sua rotina de estudos.",
     features: [
       "Ciclo de Estudos Básico", 
@@ -22,6 +25,7 @@ const plans = [
   {
     name: "Professional",
     price: "R$ 39,90",
+    priceId: "price_SEU_ID_MENSAL_AQUI", // <--- COLOQUE O ID DO STRIPE AQUI
     description: "A experiência completa para concurseiros de alto rendimento.",
     features: [
       "Disciplinas Ilimitadas", 
@@ -38,6 +42,7 @@ const plans = [
   {
     name: "Ultimate",
     price: "R$ 297",
+    priceId: "price_SEU_ID_ANUAL_AQUI", // <--- COLOQUE O ID DO STRIPE AQUI
     description: "O máximo poder de fogo com o melhor custo-benefício anual.",
     features: [
       "Tudo do Plano Professional", 
@@ -55,9 +60,42 @@ const plans = [
 ]
 
 export function PricingSection() {
+  const router = useRouter()
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
+
+  const handleSubscription = async (priceId: string | null) => {
+    if (!priceId) {
+      router.push("/register")
+      return
+    }
+
+    setLoadingPriceId(priceId)
+    
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId }),
+      })
+
+      if (response.status === 401) {
+        router.push("/login")
+        return
+      }
+
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error("Erro no checkout:", error)
+    } finally {
+      setLoadingPriceId(null)
+    }
+  }
+
   return (
     <section className="py-24 px-6 bg-background relative overflow-hidden">
-      {/* Elementos Visuais de Fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-16 relative z-10">
@@ -128,13 +166,15 @@ export function PricingSection() {
 
                 <div className="pt-4 space-y-3">
                   <Button 
+                    onClick={() => handleSubscription(plan.priceId)}
+                    disabled={loadingPriceId === plan.priceId}
                     className={`w-full rounded-full font-black italic uppercase h-16 text-sm transition-all duration-300 ${
                       plan.highlight 
                       ? "bg-primary hover:bg-primary/90 shadow-[0_15px_40px_rgba(var(--primary-rgb),0.3)]" 
                       : "bg-secondary hover:bg-secondary/80 text-foreground"
                     }`}
                   >
-                    {plan.button}
+                    {loadingPriceId === plan.priceId ? "PROCESSANDO..." : plan.button}
                   </Button>
                   {plan.trial && (
                     <p className="text-[9px] text-center font-black uppercase tracking-[0.2em] text-primary animate-pulse">

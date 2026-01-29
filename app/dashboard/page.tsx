@@ -4,8 +4,16 @@ import { TodayTasks } from "@/components/dashboard/today-tasks"
 import { QuickPomodoro } from "@/components/dashboard/quick-pomodoro"
 import { RecentNotes } from "@/components/dashboard/recent-notes"
 import { TasksChartClient } from "@/components/dashboard/tasks-chart-client"
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner"
+import { CheckCircle2, PartyPopper } from "lucide-react"
 
-export default async function DashboardPage() {
+interface DashboardProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardProps) {
+  const params = await searchParams
+  const isSuccess = params.success === "true"
   
   const supabase = await createClient()
   const {
@@ -16,14 +24,13 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split("T")[0]
 
-  // PERFORMANCE: Buscas paralelas para carregar tudo de uma vez
   const [statsRes, pendingTasksRes, allTasksRes, notesRes, disciplinesRes, profileRes] = await Promise.all([
     supabase.from("study_stats").select("*").eq("user_id", user.id).eq("date", today).maybeSingle(),
     supabase.from("tasks").select("*, discipline:disciplines(*)").eq("user_id", user.id).eq("status", "pending").order("due_date", { ascending: true }).limit(5),
     supabase.from("tasks").select("status").eq("user_id", user.id),
     supabase.from("notes").select("*, discipline:disciplines(*)").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
     supabase.from("disciplines").select("*").eq("user_id", user.id).order("name"),
-    supabase.from("profiles").select("streak_current, streak_best").eq("id", user.id).single()
+    supabase.from("profiles").select("streak_current, streak_best, plan_type").eq("id", user.id).single()
   ])
 
   const todayStats = statsRes.data
@@ -36,11 +43,39 @@ export default async function DashboardPage() {
   const completedTasksCount = allTasks?.filter((t) => t.status === "completed").length || 0
   const pendingTasksCount = allTasks?.filter((t) => t.status === "pending").length || 0
 
+  const isFreePlan = !profile?.plan_type || profile?.plan_type === 'free'
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Acompanhe seu progresso e mantenha o foco nos estudos.</p>
+      {/* Alerta de Sucesso Bonito */}
+      {isSuccess && (
+        <div className="relative overflow-hidden group rounded-xl border border-primary/20 bg-primary/5 p-4 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <PartyPopper className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-bold leading-none text-foreground flex items-center gap-2">
+                Assinatura Ativada!
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Seu período de 7 dias grátis começou. Todas as funções premium estão liberadas.
+              </p>
+            </div>
+          </div>
+          {/* Detalhe visual de brilho no fundo */}
+          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10 blur-3xl" />
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Acompanhe seu progresso e mantenha o foco nos estudos.</p>
+        </div>
+        
+        {isFreePlan && <UpgradeBanner />}
       </div>
 
       <StatsCards
@@ -54,7 +89,6 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2">
           <TodayTasks tasks={pendingTasks || []} />
         </div>
-        {/* Componente Client que gerencia o gráfico pesado */}
         <TasksChartClient completed={completedTasksCount} pending={pendingTasksCount} />
       </div>
 
