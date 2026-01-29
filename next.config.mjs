@@ -3,7 +3,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  
+
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
@@ -38,7 +38,8 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
 
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' https://*.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
           },
           {
             key: "Referrer-Policy",
@@ -46,7 +47,8 @@ const nextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+            value:
+              "camera=(), microphone=(), geolocation=(), interest-cohort=()",
           },
           {
             key: "X-XSS-Protection",
@@ -56,6 +58,6 @@ const nextConfig = {
       },
     ];
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
