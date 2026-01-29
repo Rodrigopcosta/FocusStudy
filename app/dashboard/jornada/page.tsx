@@ -7,9 +7,11 @@ import { BadgeCard } from "@/components/gamification/badge-card"
 import { DailyMissions } from "@/components/gamification/daily-missions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UpgradeModal } from "@/components/dashboard/upgrade-modal" // Importado
+import { Button } from "@/components/ui/button"
 import { 
   Trophy, Medal, Flame, Zap, Loader2, 
-  Crown, Users, LayoutDashboard 
+  Crown, Users, LayoutDashboard, Lock
 } from "lucide-react"
 import confetti from "canvas-confetti"
 
@@ -44,6 +46,8 @@ interface RankingUser {
 
 export default function JornadaPage() {
   const [loading, setLoading] = useState(true)
+  const [planType, setPlanType] = useState<string | null>(null) // Novo: controle de plano
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false) // Novo: controle do modal
   const [userData, setUserData] = useState({ 
     xp: 0, 
     level: 1, 
@@ -56,7 +60,6 @@ export default function JornadaPage() {
   const [topUsers, setTopUsers] = useState<RankingUser[]>([])
   const supabase = createClient()
 
-  // Lógica de Multiplicador Visual
   const getMultiplier = (streak: number) => {
     if (streak >= 15) return { label: "2.0x", color: "text-purple-500", bg: "bg-purple-500/10" };
     if (streak >= 7) return { label: "1.5x", color: "text-orange-500", bg: "bg-orange-500/10" };
@@ -66,31 +69,15 @@ export default function JornadaPage() {
 
   const bonus = getMultiplier(userData.streak);
 
-  // Efeito de Confetti ao subir de nível
   useEffect(() => {
     if (!loading && userData.level > 1) {
       const duration = 3 * 1000;
       const end = Date.now() + duration;
 
       const frame = () => {
-        confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#3b82f6', '#22c55e']
-        });
-        confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#3b82f6', '#22c55e']
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
+        confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#3b82f6', '#22c55e'] });
+        confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#3b82f6', '#22c55e'] });
+        if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
     }
@@ -104,15 +91,14 @@ export default function JornadaPage() {
 
         const today = new Date().toISOString().split('T')[0];
 
-        // CORREÇÃO: A ordenação múltipla deve ser feita chamando .order() sucessivas vezes ou garantindo que as colunas existam.
         const [profileRes, badgesRes, tasksRes, rankingRes, focusRes] = await Promise.all([
-          supabase.from('profiles').select('xp, level, streak_current').eq('id', user.id).maybeSingle(),
+          supabase.from('profiles').select('xp, level, streak_current, plan_type').eq('id', user.id).maybeSingle(),
           supabase.from('user_badges').select('badge_id').eq('user_id', user.id),
           supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'completed'),
           supabase.from('profiles')
             .select('id, full_name, avatar_url, xp, level, streak_current')
             .order('level', { ascending: false })
-            .order('xp', { ascending: false }) // Encadeamento de ordenação correto
+            .order('xp', { ascending: false })
             .limit(10),
           supabase.from('focus_sessions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('completed_at', today)
         ])
@@ -126,6 +112,7 @@ export default function JornadaPage() {
           focusSessions: focusRes.count ?? 0
         })
 
+        setPlanType(profileRes.data?.plan_type ?? 'free')
         const badgeIds = (badgesRes.data as UserBadge[])?.map((b: UserBadge) => b.badge_id) || []
         setUnlockedBadges(badgeIds)
         setTopUsers(rankingRes.data as RankingUser[] || [])
@@ -148,6 +135,7 @@ export default function JornadaPage() {
   }
 
   const xpRemaining = 1000 - (userData.xp % 1000)
+  const isPremium = planType === 'pro' || planType === 'ultimate'
 
   const renderBadgeGrid = (category?: string) => {
     const filtered = category ? BADGES_MASTER.filter(b => b.category === category) : BADGES_MASTER
@@ -169,6 +157,7 @@ export default function JornadaPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-350 mx-auto animate-in fade-in duration-500">
+      <UpgradeModal isOpen={showUpgradeModal} onClose={setShowUpgradeModal} />
       
       {/* Header com Bônus de XP */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 md:p-8 rounded-3xl border shadow-sm border-primary/10">
@@ -253,36 +242,58 @@ export default function JornadaPage() {
         </TabsContent>
 
         <TabsContent value="ranking" className="animate-in slide-in-from-right-4 duration-300">
-          <div className="bg-card rounded-3xl border shadow-xl overflow-hidden max-w-4xl mx-auto">
+          <div className="bg-card rounded-3xl border shadow-xl overflow-hidden max-w-4xl mx-auto min-h-100 flex flex-col">
             <div className="p-6 bg-primary/5 border-b text-center">
               <Crown className="h-10 w-10 text-yellow-500 mx-auto mb-2" />
-              <h2 className="text-2xl font-black uppercase italic">Hall da Fama</h2>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter">Hall da Fama</h2>
             </div>
-            <div className="divide-y divide-border/40">
-              {topUsers.map((user, index) => (
-                <div key={user.id} className={`flex items-center justify-between p-5 transition-colors ${user.id === userData.id ? "bg-primary/10" : "hover:bg-secondary/5"}`}>
-                  <div className="flex items-center gap-4">
-                    <span className="w-6 text-center font-black text-muted-foreground">{index + 1}</span>
-                    <Avatar className="border-2 border-background shadow-sm">
-                      <AvatarImage src={user.avatar_url || ""} />
-                      <AvatarFallback className="bg-primary/10 font-bold">{user.full_name?.charAt(0) || "U"}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className={`font-bold ${user.id === userData.id ? "text-primary" : ""}`}>
-                        {user.full_name || "Estudante"} {user.id === userData.id && "(Você)"}
-                      </p>
-                      <p className="text-[10px] uppercase font-bold text-orange-500 flex items-center gap-1">
-                        <Flame className="h-3 w-3" /> {user.streak_current}d de ofensiva
-                      </p>
+
+            {/* TRAVA DE PREMIUM */}
+            {!isPremium ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6 bg-linear-to-b from-transparent to-primary/5">
+                <div className="h-20 w-20 rounded-full bg-amber-500/10 flex items-center justify-center border-2 border-amber-500/20">
+                  <Lock className="h-10 w-10 text-amber-500" />
+                </div>
+                <div className="max-w-sm space-y-2">
+                  <h3 className="text-xl font-black uppercase italic">Competição Global</h3>
+                  <p className="text-muted-foreground font-medium text-sm">
+                    Apenas membros **PRO** podem ver o Ranking Global e disputar o topo do Hall da Fama.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-black uppercase italic tracking-tighter h-12 px-8 shadow-lg active:scale-95 transition-all cursor-pointer"
+                >
+                  Desbloquear Ranking Global
+                </Button>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/40">
+                {topUsers.map((user, index) => (
+                  <div key={user.id} className={`flex items-center justify-between p-5 transition-colors ${user.id === userData.id ? "bg-primary/10" : "hover:bg-secondary/5"}`}>
+                    <div className="flex items-center gap-4">
+                      <span className="w-6 text-center font-black text-muted-foreground">{index + 1}</span>
+                      <Avatar className="border-2 border-background shadow-sm">
+                        <AvatarImage src={user.avatar_url || ""} />
+                        <AvatarFallback className="bg-primary/10 font-bold">{user.full_name?.charAt(0) || "U"}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className={`font-bold ${user.id === userData.id ? "text-primary" : ""}`}>
+                          {user.full_name || "Estudante"} {user.id === userData.id && "(Você)"}
+                        </p>
+                        <p className="text-[10px] uppercase font-bold text-orange-500 flex items-center gap-1">
+                          <Flame className="h-3 w-3" /> {user.streak_current}d de ofensiva
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-lg leading-none">LVL {user.level}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{user.xp} XP</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-black text-lg">LVL {user.level}</p>
-                    <p className="text-xs text-muted-foreground uppercase font-medium">{user.xp} XP</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
