@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { UpgradeModal } from "@/components/dashboard/upgrade-modal" // Novo modal
+import { UpgradeModal } from "@/components/dashboard/upgrade-modal"
 
 interface Flashcard {
     front: string
@@ -28,8 +28,8 @@ export default function FlashcardsPage() {
     const [isSaved, setIsSaved] = useState(false)
     const [flashcards, setFlashcards] = useState<Flashcard[]>([])
     const [disciplines, setDisciplines] = useState<Discipline[]>([])
-    const [planType, setPlanType] = useState<string | null>(null) // Estado para o plano
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false) // Controle do modal
+    const [planType, setPlanType] = useState<string | null>(null)
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
     const supabase = createClient()
     const router = useRouter()
@@ -39,7 +39,6 @@ export default function FlashcardsPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Busca disciplinas e o plano do usuário simultaneamente
             const [disciplinesRes, profileRes] = await Promise.all([
                 supabase.from("disciplines").select("id, name, icon").eq("user_id", user.id).order("name"),
                 supabase.from("profiles").select("plan_type").eq("id", user.id).single()
@@ -52,33 +51,62 @@ export default function FlashcardsPage() {
     }, [supabase])
 
     const handleGenerate = async () => {
-        if (!content) return
+        if (!content) return;
 
-        // TRAVA DE IA: Se não for pro/ultimate, abre o modal e interrompe
         if (planType !== 'pro' && planType !== 'ultimate') {
-            setShowUpgradeModal(true)
-            return
+            setShowUpgradeModal(true);
+            return;
         }
 
-        setIsGenerating(true)
-        setIsSaved(false)
+        setIsGenerating(true);
+        setIsSaved(false);
 
         try {
             const response = await fetch("/api/ai/generate-flashcards", {
                 method: "POST",
                 body: JSON.stringify({ text: content }),
                 headers: { "Content-Type": "application/json" },
-            })
+            });
 
-            const data = await response.json()
-            setFlashcards(data.flashcards || [])
-            toast.success(`${data.flashcards?.length || 0} cards gerados!`)
-        } catch (error) {
-            toast.error("Falha ao gerar cards.")
+            // Tenta ler o corpo da resposta com segurança
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                data = null;
+            }
+
+            // Se a resposta NÃO for OK (400, 401, 500, etc)
+            if (!response.ok) {
+                const errorMessage = data?.message || data?.error || "Erro desconhecido na geração";
+
+                if (data?.error === 'invalid_content' || response.status === 400) {
+                    toast.error("Conteúdo Inválido", {
+                        description: data?.message || "O texto não possui informações claras para criar estudos."
+                    });
+                    return; // Interrompe a execução aqui de forma limpa
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            // Se a resposta for OK (200)
+            if (data?.flashcards) {
+                setFlashcards(data.flashcards);
+                toast.success(`${data.flashcards.length} cards gerados!`);
+            } else {
+                throw new Error("A IA retornou um formato inesperado.");
+            }
+
+        } catch (error: any) {
+            console.error("Erro na Requisição:", error);
+            toast.error("Falha ao gerar cards", {
+                description: error.message || "Verifique sua conexão ou tente novamente."
+            });
         } finally {
-            setIsGenerating(false)
+            setIsGenerating(false);
         }
-    }
+    };
 
     const handleSaveToDatabase = async () => {
         setIsSaving(true)
@@ -108,11 +136,16 @@ export default function FlashcardsPage() {
         }
     }
 
+    const updateCard = (index: number, field: keyof Flashcard, value: string) => {
+        const newCards = [...flashcards]
+        newCards[index][field] = value
+        setFlashcards(newCards)
+    }
+
     return (
         <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-400 mx-auto">
             <UpgradeModal isOpen={showUpgradeModal} onClose={setShowUpgradeModal} />
 
-            {/* Header */}
             <div className="flex flex-col gap-1">
                 <h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase italic flex items-center gap-3 text-foreground">
                     <Layers className="h-7 w-7 md:h-8 md:w-8 text-primary" /> Flashcards
@@ -120,7 +153,6 @@ export default function FlashcardsPage() {
                 <p className="text-muted-foreground text-sm md:text-base font-medium">Gere e gerencie seu material de estudo.</p>
             </div>
 
-            {/* Grid Principal */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 <div className="lg:sticky lg:top-8 z-10 bg-background">
                     <Card className="border-2 shadow-sm">
@@ -158,7 +190,6 @@ export default function FlashcardsPage() {
                     </Card>
                 </div>
 
-                {/* Coluna de Preview (Mantida igual ao seu original) */}
                 <div className="w-full">
                     <Card className="border-2 shadow-md min-h-100 flex flex-col">
                         <CardHeader className="border-b bg-muted/30 p-4 md:p-6">
@@ -184,15 +215,32 @@ export default function FlashcardsPage() {
                                 <>
                                     <div className="divide-y divide-border">
                                         {flashcards.map((card, index) => (
-                                            <div key={index} className="p-5 md:p-8 hover:bg-accent/30 transition-colors">
+                                            <div key={index} className="p-5 md:p-8 hover:bg-accent/30 transition-colors border-b last:border-0">
                                                 <div className="space-y-4">
-                                                    <div className="flex gap-4">
-                                                        <span className="shrink-0 text-[10px] font-black bg-blue-500 text-white px-2 py-0.5 rounded h-fit mt-1 shadow-sm">FRENTE</span>
-                                                        <p className="text-sm md:text-base font-bold leading-relaxed text-foreground">{card.front}</p>
+                                                    {/* Campo da Frente com Máscara Visual */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <span className="shrink-0 text-[10px] font-black bg-blue-500 text-white px-2 py-0.5 rounded w-fit shadow-sm uppercase">Frente</span>
+                                                        <textarea
+                                                            className="w-full bg-transparent border-none focus:ring-1 focus:ring-primary/30 rounded p-1 text-sm md:text-base font-bold leading-relaxed resize-none"
+                                                            // Exibe ____ se não estiver focado, facilitando a leitura
+                                                            value={card.front.replace(/\{\{.*?\}\}/g, "__________")}
+                                                            onChange={(e) => {
+                                                                updateCard(index, 'front', e.target.value)
+                                                            }}
+                                                            rows={2}
+                                                            placeholder="Texto da frente..."
+                                                        />
                                                     </div>
-                                                    <div className="flex gap-4">
-                                                        <span className="shrink-0 text-[10px] font-black bg-purple-500 text-white px-2 py-0.5 rounded h-fit mt-1 shadow-sm">VERSO</span>
-                                                        <p className="text-sm md:text-base text-muted-foreground italic leading-relaxed">{card.back}</p>
+
+                                                    {/* Campo do Verso */}
+                                                    <div className="flex flex-col gap-2">
+                                                        <span className="shrink-0 text-[10px] font-black bg-purple-500 text-white px-2 py-0.5 rounded w-fit shadow-sm uppercase">Verso</span>
+                                                        <input
+                                                            className="w-full bg-transparent border-none focus:ring-1 focus:ring-primary/30 rounded p-1 text-sm md:text-base text-muted-foreground italic leading-relaxed"
+                                                            value={card.back}
+                                                            onChange={(e) => updateCard(index, 'back', e.target.value)}
+                                                            placeholder="Resposta do verso..."
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
