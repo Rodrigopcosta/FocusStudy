@@ -4,10 +4,21 @@ import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { GamificationService } from "@/lib/gamification/service"
 import { motion, AnimatePresence } from "framer-motion"
-import { Brain, Eye, Keyboard, CheckCircle2, Loader2, Sparkles } from "lucide-react"
+import {
+  Brain, CheckCircle2, Loader2,
+  Flame, ArrowRight,
+  AlertCircle, Star, Zap, Plus,
+  LayoutDashboard
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+
+const BATCH_SIZE = 5;
+const MAX_DAILY_NEW = 10;
+const MAX_DAILY_REVIEWS = 20;
 
 interface Flashcard {
   id: string
@@ -16,6 +27,13 @@ interface Flashcard {
   interval: number
   ease_factor: number
   repetition_count: number
+  next_review: string
+  created_at: string
+  subject?: string
+}
+
+interface StudyLog {
+  type: 'new' | 'review'
 }
 
 export default function StudyPage() {
@@ -23,271 +41,263 @@ export default function StudyPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isRevealed, setIsRevealed] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [xpFloating, setXpFloating] = useState<{ show: boolean; val: number }>({ show: false, val: 0 })
-  
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [sessionStarted, setSessionStarted] = useState(false)
+  const [version, setVersion] = useState(0)
+  const [xpFloating, setXpFloating] = useState({ show: false, val: 0 })
+  const [dailyStats, setDailyStats] = useState({ newDone: 0, reviewsDone: 0 })
+
+  const [categories, setCategories] = useState({
+    recent: { count: 0 },
+    errei: { count: 0 },
+    dificil: { count: 0 },
+    bom: { count: 0 },
+    facil: { count: 0 }
+  })
+
   const supabase = createClient()
 
-  // Busca apenas os cards que precisam ser revisados hoje ou antes
-  const fetchCards = useCallback(async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data, error } = await supabase
+    const today = new Date().toISOString().split('T')[0];
+
+    // Busca logs com tipagem correta
+    const { data: logs } = await supabase
+      .from("study_logs")
+      .select("type")
+      .eq("user_id", user.id)
+      .gte("created_at", today)
+
+    const typedLogs = (logs as StudyLog[]) || [];
+    const newDoneCount = typedLogs.filter((l: StudyLog) => l.type === 'new').length;
+    const reviewsDoneCount = typedLogs.filter((l: StudyLog) => l.type === 'review').length;
+    
+    setDailyStats({ newDone: newDoneCount, reviewsDone: reviewsDoneCount });
+
+    const { data: allCards } = await supabase
       .from("flashcards")
       .select("*")
       .eq("user_id", user.id)
-      .lte("next_review", new Date().toISOString())
-      .order("next_review", { ascending: true })
 
-    if (error) {
-      toast.error("Erro ao carregar cards")
-    } else {
-      setCards(data || [])
+    if (allCards) {
+      const typedCards = allCards as Flashcard[];
+      setCategories({
+        recent: { count: typedCards.filter((c: Flashcard) => c.repetition_count === 0).length },
+        errei: { count: typedCards.filter((c: Flashcard) => c.repetition_count > 0 && c.ease_factor <= 1.5).length },
+        dificil: { count: typedCards.filter((c: Flashcard) => c.repetition_count > 0 && c.ease_factor > 1.5 && c.ease_factor <= 2.0).length },
+        bom: { count: typedCards.filter((c: Flashcard) => c.repetition_count > 0 && c.ease_factor > 2.0 && c.ease_factor <= 2.5).length },
+        facil: { count: typedCards.filter((c: Flashcard) => c.repetition_count > 0 && c.ease_factor > 2.5).length }
+      })
     }
     setLoading(false)
   }, [supabase])
 
   useEffect(() => {
-    fetchCards()
-  }, [fetchCards])
+    fetchDashboardData()
+  }, [fetchDashboardData, version])
 
-  // Lógica de Cloze Deletion (Omissão de Palavras {{...}})
-  const renderContent = (text: string, revealed: boolean) => {
-    const parts = text.split(/(\{\{.*?\}\})/)
-    return parts.map((part, i) => {
-      if (part.startsWith("{{") && part.endsWith("}}")) {
-        const content = part.slice(2, -2)
-        return (
-          <span
-            key={i}
-            className={`px-2 rounded-md transition-all duration-500 font-bold ${
-              revealed 
-                ? "bg-blue-100 text-blue-700 border-b-2 border-blue-400" 
-                : "bg-slate-800 text-transparent select-none cursor-pointer"
-            }`}
-            onClick={() => !revealed && setIsRevealed(true)}
-          >
-            {content}
-          </span>
-        )
-      }
-      return part
-    })
+  const startSession = async (filter: string) => {
+    if (filter === 'recent' && dailyStats.newDone >= MAX_DAILY_NEW) {
+      toast.error("Limite de novos cards atingido!");
+      return;
+    }
+    if (filter !== 'recent' && dailyStats.reviewsDone >= MAX_DAILY_REVIEWS) {
+      toast.error("Limite de revisões atingido!");
+      return;
+    }
+
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    let query = supabase.from("flashcards").select("*").eq("user_id", user?.id)
+
+    if (filter === 'recent') {
+      query = query.eq('repetition_count', 0).order('created_at', { ascending: false })
+    } else {
+      query = query.gt('repetition_count', 0)
+      if (filter === 'errei') query = query.lte('ease_factor', 1.5)
+      else if (filter === 'dificil') query = query.gt('ease_factor', 1.5).lte('ease_factor', 2.0)
+      else if (filter === 'bom') query = query.gt('ease_factor', 2.0).lte('ease_factor', 2.5)
+      else if (filter === 'facil') query = query.gt('ease_factor', 2.5)
+    }
+
+    const { data } = await query.limit(BATCH_SIZE)
+    if (data && data.length > 0) {
+      setCards(data)
+      setSessionStarted(true)
+      setCurrentIndex(0)
+      setIsRevealed(false)
+    }
+    setLoading(false)
   }
 
   const handleFeedback = async (quality: number) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
     const card = cards[currentIndex]
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || !card) return
+    if (!user || !card) { setIsProcessing(false); return; }
 
-    // Algoritmo SRS (Espaçamento)
-    let newInterval: number
-    let newEaseFactor = card.ease_factor
-
-    if (quality < 3) {
-      newInterval = 1 
-      newEaseFactor = Math.max(1.3, card.ease_factor - 0.2)
-    } else {
-      // Bônus de intervalo baseado na qualidade
-      const modifier = quality === 4 ? 2.5 : 1.5
-      newInterval = Math.max(card.interval * modifier * card.ease_factor, 1)
-      newEaseFactor = card.ease_factor + 0.1
-    }
-
-    const nextReview = new Date()
-    nextReview.setDate(nextReview.getDate() + Math.round(newInterval))
-
-    // Gamificação: XP Base
-    const baseXP = quality === 1 ? 5 : quality === 2 ? 10 : quality === 3 ? 20 : 30
+    const isNewStudy = card.repetition_count === 0;
 
     try {
-      // 1. Atualiza o Card no Supabase
-      const updateCard = supabase
-        .from("flashcards")
-        .update({
-          interval: Math.round(newInterval),
-          ease_factor: newEaseFactor,
-          next_review: nextReview.toISOString(),
-          repetition_count: card.repetition_count + 1
-        })
-        .eq("id", card.id)
+      let nextEase = card.ease_factor;
+      let nextInterval = card.interval;
+      if (quality === 1) { nextEase = 1.3; nextInterval = 1; }
+      else if (quality === 2) { nextEase = 1.8; nextInterval = 2; }
+      else if (quality === 3) { nextEase = 2.3; nextInterval = 4; }
+      else if (quality === 4) { nextEase = 3.0; nextInterval = 7; }
 
-      // 2. Adiciona XP (O serviço já calcula o bônus de streak internamente)
-      const addXp = GamificationService.addXP(user.id, baseXP)
+      await supabase.from("flashcards").update({
+        ease_factor: nextEase,
+        interval: nextInterval,
+        next_review: new Date(Date.now() + nextInterval * 86400000).toISOString(),
+        repetition_count: card.repetition_count + 1,
+        updated_at: new Date().toISOString()
+      }).eq("id", card.id);
 
-      const [_, xpResult] = await Promise.all([updateCard, addXp])
+      await supabase.from("study_logs").insert({
+        user_id: user.id,
+        card_id: card.id,
+        type: isNewStudy ? 'new' : 'review'
+      });
 
-      // Efeito visual de XP
-      if (xpResult) {
-        setXpFloating({ show: true, val: xpResult.boostedAmount })
-        setTimeout(() => setXpFloating({ show: false, val: 0 }), 1000)
-      }
+      setDailyStats(prev => ({
+        newDone: isNewStudy ? prev.newDone + 1 : prev.newDone,
+        reviewsDone: !isNewStudy ? prev.reviewsDone + 1 : prev.reviewsDone
+      }));
 
-      // 3. Verifica Medalha (Flash Hunter - 50 revisões)
-      if (card.repetition_count + 1 === 50) {
-        await GamificationService.unlockBadge(user.id, 'flash-hunter')
-        toast.success("🏅 Nova Medalha: Flash Hunter!")
-      }
+      const xpResult = await GamificationService.addXP(user.id, quality * 15)
+      if (xpResult) setXpFloating({ show: true, val: xpResult.boostedAmount });
+      setTimeout(() => setXpFloating({ show: false, val: 0 }), 800);
 
-      // Passar para o próximo
-      setIsRevealed(false)
       if (currentIndex < cards.length - 1) {
-        setCurrentIndex(prev => prev + 1)
+        setCurrentIndex(prev => prev + 1);
+        setIsRevealed(false);
       } else {
-        setCards([]) // Finalizou a pilha
+        finishSession();
       }
-    } catch (error) {
-      toast.error("Erro ao salvar progresso")
+    } catch (e) {
+      toast.error("Erro ao salvar.");
+    } finally {
+      setIsProcessing(false);
     }
   }
 
-  // Atalhos de Teclado
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (cards.length === 0) return
-      
-      if (e.code === "Space") {
-        e.preventDefault()
-        setIsRevealed(true)
-      }
-      
-      if (isRevealed) {
-        if (["1", "2", "3", "4"].includes(e.key)) {
-          handleFeedback(parseInt(e.key))
-        }
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isRevealed, currentIndex, cards])
+  const finishSession = () => {
+    setSessionStarted(false);
+    setVersion(v => v + 1);
+    setIsProcessing(false);
+  }
 
-  if (loading) return (
-    <div className="flex flex-col h-[80vh] items-center justify-center gap-4">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="font-bold text-muted-foreground animate-pulse uppercase tracking-widest">Organizando seus estudos...</p>
+  if (loading && !sessionStarted) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>
+
+  if (!sessionStarted) return (
+    <div className="max-w-5xl mx-auto p-6 space-y-10 animate-in fade-in duration-500">
+      <header className="flex justify-between items-center">
+        <h1 className="text-4xl font-black uppercase italic flex items-center gap-3 tracking-tighter">
+          <LayoutDashboard className="text-primary" size={28} /> Painel
+        </h1>
+        <div className="bg-accent/20 p-3 rounded-2xl border text-right">
+          <p className="text-[10px] font-black uppercase opacity-50">Sessão Diária</p>
+          <p className="text-xs font-bold text-primary italic">
+            Novos: {dailyStats.newDone}/{MAX_DAILY_NEW} | Rev: {dailyStats.reviewsDone}/{MAX_DAILY_REVIEWS}
+          </p>
+        </div>
+      </header>
+
+      <Card 
+        className={cn(
+          "bg-accent/10 border-2 rounded-4xl cursor-pointer overflow-hidden transition-all",
+          dailyStats.newDone >= MAX_DAILY_NEW && "opacity-50 grayscale pointer-events-none"
+        )} 
+        onClick={() => startSession('recent')}
+      >
+        <CardContent className="p-12 space-y-6">
+          <h3 className="text-5xl font-black uppercase tracking-tighter">
+            {dailyStats.newDone >= MAX_DAILY_NEW ? "Meta Batida!" : "Estudar Novos"}
+          </h3>
+          <p className="text-muted-foreground font-medium italic">
+             {dailyStats.newDone >= MAX_DAILY_NEW 
+              ? "Você já estudou os 10 cards novos de hoje." 
+              : `Faltam ${MAX_DAILY_NEW - dailyStats.newDone} cards para a meta.`}
+          </p>
+          <Button className="bg-primary font-black rounded-2xl px-10 h-14 text-lg">
+             {dailyStats.newDone >= MAX_DAILY_NEW ? "CONCLUÍDO" : "INICIAR"} <ArrowRight className="ml-2" />
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <PerformanceCard title="Errei" count={categories.errei.count} icon={<AlertCircle />} color="red" disabled={dailyStats.reviewsDone >= MAX_DAILY_REVIEWS} onClick={() => startSession('errei')} />
+        <PerformanceCard title="Difícil" count={categories.dificil.count} icon={<Zap />} color="orange" disabled={dailyStats.reviewsDone >= MAX_DAILY_REVIEWS} onClick={() => startSession('dificil')} />
+        <PerformanceCard title="Bom" count={categories.bom.count} icon={<Star />} color="green" disabled={dailyStats.reviewsDone >= MAX_DAILY_REVIEWS} onClick={() => startSession('bom')} />
+        <PerformanceCard title="Fácil" count={categories.facil.count} icon={<CheckCircle2 />} color="blue" disabled={dailyStats.reviewsDone >= MAX_DAILY_REVIEWS} onClick={() => startSession('facil')} />
+      </div>
     </div>
   )
-
-  if (cards.length === 0) return (
-    <div className="flex flex-col items-center justify-center h-[80vh] space-y-6 animate-in fade-in zoom-in duration-500">
-      <div className="bg-green-500/10 p-6 rounded-full">
-        <CheckCircle2 className="h-20 w-20 text-green-500" />
-      </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter">Deck Limpo!</h2>
-        <p className="text-muted-foreground max-w-xs mx-auto">Você concluiu todas as revisões agendadas para este momento.</p>
-      </div>
-      <Button onClick={() => window.location.href = '/dashboard/flashcards'} variant="outline" className="rounded-full px-8">
-        Gerar mais Flashcards
-      </Button>
-    </div>
-  )
-
-  const currentCard = cards[currentIndex]
-  const progressPercent = ((currentIndex) / cards.length) * 100
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 relative">
-      {/* Barra de Progresso Superior */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-end">
-          <div className="flex gap-4">
-            <div className="text-center">
-              <p className="text-[10px] font-black text-muted-foreground uppercase">Restantes</p>
-              <p className="text-xl font-black">{cards.length - currentIndex}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] font-black text-primary uppercase">Sessão Atual</p>
-            <p className="text-sm font-bold">{Math.round(progressPercent)}% Concluído</p>
-          </div>
-        </div>
-        <Progress value={progressPercent} className="h-3 bg-secondary/50 border shadow-sm" />
-      </div>
-
-      {/* Area do Card */}
-      <div className="relative min-h-100 flex flex-col items-center">
-        
-        {/* XP Floating Effect */}
+    <div className="max-w-4xl mx-auto p-6 min-h-screen flex flex-col justify-center">
+      <header className="flex justify-between items-center mb-6">
+        <Button variant="ghost" onClick={finishSession} className="font-black cursor-pointer">← VOLTAR</Button>
+        <div className="font-black text-primary bg-primary/10 px-4 py-1 rounded-full">{currentIndex + 1} / {cards.length}</div>
+      </header>
+      <Progress value={(currentIndex / cards.length) * 100} className="h-2 mb-8" />
+      <div className="relative">
         <AnimatePresence>
           {xpFloating.show && (
-            <motion.div
-              initial={{ opacity: 0, y: 0 }}
-              animate={{ opacity: 1, y: -100 }}
-              exit={{ opacity: 0 }}
-              className="absolute z-50 flex items-center gap-2 bg-yellow-400 text-black px-4 py-2 rounded-full font-black shadow-xl"
-            >
-              <Sparkles className="h-4 w-4" /> +{xpFloating.val} XP
+            <motion.div initial={{ opacity: 0, y: 0 }} animate={{ opacity: 1, y: -100 }} exit={{ opacity: 0 }} className="absolute left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-black px-6 py-2 rounded-full font-black border-2 border-black">
+              +{xpFloating.val} XP
             </motion.div>
           )}
         </AnimatePresence>
-
-        <motion.div
-          key={currentCard.id}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full bg-card border-2 border-primary/10 rounded-[2.5rem] shadow-2xl p-8 md:p-12 flex flex-col justify-center min-h-100 relative overflow-hidden"
-        >
-          {/* Tag de Lei Seca */}
-          <div className="absolute top-6 left-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
-            <Brain className="h-4 w-4" /> Modo Estudo Ativo
-          </div>
-
-          <div className="text-2xl md:text-3xl text-center leading-relaxed font-serif text-foreground selection:bg-primary/20">
-            {renderContent(currentCard.front, isRevealed)}
-          </div>
-
-          <AnimatePresence>
-            {isRevealed && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-10 pt-10 border-t-2 border-dashed border-primary/10 text-center"
-              >
-                <p className="text-xl md:text-2xl font-medium text-primary italic">
-                  {currentCard.back}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <motion.div key={cards[currentIndex]?.id} className="bg-card border-4 border-accent rounded-[2.5rem] p-8 min-h-75 flex flex-col justify-center items-center text-center">
+          <div className="text-2xl md:text-3xl font-medium mb-6">{cards[currentIndex]?.front.replace(/\{\{|\}\}/g, '')}</div>
+          {isRevealed && <div className="pt-6 border-t w-full italic text-muted-foreground text-xl">{cards[currentIndex]?.back}</div>}
         </motion.div>
       </div>
-
-      {/* Controles de Feedback */}
-      <div className="max-w-2xl mx-auto w-full">
+      <footer className="mt-8 h-24">
         {!isRevealed ? (
-          <Button 
-            className="w-full h-20 text-xl font-black uppercase tracking-tighter rounded-3xl shadow-lg hover:scale-[1.02] transition-transform"
-            onClick={() => setIsRevealed(true)}
-          >
-            Mostrar Resposta <Eye className="ml-3 h-6 w-6" />
-          </Button>
+          <Button onClick={() => setIsRevealed(true)} className="w-full h-full text-xl font-black rounded-3xl bg-primary uppercase italic">Mostrar Resposta</Button>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-bottom-4">
-            <Button onClick={() => handleFeedback(1)} variant="destructive" className="h-16 flex flex-col rounded-2xl">
-              <span className="text-xs opacity-70">ERREI</span>
-              <span className="font-bold">TECLA 1</span>
-            </Button>
-            <Button onClick={() => handleFeedback(2)} className="h-16 flex flex-col rounded-2xl bg-orange-500 hover:bg-orange-600">
-              <span className="text-xs opacity-70">DIFÍCIL</span>
-              <span className="font-bold">TECLA 2</span>
-            </Button>
-            <Button onClick={() => handleFeedback(3)} className="h-16 flex flex-col rounded-2xl bg-green-600 hover:bg-green-700">
-              <span className="text-xs opacity-70">BOM</span>
-              <span className="font-bold">TECLA 3</span>
-            </Button>
-            <Button onClick={() => handleFeedback(4)} className="h-16 flex flex-col rounded-2xl bg-blue-600 hover:bg-blue-700">
-              <span className="text-xs opacity-70">FÁCIL</span>
-              <span className="font-bold">TECLA 4</span>
-            </Button>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 h-full">
+            <FeedbackBtn onClick={() => handleFeedback(1)} label="Errei" color="bg-red-500" disabled={isProcessing} />
+            <FeedbackBtn onClick={() => handleFeedback(2)} label="Difícil" color="bg-orange-500" disabled={isProcessing} />
+            <FeedbackBtn onClick={() => handleFeedback(3)} label="Bom" color="bg-green-600" disabled={isProcessing} />
+            <FeedbackBtn onClick={() => handleFeedback(4)} label="Fácil" color="bg-blue-600" disabled={isProcessing} />
           </div>
         )}
-        
-        <p className="text-center mt-6 text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-50">
-          Dica: Use a BARRA DE ESPAÇO para revelar e os números 1 a 4 para responder
-        </p>
-      </div>
+      </footer>
     </div>
+  )
+}
+
+function PerformanceCard({ title, count, icon, color, onClick, disabled }: any) {
+  const styles: any = {
+    red: "hover:border-red-500 text-red-500 bg-red-500/5",
+    orange: "hover:border-orange-500 text-orange-500 bg-orange-500/5",
+    green: "hover:border-green-500 text-green-500 bg-green-500/5",
+    blue: "hover:border-blue-500 text-blue-500 bg-blue-500/5",
+  }
+  return (
+    <Card className={cn("border-2 transition-all cursor-pointer bg-card rounded-3xl", styles[color], disabled && "opacity-40 grayscale pointer-events-none")} onClick={onClick}>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="p-2 bg-foreground/5 rounded-lg">{icon}</div>
+        </div>
+        <p className="text-3xl font-black text-foreground">{count}</p>
+        <p className="text-[10px] font-black text-muted-foreground uppercase">{title}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function FeedbackBtn({ onClick, label, color, disabled }: any) {
+  return (
+    <Button disabled={disabled} onClick={onClick} className={cn("h-full font-black rounded-2xl text-white cursor-pointer uppercase italic text-sm", color)}>{label}</Button>
   )
 }
