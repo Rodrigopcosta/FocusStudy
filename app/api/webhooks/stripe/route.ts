@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST(req: Request) {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
   } catch (error: any) {
     console.error(`❌ Erro de Assinatura: ${error.message}`);
@@ -36,13 +36,18 @@ export async function POST(req: Request) {
         const subscriptionId = session.subscription as string;
 
         if (userId && subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription =
+            await stripe.subscriptions.retrieve(subscriptionId);
           const priceId = subscription.items.data[0].price.id;
-          
-          // Defina aqui os IDs reais do seu dashboard para diferenciar os planos
-          const planType = priceId === "price_ID_ANUAL_AQUI" ? "ultimate" : "pro";
 
-          console.log(`🚀 Ativando plano ${planType} para o usuário: ${userId}`);
+          // Defina aqui os IDs reais do seu dashboard para diferenciar os planos
+          const planType =
+            priceId === process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
+              ? "ultimate"
+              : "pro";
+          console.log(
+            `🚀 Ativando plano ${planType} para o usuário: ${userId}`,
+          );
 
           const { error: updateError } = await supabaseAdmin
             .from("profiles")
@@ -62,7 +67,7 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
         const updatedSub = event.data.object as any;
         console.log("🔄 Assinatura atualizada:", updatedSub.status);
-        
+
         await supabaseAdmin
           .from("profiles")
           .update({
@@ -76,9 +81,9 @@ export async function POST(req: Request) {
         console.log("❌ Assinatura removida");
         await supabaseAdmin
           .from("profiles")
-          .update({ 
-            subscription_status: "canceled", 
-            plan_type: "free" 
+          .update({
+            subscription_status: "canceled",
+            plan_type: "free",
           })
           .eq("stripe_customer_id", session.customer as string);
         break;
@@ -87,7 +92,9 @@ export async function POST(req: Request) {
         console.log(`🟡 Evento ignorado: ${event.type}`);
     }
 
-    return new NextResponse(JSON.stringify({ received: true }), { status: 200 });
+    return new NextResponse(JSON.stringify({ received: true }), {
+      status: 200,
+    });
   } catch (error: any) {
     console.error("❌ Erro interno no Webhook:", error.message);
     return new NextResponse(`Erro Interno: ${error.message}`, { status: 500 });
