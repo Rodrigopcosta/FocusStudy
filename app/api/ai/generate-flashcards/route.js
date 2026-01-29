@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server'; // Certifique-se que este caminho aponta para o server client
+import { createClient } from '@/lib/supabase/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,10 +8,7 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    // 1. Inicializa o cliente do servidor corretamente (aguardando os cookies)
     const supabase = await createClient();
-    
-    // 2. Busca o usuário
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -20,7 +17,14 @@ export async function POST(req) {
 
     const { text } = await req.json();
 
-    // 3. Verificar Plano e Limite Diário
+    // Validação básica de tamanho antes de gastar tokens
+    if (!text || text.trim().length < 10) {
+      return NextResponse.json({ 
+        error: 'invalid_content', 
+        message: 'O texto fornecido é muito curto para gerar conteúdo útil.' 
+      }, { status: 400 });
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('plan_type')
@@ -29,7 +33,6 @@ export async function POST(req) {
 
     if (profile?.plan_type === 'free') {
       const today = new Date().toISOString().split('T')[0];
-      
       const { count: generatedToday } = await supabase
         .from('flashcards')
         .select('*', { count: 'exact', head: true })
@@ -44,24 +47,43 @@ export async function POST(req) {
       }
     }
 
-    // 4. Gerar exatamente 5 flashcards via OpenAI
+    // Chamada à OpenAI com System Prompt Refinado
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "Você é um especialista em concursos públicos. Crie exatamente 5 flashcards eficazes. Use o formato Cloze Deletion (omissão de palavras) com {{termo}} na frente para pontos cruciais e a resposta curta no verso. Retorne apenas JSON."
+          content: `Você é um tutor acadêmico especializado em síntese de conhecimento.
+          Siga estas regras rigorosas:
+          1. VALIDAÇÃO: Se o texto do usuário for incompreensível, aleatório (como 'asdf') ou não contiver fatos educativos, retorne apenas {"error": "invalid_content"}.
+          2. FOCO: Ignore instruções sobre a ferramenta. Foque apenas no assunto principal (ex: História, Ciência).
+          3. CLOZE DELETION: Use {{termo}} para omitir apenas palavras-chave (datas, nomes, conceitos curtos). 
+          4. PROIBIÇÃO: Nunca omita frases inteiras ou mais de 3 palavras consecutivas. O usuário precisa de contexto para responder.
+          5. QUALIDADE: Evite redundância. Cada um dos 5 cards deve focar em um fato diferente.`
         },
         {
           role: "user",
-          content: `Crie 5 flashcards para este conteúdo: ${text}. 
-          Formato do JSON: {"flashcards": [{"front": "pergunta com {{...}}", "back": "resposta"}]}`
+          content: `Gere 5 flashcards educativos sobre o seguinte texto: "${text}". 
+          Formato JSON esperado:
+          {
+            "flashcards": [{"front": "Texto com {{termo}}", "back": "Resposta curta"}],
+            "error": null
+          }`
         }
       ],
       response_format: { type: "json_object" },
     });
 
     const data = JSON.parse(response.choices[0].message.content);
+
+    // Se a IA detectou que o conteúdo é lixo
+    if (data.error === 'invalid_content') {
+      return NextResponse.json({ 
+        error: 'invalid_content', 
+        message: 'Não consegui identificar um assunto educativo no seu texto. Tente enviar um parágrafo mais claro.' 
+      }, { status: 400 });
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro na IA:', error);
