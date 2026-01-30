@@ -62,7 +62,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'FocusStudy | Domine seu Edital',
-    description: 'Transforme seu estudo em uma máquina de resultados com o FocusStudy.',
+    description:
+      'Transforme seu estudo em uma máquina de resultados com o FocusStudy.',
     images: ['/og-image.png'],
   },
   alternates: {
@@ -92,7 +93,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

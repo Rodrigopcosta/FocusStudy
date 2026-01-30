@@ -1,9 +1,9 @@
 'use client'
 
-import * as React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Target, ArrowLeft, Lock, Fingerprint, EyeOff } from 'lucide-react'
+import { Footer } from '@/components/landing/footer'
 
 export default function PrivacyPage() {
   const lastUpdate = '25 de Janeiro de 2026'
@@ -194,6 +194,7 @@ export default function PrivacyPage() {
           </section>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }
