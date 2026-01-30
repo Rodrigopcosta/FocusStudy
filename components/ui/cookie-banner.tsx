@@ -27,12 +27,13 @@ export function CookieBanner() {
     setIsVisible(false)
   }
 
-  // Evita erro de hidratação (renderização desigual entre servidor e cliente)
+  // Evita erro de hidratação
   if (!mounted || !isVisible) return null
 
   return (
     <div className="fixed bottom-6 left-6 right-6 z-100 animate-in fade-in slide-in-from-bottom-10 duration-700">
-      <div className="max-w-4xl mx-auto bg-card/80 backdrop-blur-xl border-2 border-primary/20 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      {/* Ajustado: fundo 100% opaco e borda mais nítida */}
+      <div className="max-w-4xl mx-auto bg-card border-2 border-primary/30 p-6 md:p-8 rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.8)]">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 cursor-help group">
             <Cookie className="h-8 w-8 text-primary animate-pulse group-hover:scale-110 transition-transform" />
