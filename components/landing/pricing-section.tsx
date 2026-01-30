@@ -110,8 +110,8 @@ export function PricingSection() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-20 space-y-4">
-          <h2 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter">
-            FOCO NA <span className="text-primary">APROVAÇÃO</span>
+          <h2 className="text-5xl md:text-7xl font-extrabold italic uppercase tracking-tighter leading-tight">
+            Alcance seus objetivos <span className="text-primary">com um cronograma que se adapta ao seu ritmo com IA</span>
           </h2>
           <p className="text-muted-foreground font-bold uppercase italic tracking-[0.2em] text-xs md:text-sm">
             A estrutura profissional que sua aprovação exige.
