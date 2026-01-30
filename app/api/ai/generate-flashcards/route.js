@@ -2,12 +2,13 @@ import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// Força o Next.js a tratar a rota como dinâmica, evitando erros de leitura de env no build
+// Esta linha avisa ao Next.js para não tentar pré-renderizar esta rota no build
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    // Inicialização movida para dentro do escopo da função
+    // Inicializamos a OpenAI aqui dentro para garantir que ela pegue a chave 
+    // apenas quando a função for realmente executada no servidor.
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -51,7 +52,7 @@ export async function POST(req) {
       }
     }
 
-    // Chamada à OpenAI com System Prompt Refinado
+    // Chamada à OpenAI
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
