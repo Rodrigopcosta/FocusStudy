@@ -4,6 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Target, ArrowLeft, ShieldCheck, Scale } from 'lucide-react'
+import { Footer } from '@/components/landing/footer'
 
 export default function TermsPage() {
   const lastUpdate = '25 de Janeiro de 2026'
@@ -183,6 +184,7 @@ export default function TermsPage() {
           </footer>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

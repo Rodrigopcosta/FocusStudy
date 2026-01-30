@@ -4,69 +4,68 @@ import * as React from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { BookOpen, ArrowLeft } from 'lucide-react'
+import {
+  Target,
+  ArrowLeft,
+  HelpCircle,
+  MessageCircle,
+  Sparkles,
+  ShieldCheck,
+} from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Footer } from '@/components/landing/footer'
 
 const faqs = [
   {
-    question: 'O FocusStudy é gratuito?',
+    category: 'PLANOS E ACESSO',
+    question: 'Como funciona o período de teste de 7 dias?',
     answer:
-      'Sim! O FocusStudy é totalmente gratuito. Você pode criar sua conta e usar todas as funcionalidades sem nenhum custo.',
+      'Ao assinar os planos Professional ou Ultimate, você ganha 7 dias para experimentar todas as funcionalidades de elite. A cobrança no seu cartão de crédito só será processada após esse período. Se você cancelar dentro dos 7 dias, nada será cobrado.',
   },
   {
-    question: 'Como funciona a técnica Pomodoro?',
+    category: 'PAGAMENTO',
+    question: 'Quais as formas de pagamento disponíveis?',
     answer:
-      'A técnica Pomodoro consiste em dividir o tempo de estudo em blocos focados seguidos de pausas. No FocusStudy, oferecemos dois modos: 25 minutos de foco + 5 de pausa, ou 50 minutos de foco + 10 de pausa. Isso ajuda a manter a concentração e evitar a fadiga mental.',
+      'Aceitamos exclusivamente Cartão de Crédito via Stripe. O uso do cartão é necessário para viabilizar o período de teste gratuito e garantir que sua renovação seja automática, evitando a interrupção do seu acesso e a perda do seu histórico de estudos.',
   },
   {
-    question: 'Posso usar o FocusStudy para estudar para concursos?',
+    category: 'INTELIGÊNCIA ARTIFICIAL',
+    question: 'O uso da IA é ilimitado durante o teste?',
     answer:
-      'Com certeza! O FocusStudy foi desenvolvido pensando em concurseiros. Você pode criar disciplinas específicas, organizar tarefas por prioridade, fazer anotações de cada matéria e acompanhar seu progresso no dashboard.',
+      'Não. Para proteger a plataforma de usos abusivos e garantir a qualidade para todos, aplicamos limites de créditos para resumos e flashcards, inclusive durante o período de teste. Esses limites são generosos e suficientes para uma rotina intensa de estudos.',
   },
   {
-    question: 'E para quem está na faculdade?',
+    category: 'METODOLOGIA',
+    question: 'Como a IA utiliza meu histórico de 50 tópicos?',
     answer:
-      'Também! Ao criar sua conta, você pode escolher se está estudando para concursos ou na faculdade. Para universitários, oferecemos opções de organizar disciplinas por curso e matéria.',
+      'Nossa IA (OpenAI) utiliza uma janela de contexto dos seus últimos 50 tópicos para entender seu progresso e gerar respostas muito mais precisas e personalizadas. Seus dados são processados via API privada e não são compartilhados para treinamento público.',
   },
   {
-    question: 'Meus dados estão seguros?',
+    category: 'PÚBLICO-ALVO',
+    question: 'O FocusStudy serve para faculdade?',
     answer:
-      'Sim, levamos a segurança muito a sério. Seus dados são armazenados em servidores seguros com criptografia, e seguimos as melhores práticas de proteção de dados conforme a LGPD.',
+      'Embora a estrutura permita organizar qualquer disciplina, o FocusStudy é otimizado para Concurseiros. Nossas ferramentas de IA, cronogramas e métricas foram desenhadas para quem enfrenta a alta densidade de conteúdos de editais públicos.',
   },
   {
-    question: 'Como crio uma nova disciplina?',
+    category: 'CANCELAMENTO',
+    question: 'É difícil cancelar o teste ou a assinatura?',
     answer:
-      'Vá até a página de Disciplinas no menu lateral. Lá você pode adicionar novas disciplinas com nome, cor e ícone personalizados. As disciplinas podem ser usadas para organizar suas tarefas e notas.',
+      'Absolutamente não. Você tem total autonomia para cancelar a renovação ou o seu período de teste com um clique no painel de Configurações. Sem chamados, sem e-mails, sem burocracia.',
   },
   {
-    question: 'Posso editar ou excluir uma tarefa?',
+    category: 'SEGURANÇA',
+    question: 'Meus dados estão protegidos?',
     answer:
-      'Sim! Na lista de tarefas, clique no menu de três pontos ao lado de qualquer tarefa para ver as opções de editar ou excluir. Você também pode marcar tarefas como concluídas clicando no checkbox.',
-  },
-  {
-    question: 'O que é a sequência (streak)?',
-    answer:
-      'A sequência mostra quantos dias consecutivos você estudou. Cada dia que você completa ao menos uma sessão de Pomodoro ou tarefa, sua sequência aumenta. É uma forma de motivação para manter a consistência nos estudos!',
-  },
-  {
-    question: 'Posso usar o FocusStudy no celular?',
-    answer:
-      'Sim! O FocusStudy é totalmente responsivo e funciona em qualquer dispositivo - computador, tablet ou celular. Basta acessar pelo navegador.',
-  },
-  {
-    question: 'Como posso dar feedback ou sugestões?',
-    answer:
-      'Adoramos ouvir nossos usuários! Você pode enviar feedback, sugestões ou relatar problemas pelo e-mail: contato@focusstudy.com.br',
+      'Sim. Utilizamos criptografia AES-256 e Row Level Security (RLS) via Supabase. Suas anotações são privadas: nem a nossa equipe, nem terceiros têm acesso ao conteúdo que você estuda.',
   },
 ]
 
 export default function FAQPage() {
-  // Usando o seu cliente configurado em lib/supabase/client
   const supabase = createClient()
   const [backHref, setBackHref] = React.useState('/')
 
@@ -76,27 +75,34 @@ export default function FAQPage() {
         const {
           data: { session },
         } = await supabase.auth.getSession()
-        if (session) {
-          setBackHref('/dashboard')
-        }
+        if (session) setBackHref('/dashboard')
       } catch (error) {
-        console.error('Erro ao verificar sessão na FAQ:', error)
+        console.error('Erro na FAQ:', error)
       }
     }
     checkUser()
   }, [supabase])
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-background flex flex-col selection:bg-primary/30">
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={backHref} className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-primary-foreground" />
+          <Link
+            href={backHref}
+            className="flex items-center gap-2 group cursor-pointer"
+          >
+            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-3 transition-transform">
+              <Target className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg">FocusStudy</span>
+            <span className="font-black text-xl tracking-tighter italic uppercase">
+              FocusStudy
+            </span>
           </Link>
-          <Button variant="ghost" asChild>
+          <Button
+            variant="ghost"
+            asChild
+            className="font-bold uppercase italic text-xs tracking-widest cursor-pointer hover:bg-primary/10"
+          >
             <Link href={backHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
@@ -105,38 +111,87 @@ export default function FAQPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-4">Perguntas Frequentes</h1>
-        <p className="text-muted-foreground mb-8">
-          Encontre respostas para as dúvidas mais comuns sobre o FocusStudy.
-        </p>
+      <main className="flex-1">
+        <section className="bg-primary/5 border-b border-primary/10 py-16 md:py-24 text-center">
+          <div className="container mx-auto px-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
+              <ShieldCheck className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                Teste Grátis por 7 Dias • Sem Cobrança Antecipada
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter leading-none mb-6">
+              Dúvidas <span className="text-primary">Frequentes</span>
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto font-medium text-sm md:text-base leading-relaxed">
+              Transparência sobre nosso período de teste, uso de IA e segurança.
+              Experimente a ferramenta líder para concurseiros de elite.
+            </p>
+          </div>
+        </section>
 
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <section className="container mx-auto px-4 py-16 max-w-4xl">
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            {faqs.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={`item-${index}`}
+                className="border border-border/40 bg-card/50 rounded-2xl md:rounded-3xl px-6 overflow-hidden"
+              >
+                <AccordionTrigger className="hover:no-underline py-6 cursor-pointer group">
+                  <div className="flex flex-col items-start text-left gap-1">
+                    <span className="text-[9px] font-black text-primary tracking-[0.2em] uppercase group-hover:text-primary/80 transition-colors">
+                      {faq.category}
+                    </span>
+                    <span className="font-bold text-sm md:text-base uppercase italic tracking-tight">
+                      {faq.question}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-6 leading-relaxed text-sm md:text-base italic">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
 
-        <div className="mt-12 p-6 rounded-lg bg-muted/50 text-center">
-          <h2 className="font-semibold mb-2">Não encontrou sua resposta?</h2>
-          <p className="text-muted-foreground mb-4">
-            Entre em contato conosco pelo e-mail:
-          </p>
-          <a
-            href="mailto:contato@focusstudy.com.br"
-            className="text-primary hover:underline"
-          >
-            contato@focusstudy.com.br
-          </a>
-        </div>
+          <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-8 rounded-4xl bg-secondary/30 border border-border/40 flex flex-col items-center text-center group">
+              <MessageCircle className="h-10 w-10 text-primary mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-black uppercase italic text-lg mb-2">
+                Apoio ao Aluno
+              </h3>
+              <p className="text-xs text-muted-foreground mb-6 uppercase font-bold tracking-wider italic">
+                Suporte direto via e-mail
+              </p>
+              <a
+                href="mailto:contato@focusstudy.com.br"
+                className="text-primary font-black italic uppercase tracking-tighter text-lg hover:underline cursor-pointer"
+              >
+                contato@focusstudy.com.br
+              </a>
+            </div>
+
+            <div className="p-8 rounded-4xl bg-primary/10 border border-primary/20 flex flex-col items-center text-center group">
+              <Sparkles className="h-10 w-10 text-primary mb-4 group-hover:rotate-12 transition-transform" />
+              <h3 className="font-black uppercase italic text-lg mb-2">
+                7 Dias de Teste
+              </h3>
+              <p className="text-xs text-muted-foreground mb-6 uppercase font-bold tracking-wider italic">
+                Libere seu acesso agora
+              </p>
+              <Button
+                asChild
+                className="w-full font-black uppercase italic tracking-widest py-6 rounded-xl cursor-pointer shadow-lg shadow-primary/20"
+              >
+                <Link href="/auth/signup">Iniciar Teste Grátis</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
+
+      <Footer />
     </div>
   )
 }
