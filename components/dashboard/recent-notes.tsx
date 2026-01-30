@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import type { Note } from "@/types/database"
-import { FileText, Plus, ArrowRight, Star } from "lucide-react"
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import type { Note } from '@/types/database'
+import { FileText, Plus, ArrowRight, Star } from 'lucide-react'
 
 interface RecentNotesProps {
   notes: Note[]
@@ -33,8 +33,12 @@ export function RecentNotes({ notes }: RecentNotesProps) {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {notes.map((note) => (
-              <Link key={note.id} href={`/dashboard/notes/${note.id}`} className="group">
+            {notes.map(note => (
+              <Link
+                key={note.id}
+                href={`/dashboard/notes/${note.id}`}
+                className="group"
+              >
                 <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -42,8 +46,12 @@ export function RecentNotes({ notes }: RecentNotesProps) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium truncate group-hover:text-primary transition-colors">{note.title}</p>
-                        {note.is_important && <Star className="h-4 w-4 text-chart-4 fill-chart-4 shrink-0" />}
+                        <p className="font-medium truncate group-hover:text-primary transition-colors">
+                          {note.title}
+                        </p>
+                        {note.is_important && (
+                          <Star className="h-4 w-4 text-chart-4 fill-chart-4 shrink-0" />
+                        )}
                       </div>
                       {note.discipline && (
                         <span

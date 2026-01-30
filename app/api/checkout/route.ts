@@ -1,6 +1,6 @@
-import { stripe } from "@/lib/stripe"
-import { createClient } from "@/lib/supabase/server"
-import { NextResponse } from "next/server"
+import { stripe } from '@/lib/stripe'
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
@@ -8,26 +8,28 @@ export async function POST(req: Request) {
     const supabase = await createClient()
 
     // 1. Pega o usuário logado para saber QUEM está comprando
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
-      return new NextResponse("Não autorizado", { status: 401 })
+      return new NextResponse('Não autorizado', { status: 401 })
     }
 
     // 2. Cria a sessão de checkout no Stripe
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
           quantity: 1,
         },
       ],
-      mode: "subscription",
+      mode: 'subscription',
       // REDIRECIONAMENTOS: Para onde ele vai após pagar ou cancelar
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
-      
+
       // O SEGREDO ESTÁ AQUI: Vinculamos o ID do Supabase ao pagamento do Stripe
       metadata: {
         supabase_user_id: user.id,
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url })
   } catch (error: any) {
-    console.error("Erro no Checkout:", error)
-    return new NextResponse("Erro interno", { status: 500 })
+    console.error('Erro no Checkout:', error)
+    return new NextResponse('Erro interno', { status: 500 })
   }
 }

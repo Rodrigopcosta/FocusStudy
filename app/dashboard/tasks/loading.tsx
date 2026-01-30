@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function TasksLoading() {
   return (
@@ -17,7 +17,7 @@ export default function TasksLoading() {
       </div>
 
       <div className="space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => (
+        {[1, 2, 3, 4, 5].map(i => (
           <Skeleton key={i} className="h-20 w-full rounded-lg" />
         ))}
       </div>

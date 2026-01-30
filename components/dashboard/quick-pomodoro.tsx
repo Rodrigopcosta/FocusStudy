@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import type { Discipline, Task } from "@/types/database"
-import { Timer, Play } from "lucide-react"
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import type { Discipline, Task } from '@/types/database'
+import { Timer, Play } from 'lucide-react'
 
 interface QuickPomodoroProps {
   disciplines: Discipline[]
@@ -26,14 +26,24 @@ export function QuickPomodoro({ disciplines, tasks }: QuickPomodoroProps) {
           </div>
           {topTask ? (
             <div className="mb-4">
-              <p className="text-sm text-muted-foreground mb-1">Próxima tarefa:</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                Próxima tarefa:
+              </p>
               <p className="font-medium">{topTask.title}</p>
             </div>
           ) : (
-            <p className="text-muted-foreground mb-4">Foque nos seus estudos com a técnica Pomodoro</p>
+            <p className="text-muted-foreground mb-4">
+              Foque nos seus estudos com a técnica Pomodoro
+            </p>
           )}
           <Button asChild size="lg" className="gap-2">
-            <Link href={topTask ? `/dashboard/pomodoro?task=${topTask.id}` : "/dashboard/pomodoro"}>
+            <Link
+              href={
+                topTask
+                  ? `/dashboard/pomodoro?task=${topTask.id}`
+                  : '/dashboard/pomodoro'
+              }
+            >
               <Play className="h-4 w-4" />
               Iniciar Sessão
             </Link>

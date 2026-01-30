@@ -15,11 +15,13 @@
 ## 📸 Screenshots do Projeto
 
 ### 🖥️ Desktop (Web)
-| Dashboard (Modo Claro) | Pomodoro (Modo Escuro) |
-|:---:|:---:|
+
+|                             Dashboard (Modo Claro)                              |                             Pomodoro (Modo Escuro)                             |
+| :-----------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
 | ![Dashboard Web](https://via.placeholder.com/600x400?text=Dashboard+Modo+Claro) | ![Pomodoro Web](https://via.placeholder.com/600x400?text=Pomodoro+Modo+Escuro) |
 
 ### 📱 Mobile
+
 <div align="center">
   <img src="https://via.placeholder.com/200x400?text=Login+Mobile" width="200" />
   <img src="https://via.placeholder.com/200x400?text=Tasks+Mobile" width="200" />
@@ -28,9 +30,11 @@
 ---
 
 ## 🎯 Sobre o FocusStudy
+
 O FocusStudy é uma plataforma Full Stack projetada para transformar a rotina de concurseiros e estudantes de alto rendimento. Através de uma interface minimalista e sem distrações, o app centraliza o gerenciamento de carga horária, anotações e execução de tarefas.
 
 ### 🌟 Diferenciais
+
 - **🌓 Dual Theme:** Suporte completo a Modo Escuro (Dark) e Claro (Light) para conforto visual em longas sessões de estudo.
 - **🔒 Auth Híbrida:** Login seguro via e-mail ou **Google OAuth** via Supabase Auth.
 - **🏗️ Arquitetura Robusta:** Desenvolvido com **Clean Code** e tipagem rigorosa em TypeScript.
@@ -95,3 +99,4 @@ Email: rodrigo_ward@hotmail.com
 LinkedIn: https://www.linkedin.com/in/rodrigopc-developer/
 
 Desenvolvido com foco em performance e simplicidade. 🚀
+```

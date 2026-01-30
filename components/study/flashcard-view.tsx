@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
 
 interface FlashcardViewProps {
   card: {
@@ -13,8 +13,8 @@ interface FlashcardViewProps {
 
 export function FlashcardView({ card, isRevealed }: FlashcardViewProps) {
   return (
-    <motion.div 
-      key={card?.id} 
+    <motion.div
+      key={card?.id}
       className="bg-card border-4 border-accent rounded-[2.5rem] p-8 min-h-75 flex flex-col justify-center items-center text-center"
     >
       <div className="text-2xl md:text-3xl font-medium mb-6">

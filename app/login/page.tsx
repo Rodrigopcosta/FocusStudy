@@ -1,20 +1,26 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { BookOpen, Loader2, ArrowLeft, Sun, Moon } from "lucide-react"
-import { useTheme } from "next-themes"
+import type React from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { BookOpen, Loader2, ArrowLeft, Sun, Moon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
@@ -33,9 +39,13 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/dashboard")
+      router.push('/dashboard')
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao fazer login. Tente novamente.")
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Erro ao fazer login. Tente novamente.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -45,14 +55,16 @@ export default function LoginPage() {
     setIsGoogleLoading(true)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao conectar com Google.")
+      setError(
+        error instanceof Error ? error.message : 'Erro ao conectar com Google.'
+      )
       setIsGoogleLoading(false)
     }
   }
@@ -62,9 +74,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Header com Navegação e Toggle de Tema */}
         <div className="mb-8 flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            asChild 
+          <Button
+            variant="outline"
+            asChild
             className="group px-4 border-muted-foreground/20 hover:border-primary/50 text-foreground shadow-sm transition-all"
           >
             <Link href="/">
@@ -76,7 +88,7 @@ export default function LoginPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="rounded-full border border-muted-foreground/20"
           >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -90,9 +102,11 @@ export default function LoginPage() {
             <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
               <BookOpen className="h-7 w-7 text-primary-foreground" />
             </div>
-            <span className="font-bold text-3xl tracking-tight text-foreground">FocusStudy</span>
+            <span className="font-bold text-3xl tracking-tight text-foreground">
+              FocusStudy
+            </span>
           </div>
-          
+
           <Card className="shadow-2xl border-muted/50 bg-card">
             <CardHeader className="text-center space-y-1">
               <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
@@ -109,8 +123,15 @@ export default function LoginPage() {
                 {isGoogleLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <svg className="mr-3 h-5 w-5" viewBox="0 0 488 512" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                  <svg
+                    className="mr-3 h-5 w-5"
+                    viewBox="0 0 488 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                    ></path>
                   </svg>
                 )}
                 Continuar com Google
@@ -121,7 +142,9 @@ export default function LoginPage() {
                   <span className="w-full border-t border-muted" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-3 text-muted-foreground font-medium">Ou e-mail</span>
+                  <span className="bg-card px-3 text-muted-foreground font-medium">
+                    Ou e-mail
+                  </span>
                 </div>
               </div>
 
@@ -135,13 +158,18 @@ export default function LoginPage() {
                     className="h-11 bg-background"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Senha</Label>
-                    <Link href="#" className="text-xs text-primary hover:underline font-medium">Esqueceu a senha?</Link>
+                    <Link
+                      href="#"
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Esqueceu a senha?
+                    </Link>
                   </div>
                   <Input
                     id="password"
@@ -149,19 +177,35 @@ export default function LoginPage() {
                     className="h-11 bg-background"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={e => setPassword(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md">{error}</p>}
-                <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={isLoading || isGoogleLoading}>
+                {error && (
+                  <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md">
+                    {error}
+                  </p>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-semibold"
+                  disabled={isLoading || isGoogleLoading}
+                >
                   {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...</>
-                  ) : "Acessar Plataforma"}
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                      Entrando...
+                    </>
+                  ) : (
+                    'Acessar Plataforma'
+                  )}
                 </Button>
-                
+
                 <div className="pt-2 text-center text-sm">
-                  <span className="text-muted-foreground">Novo por aqui?</span>{" "}
-                  <Link href="/register" className="text-primary font-bold hover:underline underline-offset-4">
+                  <span className="text-muted-foreground">Novo por aqui?</span>{' '}
+                  <Link
+                    href="/register"
+                    className="text-primary font-bold hover:underline underline-offset-4"
+                  >
                     Crie sua conta
                   </Link>
                 </div>

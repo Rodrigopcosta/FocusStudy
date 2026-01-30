@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DisciplinesLoading() {
   return (
@@ -12,7 +12,7 @@ export default function DisciplinesLoading() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map(i => (
           <Skeleton key={i} className="h-32 w-full rounded-xl" />
         ))}
       </div>
