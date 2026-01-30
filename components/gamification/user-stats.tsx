@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { Zap, Flame, CheckCircle } from "lucide-react"
+import { Zap, Flame, CheckCircle } from 'lucide-react'
 
 interface UserStatsProps {
   xp: number
@@ -16,7 +16,9 @@ export function UserStats({ xp, streak, completedTasks }: UserStatsProps) {
           <Zap className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">XP Total</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            XP Total
+          </p>
           <p className="text-2xl font-black leading-none mt-1">{xp}</p>
         </div>
       </div>
@@ -26,7 +28,9 @@ export function UserStats({ xp, streak, completedTasks }: UserStatsProps) {
           <Flame className="h-6 w-6 text-orange-500" />
         </div>
         <div>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Ofensiva</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            Ofensiva
+          </p>
           <p className="text-2xl font-black leading-none mt-1">{streak} dias</p>
         </div>
       </div>
@@ -36,8 +40,12 @@ export function UserStats({ xp, streak, completedTasks }: UserStatsProps) {
           <CheckCircle className="h-6 w-6 text-blue-500" />
         </div>
         <div>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Concluídas</p>
-          <p className="text-2xl font-black leading-none mt-1">{completedTasks}</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+            Concluídas
+          </p>
+          <p className="text-2xl font-black leading-none mt-1">
+            {completedTasks}
+          </p>
         </div>
       </div>
     </div>

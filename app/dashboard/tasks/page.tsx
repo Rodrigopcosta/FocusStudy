@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server"
-import { TaskList } from "@/components/tasks/task-list"
-import { CreateTaskDialog } from "@/components/tasks/create-task-dialog"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { createClient } from '@/lib/supabase/server'
+import { TaskList } from '@/components/tasks/task-list'
+import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 export default async function TasksPage({
   searchParams,
@@ -10,22 +10,24 @@ export default async function TasksPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) return null
 
-  // Removida a ordenação complexa do banco para deixar o TaskList 
+  // Removida a ordenação complexa do banco para deixar o TaskList
   // gerenciar a lógica de ordenação personalizada/manual e status.
   const { data: tasksRes } = await supabase
-    .from("tasks")
-    .select("*, discipline:disciplines(*)")
-    .eq("user_id", user.id)
+    .from('tasks')
+    .select('*, discipline:disciplines(*)')
+    .eq('user_id', user.id)
 
   const { data: disciplinesRes } = await supabase
-    .from("disciplines")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("name")
+    .from('disciplines')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('name')
 
   const tasks = tasksRes || []
   const disciplines = disciplinesRes || []
@@ -35,7 +37,9 @@ export default async function TasksPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tarefas</h1>
-          <p className="text-muted-foreground text-sm">Gerencie suas tarefas de estudo</p>
+          <p className="text-muted-foreground text-sm">
+            Gerencie suas tarefas de estudo
+          </p>
         </div>
         <CreateTaskDialog disciplines={disciplines}>
           <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">

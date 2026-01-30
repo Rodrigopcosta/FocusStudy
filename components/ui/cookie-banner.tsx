@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { Cookie, ShieldCheck } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useState, useEffect } from 'react'
+import { Cookie, ShieldCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 export function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false)
@@ -11,19 +11,19 @@ export function CookieBanner() {
 
   useEffect(() => {
     setMounted(true) // Garante que o código só rode no navegador
-    const consent = localStorage.getItem("focusstudy-cookie-consent")
+    const consent = localStorage.getItem('focusstudy-cookie-consent')
     if (!consent) {
       setIsVisible(true)
     }
   }, [])
 
   const handleAccept = () => {
-    localStorage.setItem("focusstudy-cookie-consent", "accepted")
+    localStorage.setItem('focusstudy-cookie-consent', 'accepted')
     setIsVisible(false)
   }
 
   const handleDecline = () => {
-    localStorage.setItem("focusstudy-cookie-consent", "declined")
+    localStorage.setItem('focusstudy-cookie-consent', 'declined')
     setIsVisible(false)
   }
 
@@ -37,32 +37,35 @@ export function CookieBanner() {
           <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 cursor-help group">
             <Cookie className="h-8 w-8 text-primary animate-pulse group-hover:scale-110 transition-transform" />
           </div>
-          
+
           <div className="flex-1 text-center md:text-left space-y-2">
             <h4 className="text-lg font-black uppercase italic tracking-tighter flex items-center justify-center md:justify-start gap-2">
-              Controle de Privacidade <ShieldCheck className="h-4 w-4 text-primary" />
+              Controle de Privacidade{' '}
+              <ShieldCheck className="h-4 w-4 text-primary" />
             </h4>
             <p className="text-[11px] md:text-xs text-muted-foreground font-bold uppercase italic leading-relaxed">
-              Nós utilizamos cookies para personalizar sua experiência, analisar tráfego e garantir a segurança das suas transações. 
-              Ao clicar em aceitar, você concorda com nossa{" "}
-              <Link 
-                href="/privacy" 
+              Nós utilizamos cookies para personalizar sua experiência, analisar
+              tráfego e garantir a segurança das suas transações. Ao clicar em
+              aceitar, você concorda com nossa{' '}
+              <Link
+                href="/privacy"
                 className="text-primary underline decoration-2 underline-offset-4 cursor-pointer hover:text-primary/80 transition-colors"
               >
                 Política de Privacidade
-              </Link>.
+              </Link>
+              .
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={handleDecline}
               className="w-full sm:w-auto text-[10px] font-black uppercase italic tracking-widest hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
             >
               Recusar
             </Button>
-            <Button 
+            <Button
               onClick={handleAccept}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase italic px-8 h-12 rounded-full shadow-lg shadow-primary/20 cursor-pointer transition-all active:scale-95"
             >

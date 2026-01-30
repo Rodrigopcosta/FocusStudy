@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from '@/lib/supabase/client'
 
 export const GamificationService = {
   async addXP(userId: string, amount: number) {
     const supabase = createClient()
-    
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('xp, level, streak_current')
@@ -24,26 +24,26 @@ export const GamificationService = {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ 
-        xp: newXP, 
+      .update({
+        xp: newXP,
         level: newLevel,
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
 
     if (error) throw error
 
-    return { 
-      newXP, 
-      newLevel, 
+    return {
+      newXP,
+      newLevel,
       leveledUp: newLevel > profile.level,
-      boostedAmount // Esta é a propriedade que o TS estava reclamando
+      boostedAmount, // Esta é a propriedade que o TS estava reclamando
     }
   },
 
   async unlockBadge(userId: string, badgeId: string) {
     const supabase = createClient()
-    
+
     const { error } = await supabase
       .from('user_badges')
       .insert({ user_id: userId, badge_id: badgeId })
@@ -51,5 +51,5 @@ export const GamificationService = {
     if (!error) {
       await this.addXP(userId, 500) // Bônus fixo por conquista
     }
-  }
+  },
 }

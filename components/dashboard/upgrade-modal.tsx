@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   Dialog,
@@ -6,11 +6,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Sparkles, CheckCircle2, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { toast } from "sonner"
+} from '@/components/ui/dialog'
+import { Sparkles, CheckCircle2, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface UpgradeModalProps {
   isOpen: boolean
@@ -22,28 +22,28 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
   const handleDirectUpgrade = async () => {
     setIsLoading(true)
-    
+
     // Usamos o plano mensal como padrão para o "Experimentar Grátis"
     const priceId = process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID
 
     try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceId }),
       })
-      
+
       const data = await response.json()
-      
+
       if (data.url) {
         // Redireciona diretamente para o Stripe
         window.location.href = data.url
       } else {
-        throw new Error("URL de checkout não recebida")
+        throw new Error('URL de checkout não recebida')
       }
     } catch (error) {
-      console.error("Erro ao iniciar checkout:", error)
-      toast.error("Não foi possível iniciar o checkout. Tente novamente.")
+      console.error('Erro ao iniciar checkout:', error)
+      toast.error('Não foi possível iniciar o checkout. Tente novamente.')
       setIsLoading(false)
     }
   }
@@ -59,39 +59,46 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             Potencialize seus Estudos
           </DialogTitle>
           <DialogDescription className="text-base font-medium text-muted-foreground">
-            A geração inteligente via IA é uma ferramenta exclusiva para membros **PRO**.
+            A geração inteligente via IA é uma ferramenta exclusiva para membros
+            **PRO**.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
           <div className="grid gap-3">
             {[
-              "Flashcards ilimitados com IA",
-              "Resumos automáticos de conteúdo",
-              "Ranking Global e Missões Diárias",
-              "7 dias grátis (cancele quando quiser)"
-            ].map((text) => (
-              <div key={text} className="flex items-center gap-3 text-sm font-bold text-foreground/80">
+              'Flashcards ilimitados com IA',
+              'Resumos automáticos de conteúdo',
+              'Ranking Global e Missões Diárias',
+              '7 dias grátis (cancele quando quiser)',
+            ].map(text => (
+              <div
+                key={text}
+                className="flex items-center gap-3 text-sm font-bold text-foreground/80"
+              >
                 <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                 {text}
               </div>
             ))}
           </div>
-          
+
           <div className="flex flex-col gap-3">
-            <Button 
+            <Button
               className="w-full h-14 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-tight cursor-pointer shadow-lg active:scale-95 transition-all"
               onClick={handleDirectUpgrade}
               disabled={isLoading}
             >
               {isLoading ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparando...</>
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />{' '}
+                  Preparando...
+                </>
               ) : (
-                "Experimentar Grátis agora"
+                'Experimentar Grátis agora'
               )}
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full font-bold text-muted-foreground uppercase text-xs tracking-widest cursor-pointer"
               onClick={() => onClose(false)}
               disabled={isLoading}

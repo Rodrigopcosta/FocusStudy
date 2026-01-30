@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import type { User } from "@supabase/supabase-js"
-import type { Profile } from "@/types/database"
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import type { Profile } from '@/types/database'
 import {
   Sidebar,
   SidebarContent,
@@ -17,15 +17,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   BookOpen,
   LayoutDashboard,
@@ -41,17 +41,17 @@ import {
   Trophy,
   Layers,
   Brain, // Ícone para Estudo
-} from "lucide-react"
+} from 'lucide-react'
 
 const menuItems = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Tarefas", href: "/dashboard/tasks", icon: CheckSquare },
-  { title: "Anotações", href: "/dashboard/notes", icon: FileText },
-  { title: "Disciplinas", href: "/dashboard/disciplines", icon: GraduationCap },
-  { title: "Pomodoro", href: "/dashboard/pomodoro", icon: Timer },
-  { title: "Jornada", href: "/dashboard/jornada", icon: Trophy },
-  { title: "Flashcards", href: "/dashboard/flashcards", icon: Layers },
-  { title: "Estudar", href: "/dashboard/study", icon: Brain }, // ADICIONADO: Rota de Estudo
+  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { title: 'Tarefas', href: '/dashboard/tasks', icon: CheckSquare },
+  { title: 'Anotações', href: '/dashboard/notes', icon: FileText },
+  { title: 'Disciplinas', href: '/dashboard/disciplines', icon: GraduationCap },
+  { title: 'Pomodoro', href: '/dashboard/pomodoro', icon: Timer },
+  { title: 'Jornada', href: '/dashboard/jornada', icon: Trophy },
+  { title: 'Flashcards', href: '/dashboard/flashcards', icon: Layers },
+  { title: 'Estudar', href: '/dashboard/study', icon: Brain }, // ADICIONADO: Rota de Estudo
 ]
 
 interface DashboardSidebarProps {
@@ -68,7 +68,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
     const supabase = createClient()
     await supabase.auth.signOut()
     if (isMobile) setOpenMobile(false)
-    router.push("/login")
+    router.push('/login')
   }
 
   const closeMobile = () => {
@@ -77,13 +77,13 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
 
   const initials =
     profile?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
+      ?.split(' ')
+      .map(n => n[0])
+      .join('')
       .toUpperCase()
       .slice(0, 2) ||
     user.email?.slice(0, 2).toUpperCase() ||
-    "US"
+    'US'
 
   return (
     <Sidebar>
@@ -100,10 +100,10 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems.map(item => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.href}
                     onClick={closeMobile}
                   >
@@ -125,8 +125,12 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent">
                 <Flame className="h-5 w-5 text-orange-500" />
                 <div>
-                  <p className="text-sm font-medium">{profile.streak_current} dias</p>
-                  <p className="text-xs text-muted-foreground">Recorde: {profile.streak_best}</p>
+                  <p className="text-sm font-medium">
+                    {profile.streak_current} dias
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Recorde: {profile.streak_best}
+                  </p>
                 </div>
               </div>
             </SidebarGroupContent>
@@ -160,11 +164,16 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="flex-1 text-left truncate">{profile?.name || user.email}</span>
+                  <span className="flex-1 text-left truncate">
+                    {profile?.name || user.email}
+                  </span>
                   <ChevronUp className="h-4 w-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-(--radix-popper-anchor-width)">
+              <DropdownMenuContent
+                side="top"
+                className="w-(--radix-popper-anchor-width)"
+              >
                 <DropdownMenuItem asChild onClick={closeMobile}>
                   <Link href="/dashboard/settings" prefetch={true}>
                     <Settings className="mr-2 h-4 w-4" />

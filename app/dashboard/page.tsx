@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
-import { StatsCards } from "@/components/dashboard/stats-cards"
-import { TodayTasks } from "@/components/dashboard/today-tasks"
-import { QuickPomodoro } from "@/components/dashboard/quick-pomodoro"
-import { RecentNotes } from "@/components/dashboard/recent-notes"
-import { TasksChartClient } from "@/components/dashboard/tasks-chart-client"
-import { UpgradeBanner } from "@/components/dashboard/upgrade-banner"
-import { CheckCircle2, PartyPopper } from "lucide-react"
+import { createClient } from '@/lib/supabase/server'
+import { StatsCards } from '@/components/dashboard/stats-cards'
+import { TodayTasks } from '@/components/dashboard/today-tasks'
+import { QuickPomodoro } from '@/components/dashboard/quick-pomodoro'
+import { RecentNotes } from '@/components/dashboard/recent-notes'
+import { TasksChartClient } from '@/components/dashboard/tasks-chart-client'
+import { UpgradeBanner } from '@/components/dashboard/upgrade-banner'
+import { CheckCircle2, PartyPopper } from 'lucide-react'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -13,8 +13,8 @@ interface DashboardProps {
 
 export default async function DashboardPage({ searchParams }: DashboardProps) {
   const params = await searchParams
-  const isSuccess = params.success === "true"
-  
+  const isSuccess = params.success === 'true'
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -22,15 +22,46 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 
   if (!user) return null
 
-  const today = new Date().toISOString().split("T")[0]
+  const today = new Date().toISOString().split('T')[0]
 
-  const [statsRes, pendingTasksRes, allTasksRes, notesRes, disciplinesRes, profileRes] = await Promise.all([
-    supabase.from("study_stats").select("*").eq("user_id", user.id).eq("date", today).maybeSingle(),
-    supabase.from("tasks").select("*, discipline:disciplines(*)").eq("user_id", user.id).eq("status", "pending").order("due_date", { ascending: true }).limit(5),
-    supabase.from("tasks").select("status").eq("user_id", user.id),
-    supabase.from("notes").select("*, discipline:disciplines(*)").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(4),
-    supabase.from("disciplines").select("*").eq("user_id", user.id).order("name"),
-    supabase.from("profiles").select("streak_current, streak_best, plan_type").eq("id", user.id).single()
+  const [
+    statsRes,
+    pendingTasksRes,
+    allTasksRes,
+    notesRes,
+    disciplinesRes,
+    profileRes,
+  ] = await Promise.all([
+    supabase
+      .from('study_stats')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle(),
+    supabase
+      .from('tasks')
+      .select('*, discipline:disciplines(*)')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .order('due_date', { ascending: true })
+      .limit(5),
+    supabase.from('tasks').select('status').eq('user_id', user.id),
+    supabase
+      .from('notes')
+      .select('*, discipline:disciplines(*)')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(4),
+    supabase
+      .from('disciplines')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name'),
+    supabase
+      .from('profiles')
+      .select('streak_current, streak_best, plan_type')
+      .eq('id', user.id)
+      .single(),
   ])
 
   const todayStats = statsRes.data
@@ -40,8 +71,10 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
   const disciplines = disciplinesRes.data
   const profile = profileRes.data
 
-  const completedTasksCount = allTasks?.filter((t) => t.status === "completed").length || 0
-  const pendingTasksCount = allTasks?.filter((t) => t.status === "pending").length || 0
+  const completedTasksCount =
+    allTasks?.filter(t => t.status === 'completed').length || 0
+  const pendingTasksCount =
+    allTasks?.filter(t => t.status === 'pending').length || 0
 
   const isFreePlan = !profile?.plan_type || profile?.plan_type === 'free'
 
@@ -60,7 +93,8 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 <CheckCircle2 className="h-4 w-4 text-primary" />
               </h4>
               <p className="text-sm text-muted-foreground">
-                Seu período de 7 dias grátis começou. Todas as funções premium estão liberadas.
+                Seu período de 7 dias grátis começou. Todas as funções premium
+                estão liberadas.
               </p>
             </div>
           </div>
@@ -72,9 +106,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Acompanhe seu progresso e mantenha o foco nos estudos.</p>
+          <p className="text-muted-foreground">
+            Acompanhe seu progresso e mantenha o foco nos estudos.
+          </p>
         </div>
-        
+
         {isFreePlan && <UpgradeBanner />}
       </div>
 
@@ -89,11 +125,17 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         <div className="lg:col-span-2">
           <TodayTasks tasks={pendingTasks || []} />
         </div>
-        <TasksChartClient completed={completedTasksCount} pending={pendingTasksCount} />
+        <TasksChartClient
+          completed={completedTasksCount}
+          pending={pendingTasksCount}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <QuickPomodoro disciplines={disciplines || []} tasks={pendingTasks || []} />
+        <QuickPomodoro
+          disciplines={disciplines || []}
+          tasks={pendingTasks || []}
+        />
         <RecentNotes notes={recentNotes || []} />
       </div>
     </div>

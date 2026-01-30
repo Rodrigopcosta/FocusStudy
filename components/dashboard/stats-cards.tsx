@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Clock, CheckCircle2, Timer, Flame } from "lucide-react"
+import { Card, CardContent } from '@/components/ui/card'
+import { Clock, CheckCircle2, Timer, Flame } from 'lucide-react'
 
 interface StatsCardsProps {
   todayMinutes: number
@@ -8,7 +8,12 @@ interface StatsCardsProps {
   streak: number
 }
 
-export function StatsCards({ todayMinutes, tasksCompleted, pomodorosCompleted, streak }: StatsCardsProps) {
+export function StatsCards({
+  todayMinutes,
+  tasksCompleted,
+  pomodorosCompleted,
+  streak,
+}: StatsCardsProps) {
   const hours = Math.floor(todayMinutes / 60)
   const minutes = todayMinutes % 60
 
@@ -22,7 +27,9 @@ export function StatsCards({ todayMinutes, tasksCompleted, pomodorosCompleted, s
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Tempo Hoje</p>
-              <p className="text-2xl font-bold">{hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}</p>
+              <p className="text-2xl font-bold">
+                {hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -35,7 +42,9 @@ export function StatsCards({ todayMinutes, tasksCompleted, pomodorosCompleted, s
               <CheckCircle2 className="h-6 w-6 text-chart-2" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tarefas Concluídas</p>
+              <p className="text-sm text-muted-foreground">
+                Tarefas Concluídas
+              </p>
               <p className="text-2xl font-bold">{tasksCompleted}</p>
             </div>
           </div>

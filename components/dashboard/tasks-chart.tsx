@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface TasksChartProps {
   completed: number
@@ -13,7 +13,9 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Progresso das Tarefas</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Progresso das Tarefas
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-50">
           <p className="text-muted-foreground text-sm text-center">
@@ -25,8 +27,8 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
   }
 
   const data = [
-    { name: "Concluídas", value: completed, color: "hsl(var(--chart-2))" },
-    { name: "Pendentes", value: pending, color: "hsl(var(--chart-4))" },
+    { name: 'Concluídas', value: completed, color: 'hsl(var(--chart-2))' },
+    { name: 'Pendentes', value: pending, color: 'hsl(var(--chart-4))' },
   ]
 
   const percentage = Math.round((completed / total) * 100)
@@ -34,7 +36,9 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Progresso das Tarefas</CardTitle>
+        <CardTitle className="text-base font-semibold">
+          Progresso das Tarefas
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -57,13 +61,16 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number, name: string) => [`${value} tarefas`, name]}
+                  formatter={(value: number, name: string) => [
+                    `${value} tarefas`,
+                    name,
+                  ]}
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "var(--radius)",
+                    backgroundColor: 'hsl(var(--popover))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
                   }}
-                  itemStyle={{ color: "hsl(var(--popover-foreground))" }}
+                  itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -77,7 +84,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
                 Concluído
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -86,7 +93,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
                 </div>
                 <span className="font-semibold">{completed}</span>
               </div>
-              
+
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-[hsl(var(--chart-4))]" />

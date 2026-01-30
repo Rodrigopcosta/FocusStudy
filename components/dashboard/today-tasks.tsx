@@ -1,15 +1,15 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import type { Task } from "@/types/database"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { Plus, ArrowRight } from "lucide-react"
+import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import type { Task } from '@/types/database'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { Plus, ArrowRight } from 'lucide-react'
 
 interface TodayTasksProps {
   tasks: Task[]
@@ -17,10 +17,10 @@ interface TodayTasksProps {
 
 // Cores atualizadas conforme solicitado
 const priorityColors = {
-  low: "bg-blue-500/20 text-blue-500",
-  medium: "bg-yellow-500/20 text-yellow-600",
-  high: "bg-orange-500/20 text-orange-500",
-  urgent: "bg-red-500/20 text-red-600 font-bold",
+  low: 'bg-blue-500/20 text-blue-500',
+  medium: 'bg-yellow-500/20 text-yellow-600',
+  high: 'bg-orange-500/20 text-orange-500',
+  urgent: 'bg-red-500/20 text-red-600 font-bold',
 }
 
 export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
@@ -36,23 +36,23 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
   }, [initialTasks])
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
-    const updatedStatus = completed ? "completed" : "pending"
+    const updatedStatus = completed ? 'completed' : 'pending'
     isUpdating.current = true
 
     // Atualização Otimista
-    setLocalTasks(prev => 
-      prev.map(t => t.id === taskId ? { ...t, status: updatedStatus } : t)
+    setLocalTasks(prev =>
+      prev.map(t => (t.id === taskId ? { ...t, status: updatedStatus } : t))
     )
 
     const supabase = createClient()
     const { error } = await supabase
-      .from("tasks")
+      .from('tasks')
       .update({
         status: updatedStatus,
         completed_at: completed ? new Date().toISOString() : null,
       })
-      .eq("id", taskId)
-    
+      .eq('id', taskId)
+
     if (error) {
       isUpdating.current = false
       setLocalTasks(initialTasks)
@@ -79,7 +79,9 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
       <CardContent>
         {localTasks.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">Nenhuma tarefa pendente</p>
+            <p className="text-muted-foreground mb-4">
+              Nenhuma tarefa pendente
+            </p>
             <Button asChild>
               <Link href="/dashboard/tasks">
                 <Plus className="mr-2 h-4 w-4" />
@@ -89,20 +91,24 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {localTasks.map((task) => (
+            {localTasks.map(task => (
               <div
                 key={task.id}
                 className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
                 <div className="flex items-center justify-center min-w-6 min-h-6">
                   <Checkbox
-                    checked={task.status === "completed"}
-                    onCheckedChange={(checked) => handleToggleTask(task.id, checked as boolean)}
+                    checked={task.status === 'completed'}
+                    onCheckedChange={checked =>
+                      handleToggleTask(task.id, checked as boolean)
+                    }
                     className="h-5 w-5"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium truncate ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                  <p
+                    className={`font-medium truncate ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}
+                  >
                     {task.title}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
@@ -117,13 +123,21 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
                         {task.discipline.icon} {task.discipline.name}
                       </span>
                     )}
-                    <Badge 
-                      variant="secondary" 
-                      className={priorityColors[task.priority as keyof typeof priorityColors]}
+                    <Badge
+                      variant="secondary"
+                      className={
+                        priorityColors[
+                          task.priority as keyof typeof priorityColors
+                        ]
+                      }
                     >
-                      {task.priority === "urgent" ? "Urgente" : 
-                       task.priority === "high" ? "Alta" : 
-                       task.priority === "medium" ? "Média" : "Baixa"}
+                      {task.priority === 'urgent'
+                        ? 'Urgente'
+                        : task.priority === 'high'
+                          ? 'Alta'
+                          : task.priority === 'medium'
+                            ? 'Média'
+                            : 'Baixa'}
                     </Badge>
                   </div>
                 </div>
