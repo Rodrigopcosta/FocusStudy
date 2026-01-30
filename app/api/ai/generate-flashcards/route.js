@@ -2,12 +2,16 @@ import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Força o Next.js a tratar a rota como dinâmica, evitando erros de leitura de env no build
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
+    // Inicialização movida para dentro do escopo da função
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
