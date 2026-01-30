@@ -79,7 +79,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       </div>
 
       <StatsCards
-        todayMinutes={todayStats?.total_minutes || 0}
+        todayMinutes={Math.floor(todayStats?.total_minutes || 0)}
         tasksCompleted={todayStats?.tasks_completed || 0}
         pomodorosCompleted={todayStats?.pomodoros_completed || 0}
         streak={profile?.streak_current || 0}
