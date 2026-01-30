@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { motion } from 'framer-motion'
 
 const plans = [
   {
@@ -104,81 +103,95 @@ export function PricingSection() {
   }
 
   return (
-    <section className="py-24 px-6 bg-background relative overflow-hidden text-foreground">
-      {/* Glow de fundo otimizado */}
+    <section className="py-20 md:py-32 px-4 bg-background relative overflow-hidden text-foreground">
+      {/* Glow de fundo */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(var(--primary-rgb),0.03)_0,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-20 space-y-4">
-          <h2 className="text-5xl md:text-7xl font-extrabold italic uppercase tracking-tighter leading-tight">
-            Alcance seus objetivos{' '}
-            <span className="text-primary">
-              com um cronograma que se adapta ao seu ritmo com IA
-            </span>
+        <div className="text-center mb-16 md:mb-24 space-y-6">
+          {/* Frase ajustada para responsividade */}
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold italic uppercase tracking-tighter leading-[0.9] md:leading-tight">
+            Estude com <br className="md:hidden" />
+            <span className="text-primary italic">Inteligência</span> e{' '}
+            <br className="md:hidden" />
+            Vença o Edital
           </h2>
-          <p className="text-muted-foreground font-bold uppercase italic tracking-[0.2em] text-xs md:text-sm">
-            A estrutura profissional que sua aprovação exige.
+          <p className="text-muted-foreground font-bold uppercase italic tracking-[0.15em] text-[10px] md:text-sm max-w-lg mx-auto">
+            A estrutura de elite que sua aprovação exige,{' '}
+            <br className="hidden md:block" /> adaptada ao seu ritmo com IA.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-stretch">
           {plans.map(plan => (
             <div
               key={plan.name}
               className={cn(
-                'relative flex flex-col p-10 rounded-[2.5rem] border-2 transition-all duration-200 will-change-transform',
+                'relative flex flex-col p-8 md:p-10 rounded-4xl md:rounded-[2.5rem] border-2 transition-all duration-200',
                 plan.highlight
-                  ? 'border-primary bg-card shadow-xl z-20 lg:scale-105'
+                  ? 'border-primary bg-card shadow-2xl z-20 lg:scale-105'
                   : 'border-border/50 bg-card/80 hover:border-primary/30'
               )}
             >
               {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-black uppercase px-6 py-2 rounded-full shadow-lg whitespace-nowrap tracking-widest">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px] md:text-[10px] font-black uppercase px-4 md:px-6 py-2 rounded-full shadow-lg whitespace-nowrap tracking-widest">
                   {plan.badge}
                 </div>
               )}
 
-              <div className="mb-10 text-left">
+              <div className="mb-8 md:mb-10 text-left">
                 <div className="flex items-center gap-3 mb-4 text-primary">
-                  {plan.name === 'Starter' && <Rocket className="h-7 w-7" />}
-                  {plan.name === 'Ultimate' && <Crown className="h-7 w-7" />}
-                  {plan.name === 'Mensal' && <Target className="h-7 w-7" />}
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">
+                  {plan.name === 'Starter' && (
+                    <Rocket className="h-6 w-6 md:h-7 md:w-7" />
+                  )}
+                  {plan.name === 'Ultimate' && (
+                    <Crown className="h-6 w-6 md:h-7 md:w-7" />
+                  )}
+                  {plan.name === 'Mensal' && (
+                    <Target className="h-6 w-6 md:h-7 md:w-7" />
+                  )}
+                  <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">
                     {plan.name}
                   </h3>
                 </div>
 
                 <div className="flex items-baseline gap-1 text-foreground">
-                  <span className="text-5xl md:text-6xl font-black tracking-tighter">
+                  <span className="text-4xl md:text-6xl font-black tracking-tighter">
                     {plan.price}
                   </span>
                   {plan.period && (
-                    <span className="text-muted-foreground font-black italic text-lg">
+                    <span className="text-muted-foreground font-black italic text-base md:text-lg">
                       {plan.period}
                     </span>
                   )}
                 </div>
 
                 {plan.economy && (
-                  <div className="mt-2 inline-block bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-lg">
-                    <p className="text-green-500 text-[10px] font-black uppercase italic">
+                  <div className="mt-2 inline-block bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg">
+                    <p className="text-green-500 text-[9px] md:text-[10px] font-black uppercase italic">
                       {plan.economy}
                     </p>
                   </div>
                 )}
 
-                <p className="text-sm text-muted-foreground mt-6 font-bold uppercase italic leading-relaxed opacity-70">
+                <p className="text-xs md:text-sm text-muted-foreground mt-4 md:mt-6 font-bold uppercase italic leading-relaxed opacity-70">
                   {plan.description}
                 </p>
               </div>
 
-              <div className="space-y-4 mb-10 flex-1">
+              <div className="space-y-3 md:space-y-4 mb-8 md:mb-10 flex-1">
                 {plan.features.map(feature => (
-                  <div key={feature} className="flex items-center gap-4">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Check className="h-3 w-3 text-primary" strokeWidth={4} />
+                  <div
+                    key={feature}
+                    className="flex items-center gap-3 md:gap-4"
+                  >
+                    <div className="h-4 w-4 md:h-5 md:w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Check
+                        className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary"
+                        strokeWidth={4}
+                      />
                     </div>
-                    <span className="text-[11px] md:text-xs font-black uppercase italic text-foreground/80 tracking-tight">
+                    <span className="text-[10px] md:text-xs font-black uppercase italic text-foreground/80 tracking-tight">
                       {feature}
                     </span>
                   </div>
@@ -192,19 +205,18 @@ export function PricingSection() {
                     plan.priceId ? loadingPriceId === plan.priceId : false
                   }
                   className={cn(
-                    'relative w-full h-20 rounded-2xl font-black italic uppercase text-lg overflow-hidden transition-transform duration-200 active:scale-95 group/btn cursor-pointer!',
+                    'relative w-full h-16 md:h-20 rounded-xl md:rounded-2xl font-black italic uppercase text-base md:text-lg overflow-hidden transition-transform duration-200 active:scale-95 group/btn cursor-pointer!',
                     plan.highlight
                       ? 'bg-primary text-primary-foreground shadow-lg'
                       : 'bg-secondary text-foreground hover:bg-secondary/80'
                   )}
                 >
-                  {/* Shimmer Otimizado: sem tag de estilo, usando transição de opacidade/transform via Tailwind */}
-                  <span className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] pointer-events-none will-change-transform" />
+                  <span className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] pointer-events-none" />
 
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {plan.priceId && loadingPriceId === plan.priceId ? (
                       <>
-                        <div className="h-5 w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <div className="h-4 w-4 md:h-5 md:w-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         PROCESSANDO...
                       </>
                     ) : (
@@ -214,7 +226,7 @@ export function PricingSection() {
                 </Button>
 
                 {plan.name !== 'Starter' && (
-                  <p className="text-[10px] text-center font-black text-primary tracking-[0.2em] uppercase">
+                  <p className="text-[9px] md:text-[10px] text-center font-black text-primary tracking-[0.2em] uppercase">
                     7 DIAS DE TESTE TOTALMENTE GRÁTIS
                   </p>
                 )}
@@ -223,18 +235,17 @@ export function PricingSection() {
           ))}
         </div>
 
-        {/* Badges de confiança finais */}
-        <div className="mt-20 flex flex-wrap justify-center gap-10 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-          <div className="flex items-center gap-3 text-[11px] font-black uppercase italic tracking-widest">
-            <ShieldCheck className="h-5 w-5 text-primary" /> Pagamento 100%
-            Seguro via Stripe
+        {/* Badges de confiança */}
+        <div className="mt-16 md:mt-24 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 opacity-50">
+          <div className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+            <ShieldCheck className="h-4 w-4 text-primary" /> Pagamento Seguro
+            via Stripe
           </div>
-          <div className="flex items-center gap-3 text-[11px] font-black uppercase italic tracking-widest">
-            <CalendarDays className="h-5 w-5 text-primary" /> Liberação Digital
-            Imediata
+          <div className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+            <CalendarDays className="h-4 w-4 text-primary" /> Liberação Imediata
           </div>
-          <div className="flex items-center gap-3 text-[11px] font-black uppercase italic tracking-widest">
-            <Zap className="h-5 w-5 text-primary" /> Cancele quando quiser
+          <div className="flex items-center gap-2 text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+            <Zap className="h-4 w-4 text-primary" /> Cancele quando quiser
           </div>
         </div>
       </div>

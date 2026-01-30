@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
 import { PricingSection } from '@/components/landing/pricing-section'
+import { Footer } from '@/components/landing/footer'
 import {
   ArrowRight,
   Sun,
@@ -55,37 +56,44 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 transition-colors duration-500 overflow-x-hidden">
       {/* HEADER */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 group cursor-pointer">
-            <div className="h-9 w-9 md:h-10 md:w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-6 transition-transform">
-              <Target className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+        <div className="container mx-auto px-2 sm:px-4 py-3 md:py-4 flex items-center justify-between">
+          {/* LOGO */}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 md:gap-2 group cursor-pointer shrink-0"
+          >
+            <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-6 transition-transform">
+              <Target className="h-4 w-4 md:h-6 md:w-6 text-primary-foreground" />
             </div>
-            <span className="font-black text-xl md:text-2xl tracking-tighter italic uppercase">
-              FocusStudy
+            <span className="font-black text-lg md:text-2xl tracking-tighter italic uppercase">
+              Focus<span className="hidden xs:inline">Study</span>
             </span>
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          {/* ACTIONS */}
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            {/* BOTÃO TEMA: Removido o bg-primary/10 e adicionado cursor-pointer */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full hover:bg-primary/10"
+              className="rounded-full hover:bg-transparent border-none shrink-0 h-8 w-8 md:h-10 md:w-10 cursor-pointer"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="h-4 w-4 md:h-5 md:w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-foreground" />
+              <Moon className="absolute h-4 w-4 md:h-5 md:w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-foreground" />
             </Button>
 
             <Button
               variant="ghost"
               asChild
-              className="hidden sm:inline-flex font-black uppercase italic text-xs tracking-widest"
+              className="font-black uppercase italic text-[9px] md:text-xs tracking-tighter sm:tracking-widest px-2 md:px-4 h-9 md:h-10 transition-colors shrink-0 cursor-pointer"
             >
               <Link href="/login">Entrar</Link>
             </Button>
+
             <Button
               asChild
-              className="shadow-xl shadow-primary/20 font-black uppercase italic text-[10px] md:text-xs rounded-full px-5 md:px-8 h-10 md:h-11 border-2 border-primary/20"
+              className="shadow-xl shadow-primary/20 font-black uppercase italic text-[9px] md:text-xs rounded-full px-3 sm:px-8 h-9 md:h-11 border-2 border-primary/20 shrink-0 bg-primary text-primary-foreground cursor-pointer"
             >
               <Link href="/register">Cadastre-se</Link>
             </Button>
@@ -129,7 +137,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   asChild
-                  className="h-16 md:h-20 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg bg-primary hover:scale-105 transition-all shadow-[0_20px_60px_rgba(var(--primary-rgb),0.35)]"
+                  className="h-16 md:h-20 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg bg-primary hover:scale-105 transition-all shadow-[0_20px_60px_rgba(var(--primary-rgb),0.35)] cursor-pointer"
                 >
                   <Link href="/register" className="flex items-center gap-3">
                     Garantir minha vaga
@@ -141,13 +149,12 @@ export default function LandingPage() {
                   size="lg"
                   variant="outline"
                   asChild
-                  className="h-16 md:h-20 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg border-2 hover:bg-secondary/50 backdrop-blur-sm"
+                  className="h-16 md:h-20 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg border-2 hover:bg-secondary/50 backdrop-blur-sm cursor-pointer"
                 >
                   <Link href="#pricing">Conhecer o Método</Link>
                 </Button>
               </div>
 
-              {/* Trust Section */}
               <div className="pt-12 md:pt-16 flex flex-wrap justify-center gap-x-8 gap-y-6 md:gap-x-12 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 px-4">
                 <div className="flex items-center gap-2 font-black italic uppercase text-[9px] md:text-[10px] tracking-widest">
                   <BrainCircuit className="h-4 w-4 md:h-5 md:w-5" />{' '}
@@ -196,7 +203,6 @@ export default function LandingPage() {
         <section className="py-20 md:py-32 container mx-auto px-4">
           <div className="bg-primary p-10 md:p-24 rounded-[2.5rem] md:rounded-[3.5rem] text-primary-foreground text-center space-y-6 md:space-y-8 relative overflow-hidden shadow-3xl shadow-primary/20">
             <div className="absolute top-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-white/10 blur-[80px] md:blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-
             <h2 className="text-3xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.95] relative z-10">
               A PROVA NÃO <br /> ESPERA POR VOCÊ.
             </h2>
@@ -207,7 +213,7 @@ export default function LandingPage() {
               size="lg"
               variant="secondary"
               asChild
-              className="h-14 md:h-16 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg hover:scale-105 transition-transform relative z-10 shadow-2xl w-full sm:w-auto"
+              className="h-14 md:h-16 px-8 md:px-12 rounded-full font-black uppercase italic text-base md:text-lg hover:scale-105 transition-transform relative z-10 shadow-2xl w-full sm:w-auto cursor-pointer"
             >
               <Link href="/register">Começar agora</Link>
             </Button>
@@ -215,51 +221,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-border/50 bg-card/50 py-12 md:py-20">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-10 text-center md:text-left">
-          <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="flex items-center gap-2 font-black italic text-xl md:text-2xl uppercase tracking-tighter">
-              <Target className="h-6 w-6 md:h-7 md:w-7 text-primary" />
-              FocusStudy
-            </div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest italic">
-              O seu foco é o nosso compromisso.
-            </p>
-          </div>
-
-          <div className="flex gap-6 md:gap-10 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-muted-foreground/60">
-            <Link
-              href="/faq"
-              className="hover:text-primary transition-colors italic cursor-pointer"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-primary transition-colors italic cursor-pointer"
-            >
-              Termos
-            </Link>
-            <Link
-              href="/privacy"
-              className="hover:text-primary transition-colors italic cursor-pointer"
-            >
-              Privacidade
-            </Link>
-            <Link
-              href="#"
-              className="hover:text-primary transition-colors italic cursor-pointer"
-            >
-              Suporte
-            </Link>
-          </div>
-
-          <div className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-            © 2026 FOCUSSTUDY // ALL RIGHTS RESERVED
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
