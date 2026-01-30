@@ -30,6 +30,8 @@ import {
   ArrowLeft,
   Sun,
   Moon,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -46,12 +48,19 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  
+  // Estados para visibilidade das senhas
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const router = useRouter()
   const supabase = createClient()
   const { theme, setTheme } = useTheme()
 
   const handleGoogleSignUp = async () => {
+    if (isGoogleLoading) return
     setIsGoogleLoading(true)
+    setError(null)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -125,7 +134,7 @@ export default function RegisterPage() {
     return (
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background transition-colors duration-300">
         <div className="w-full max-w-sm">
-          <Card className="border-primary/20 shadow-lg bg-card">
+          <Card className="border-primary/20 shadow-lg bg-card animate-in fade-in zoom-in duration-300">
             <CardContent className="pt-8">
               <div className="flex flex-col items-center gap-4 text-center">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -140,7 +149,7 @@ export default function RegisterPage() {
                     poderá fazer login.
                   </p>
                 </div>
-                <Button asChild className="w-full mt-4 h-11">
+                <Button asChild className="w-full mt-4 h-11 cursor-pointer">
                   <Link href="/login">Ir para Login</Link>
                 </Button>
               </div>
@@ -154,12 +163,11 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-svh w-full flex-col items-center justify-center p-6 md:p-10 bg-background transition-colors duration-300">
       <div className="w-full max-w-md">
-        {/* Header com Navegação e Toggle de Tema */}
         <div className="mb-8 flex items-center justify-between">
           <Button
             variant="outline"
             asChild
-            className="group px-4 border-muted-foreground/20 hover:border-primary/50 text-foreground shadow-sm transition-all"
+            className="group px-4 border-muted-foreground/20 hover:border-primary/50 text-foreground shadow-sm transition-all cursor-pointer"
           >
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -171,7 +179,7 @@ export default function RegisterPage() {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="rounded-full border border-muted-foreground/20"
+            className="rounded-full border border-muted-foreground/20 cursor-pointer"
           >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -200,25 +208,30 @@ export default function RegisterPage() {
               <Button
                 variant="outline"
                 type="button"
-                className="w-full mb-6 h-12 border-muted-foreground/20 hover:bg-accent hover:text-accent-foreground"
+                className="w-full mb-6 h-12 border-muted-foreground/20 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-all active:scale-[0.98]"
                 onClick={handleGoogleSignUp}
                 disabled={isGoogleLoading || isLoading}
               >
                 {isGoogleLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <svg
-                    className="mr-3 h-5 w-5"
-                    aria-hidden="true"
-                    focusable="false"
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 488 512"
-                  >
+                  <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path
-                      fill="currentColor"
-                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                    ></path>
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      fill="#4285F4"
+                    />
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      fill="#34A853"
+                    />
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                      fill="#FBBC05"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      fill="#EA4335"
+                    />
                   </svg>
                 )}
                 Cadastrar com Google
@@ -275,7 +288,7 @@ export default function RegisterPage() {
                   <div className="grid gap-2">
                     <Label htmlFor="gender">Gênero</Label>
                     <Select value={gender} onValueChange={setGender}>
-                      <SelectTrigger id="gender" className="h-11 bg-background">
+                      <SelectTrigger id="gender" className="h-11 bg-background cursor-pointer">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -295,7 +308,7 @@ export default function RegisterPage() {
                   <Select value={studyType} onValueChange={setStudyType}>
                     <SelectTrigger
                       id="studyType"
-                      className="h-11 bg-background"
+                      className="h-11 bg-background cursor-pointer"
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -311,31 +324,50 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="password">Senha *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      className="h-11 bg-background"
-                      required
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        className="h-11 bg-background pr-10"
+                        required
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="confirmPassword">Confirmar *</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      className="h-11 bg-background"
-                      required
-                      value={confirmPassword}
-                      onChange={e => setConfirmPassword(e.target.value)}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        className="h-11 bg-background pr-10"
+                        required
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-2 pt-2">
                   <Checkbox
                     id="terms"
+                    className="cursor-pointer"
                     checked={termsAccepted}
                     onCheckedChange={checked =>
                       setTermsAccepted(checked as boolean)
@@ -343,7 +375,7 @@ export default function RegisterPage() {
                   />
                   <label
                     htmlFor="terms"
-                    className="text-xs text-muted-foreground leading-tight cursor-pointer"
+                    className="text-xs text-muted-foreground leading-tight cursor-pointer select-none"
                   >
                     Li e concordo com os{' '}
                     <Link
@@ -365,14 +397,14 @@ export default function RegisterPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md">
+                  <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md animate-in fade-in zoom-in duration-200">
                     {error}
                   </p>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-semibold"
+                  className="w-full h-11 text-base font-semibold cursor-pointer transition-all active:scale-[0.98]"
                   disabled={isLoading || isGoogleLoading}
                 >
                   {isLoading ? (
@@ -391,7 +423,7 @@ export default function RegisterPage() {
                   </span>{' '}
                   <Link
                     href="/login"
-                    className="text-primary font-bold hover:underline underline-offset-4"
+                    className="text-primary font-bold hover:underline underline-offset-4 cursor-pointer"
                   >
                     Entrar
                   </Link>
