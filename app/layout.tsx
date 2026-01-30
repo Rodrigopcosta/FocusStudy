@@ -7,28 +7,26 @@ import { CookieBanner } from '@/components/ui/cookie-banner'
 import { Toaster } from 'sonner'
 import './globals.css'
 
-const _geist = Geist({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://focus-study.online'),
+  metadataBase: new URL('https://focus-study.com.br'),
   title: {
-    default: 'FocusStudy - Planejador de Estudos para Concursos e Faculdade',
+    default: 'FocusStudy | O Método de Elite para sua Aprovação',
     template: '%s | FocusStudy',
   },
   description:
-    'Organize seus estudos com o FocusStudy. Gerencie tarefas, crie anotações estruturadas e use a técnica Pomodoro para maximizar seu foco. Ideal para concurseiros e universitários.',
+    'Blinde sua concentração e domine o edital. O FocusStudy é a plataforma definitiva com IA, Pomodoro e gestão de alta performance para concurseiros e universitários de elite.',
   keywords: [
     'planejador de estudos',
-    'concursos',
-    'faculdade',
-    'pomodoro',
-    'organização',
-    'tarefas',
-    'notas',
-    'estudo',
-    'produtividade',
-    'foco',
+    'estudo para concursos',
+    'método de aprovação',
+    'cronograma inteligente',
+    'pomodoro para concursos',
+    'foco e produtividade',
+    'gestão de estudos IA',
+    'organização universitária',
   ],
   authors: [{ name: 'FocusStudy' }],
   creator: 'FocusStudy',
@@ -47,28 +45,28 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://focus-study.online',
+    url: 'https://focus-study.com.br',
     siteName: 'FocusStudy',
-    title: 'FocusStudy - Planejador de Estudos para Concursos e Faculdade',
+    title: 'FocusStudy | Foco Total, Resultado Real',
     description:
-      'Organize seus estudos com tarefas, notas e técnica Pomodoro. Ideal para concurseiros e universitários.',
+      'A estrutura profissional que sua aprovação exige. Domine o edital com inteligência e blindagem de foco.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'FocusStudy - Planejador de Estudos',
+        alt: 'FocusStudy - Plataforma de Estudo de Alta Performance',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FocusStudy - Planejador de Estudos',
-    description: 'Organize seus estudos com tarefas, notas e técnica Pomodoro.',
+    title: 'FocusStudy | Domine seu Edital',
+    description: 'Transforme seu estudo em uma máquina de resultados com o FocusStudy.',
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://focus-study.online',
+    canonical: 'https://focus-study.com.br',
   },
   category: 'education',
   generator: 'Next.js',
@@ -80,8 +78,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
-    { media: '(prefers-color-scheme: dark)', color: '#1e293b' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -94,15 +92,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}
           <CookieBanner />
-          {/* 2. ADICIONE O TOASTER AQUI */}
           <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>
         <Analytics />

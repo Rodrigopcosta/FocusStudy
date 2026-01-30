@@ -229,6 +229,13 @@ export default function LandingPage() {
           </div>
 
           <div className="flex gap-6 md:gap-10 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-muted-foreground/60">
+
+            <Link
+              href="/faq"
+              className="hover:text-primary transition-colors italic cursor-pointer"
+            >
+              FAQ
+            </Link>
             <Link
               href="/terms"
               className="hover:text-primary transition-colors italic cursor-pointer"
