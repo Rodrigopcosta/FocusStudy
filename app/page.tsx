@@ -87,7 +87,7 @@ export default function LandingPage() {
               asChild
               className="shadow-xl shadow-primary/20 font-black uppercase italic text-[10px] md:text-xs rounded-full px-5 md:px-8 h-10 md:h-11 border-2 border-primary/20"
             >
-              <Link href="/register">Começar</Link>
+              <Link href="/register">Cadastre-se</Link>
             </Button>
           </div>
         </div>
@@ -109,7 +109,8 @@ export default function LandingPage() {
 
               <div className="space-y-4 md:space-y-6">
                 <h1 className="text-4xl sm:text-6xl md:text-[120px] font-black leading-[0.9] tracking-[-0.04em] md:tracking-[-0.06em] uppercase italic">
-                  FOCO TOTAL. <br />
+                  FOCO TOTAL
+                  <br />
                   <span className="text-transparent stroke-text">
                     RESULTADO REAL.
                   </span>
