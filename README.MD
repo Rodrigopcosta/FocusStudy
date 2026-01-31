@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg?style=for-the-badge)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-**Acesse o projeto:** [https://focus-study.online/](https://focus-study.online/)
+**Acesse o projeto:** [https://www.focus-study.com.br/](https://www.focus-study.com.br/)
 
 ---
 
