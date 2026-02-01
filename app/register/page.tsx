@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import Link from 'next/link' // Corrigido aqui
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
@@ -56,6 +56,20 @@ export default function RegisterPage() {
   const [birthDateTouched, setBirthDateTouched] = useState(false)
   const [genderTouched, setGenderTouched] = useState(false)
   
+  // Função para gerar um ID de dispositivo único (Fingerprint)
+  const generateDeviceId = () => {
+    const nav = window.navigator
+    const screen = window.screen
+    const guid = `${nav.userAgent}${nav.language}${screen.colorDepth}${screen.width}${screen.height}${nav.hardwareConcurrency}`
+    
+    // Gera um hash simples (SDBM) para não salvar a string gigante
+    let hash = 0
+    for (let i = 0; i < guid.length; i++) {
+      hash = guid.charCodeAt(i) + (hash << 6) + (hash << 16) - hash
+    }
+    return `dev_${Math.abs(hash).toString(16)}`
+  }
+
   const validateAge = (dateString: string) => {
     if (!dateString) return false
     const today = new Date()
@@ -112,11 +126,18 @@ export default function RegisterPage() {
     if (isGoogleLoading) return
     setIsGoogleLoading(true)
     setError(null)
+    
+    const deviceId = generateDeviceId()
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            // Passamos o device_id nos metadados da tentativa de login
+            device_id: deviceId
+          }
         },
       })
       if (error) throw error
@@ -178,6 +199,8 @@ export default function RegisterPage() {
       return
     }
 
+    const deviceId = generateDeviceId()
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -190,6 +213,7 @@ export default function RegisterPage() {
             gender: gender || null,
             study_type: studyType,
             terms_accepted_at: new Date().toISOString(),
+            device_id: deviceId, // Vincula o ID do aparelho ao perfil
           },
         },
       })
@@ -202,7 +226,6 @@ export default function RegisterPage() {
         throw error
       }
 
-      // Redirecionamento direto se a confirmação de e-mail estiver desativada
       if (data?.session) {
         router.push('/onboarding')
         return
