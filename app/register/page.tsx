@@ -44,13 +44,37 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState('')
-  const [studyType, setStudyType] = useState('exam')
+  const [studyType, setStudyType] = useState('administrativa')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   
+  // Estados para validação instantânea
+  const [nameTouched, setNameTouched] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [birthDateTouched, setBirthDateTouched] = useState(false)
+  const [genderTouched, setGenderTouched] = useState(false)
+  
+  // Lógica de validação de idade (Mínimo 18 anos)
+  const validateAge = (dateString: string) => {
+    if (!dateString) return false
+    const today = new Date()
+    const birth = new Date(dateString)
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--
+    }
+    return age >= 18
+  }
+
+  const isNameInvalid = nameTouched && name.trim().length > 0 && name.trim().length < 2
+  const isEmailInvalid = emailTouched && email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const isBirthDateInvalid = birthDateTouched && (birthDate === '' || !validateAge(birthDate))
+  const isGenderInvalid = genderTouched && !gender
+
   const [emailSuggestions, setEmailSuggestions] = useState<string[]>([])
   const emailDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'icloud.com']
 
@@ -61,7 +85,6 @@ export default function RegisterPage() {
   const supabase = createClient()
   const { theme, setTheme } = useTheme()
 
-  // Regras de validação atualizadas
   const passwordRules = {
     length: password.length >= 8,
     upper: /[A-Z]/.test(password),
@@ -107,8 +130,37 @@ export default function RegisterPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    setNameTouched(true)
+    setEmailTouched(true)
+    setBirthDateTouched(true)
+    setGenderTouched(true)
+    
     setIsLoading(true)
     setError(null)
+
+    if (name.trim().length < 2) {
+      setError('O nome deve ter pelo menos 2 caracteres.')
+      setIsLoading(false)
+      return
+    }
+
+    if (isEmailInvalid || email.length === 0) {
+      setError('Por favor, insira um e-mail válido.')
+      setIsLoading(false)
+      return
+    }
+
+    if (!validateAge(birthDate)) {
+      setError('Você precisa ter pelo menos 18 anos para se cadastrar.')
+      setIsLoading(false)
+      return
+    }
+
+    if (!gender) {
+      setError('O gênero é obrigatório.')
+      setIsLoading(false)
+      return
+    }
 
     if (!passwordRules.length || !passwordRules.upper || !passwordRules.lower || !passwordRules.special) {
       setError('A senha não atende a todos os requisitos de segurança.')
@@ -147,8 +199,12 @@ export default function RegisterPage() {
       })
       if (error) throw error
       setSuccess(true)
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Erro ao criar conta.')
+    } catch (error: any) {
+      if (error.message?.includes('rate limit')) {
+        setError('Muitas tentativas. Aguarde um pouco antes de tentar novamente.')
+      } else {
+        setError(error instanceof Error ? error.message : 'Erro ao criar conta.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -211,7 +267,7 @@ export default function RegisterPage() {
           <Card className="shadow-2xl border-muted/50 bg-card">
             <CardHeader className="text-center space-y-1">
               <CardTitle className="text-2xl font-bold">Criar conta</CardTitle>
-              <CardDescription>Comece a organizar seus estudos agora mesmo</CardDescription>
+              <CardDescription>Sua jornada rumo à aprovação começa aqui</CardDescription>
             </CardHeader>
             <CardContent>
               <Button
@@ -233,14 +289,40 @@ export default function RegisterPage() {
               </div>
 
               <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Nome */}
                 <div className="grid gap-2">
-                  <Label htmlFor="name">Nome completo *</Label>
-                  <Input id="name" placeholder="Seu nome" className="h-11" required value={name} onChange={e => setName(e.target.value)} />
+                  <Label htmlFor="name" className={isNameInvalid ? "text-destructive" : ""}>Nome completo *</Label>
+                  <Input 
+                    id="name" 
+                    placeholder="Seu nome" 
+                    className={`h-11 ${isNameInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`} 
+                    required 
+                    value={name} 
+                    onChange={e => setName(e.target.value)}
+                    onBlur={() => setNameTouched(true)}
+                  />
+                  {isNameInvalid && (
+                    <p className="text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1">O nome deve ter pelo menos 2 caracteres.</p>
+                  )}
                 </div>
                 
+                {/* Email */}
                 <div className="grid gap-2 relative">
-                  <Label htmlFor="email">E-mail *</Label>
-                  <Input id="email" type="email" placeholder="seu@email.com" className="h-11" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" />
+                  <Label htmlFor="email" className={isEmailInvalid ? "text-destructive" : ""}>E-mail *</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="seu@email.com" 
+                    className={`h-11 ${isEmailInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`} 
+                    required 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    onBlur={() => setEmailTouched(true)}
+                    autoComplete="off" 
+                  />
+                  {isEmailInvalid && (
+                    <p className="text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1">Insira um endereço de e-mail válido.</p>
+                  )}
                   {emailSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 w-full z-50 mt-1 bg-card border border-muted rounded-md shadow-lg overflow-hidden">
                       {emailSuggestions.map((suggestion) => (
@@ -251,11 +333,27 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2"><Label htmlFor="birthDate">Nascimento</Label><Input id="birthDate" type="date" className="h-11" value={birthDate} onChange={e => setBirthDate(e.target.value)} /></div>
                   <div className="grid gap-2">
-                    <Label htmlFor="gender">Gênero</Label>
-                    <Select value={gender} onValueChange={setGender}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <Label htmlFor="birthDate" className={isBirthDateInvalid ? "text-destructive" : ""}>Nascimento *</Label>
+                    <Input 
+                      id="birthDate" 
+                      type="date" 
+                      className={`h-11 ${isBirthDateInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`} 
+                      required 
+                      value={birthDate} 
+                      onChange={e => setBirthDate(e.target.value)}
+                      onBlur={() => setBirthDateTouched(true)}
+                    />
+                    {isBirthDateInvalid && (
+                      <p className="text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1">Mínimo 18 anos.</p>
+                    )}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="gender" className={isGenderInvalid ? "text-destructive" : ""}>Gênero *</Label>
+                    <Select value={gender} onValueChange={(val) => { setGender(val); setGenderTouched(true) }}>
+                      <SelectTrigger className={`h-11 ${isGenderInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`}>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="male">Masculino</SelectItem>
                         <SelectItem value="female">Feminino</SelectItem>
@@ -267,17 +365,21 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="studyType">Tipo de Estudo *</Label>
+                  <Label htmlFor="studyType">Área de Concurso *</Label>
                   <Select value={studyType} onValueChange={setStudyType}>
                     <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="exam">Concurso Público</SelectItem>
-                      <SelectItem value="college">Faculdade / Universidade</SelectItem>
+                      <SelectItem value="administrativa">Administrativa</SelectItem>
+                      <SelectItem value="policial">Policial</SelectItem>
+                      <SelectItem value="tribunais">Tribunais / Judiciária</SelectItem>
+                      <SelectItem value="fiscal">Fiscal / Controle</SelectItem>
+                      <SelectItem value="saude">Saúde</SelectItem>
+                      <SelectItem value="educacao">Educação</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Senha e Confirmação em linhas separadas para melhor UX com senhas longas */}
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="password">Senha *</Label>
@@ -287,7 +389,6 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* Password Rules Indicator */}
                   <div className="grid grid-cols-2 gap-y-2 bg-muted/30 p-3 rounded-lg border border-muted">
                     <RuleItem met={passwordRules.length} text="Mín. 8 caracteres" />
                     <RuleItem met={passwordRules.upper} text="Letra maiúscula" />
