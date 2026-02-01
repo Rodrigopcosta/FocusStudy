@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import Link from 'next/link'
+import Link from 'next/link' // Corrigido aqui
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import {
@@ -51,13 +51,11 @@ export default function RegisterPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   
-  // Estados para validação instantânea
   const [nameTouched, setNameTouched] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [birthDateTouched, setBirthDateTouched] = useState(false)
   const [genderTouched, setGenderTouched] = useState(false)
   
-  // Lógica de validação de idade (Mínimo 18 anos)
   const validateAge = (dateString: string) => {
     if (!dateString) return false
     const today = new Date()
@@ -86,7 +84,7 @@ export default function RegisterPage() {
   const { theme, setTheme } = useTheme()
 
   const passwordRules = {
-    length: password.length >= 8,
+    length: password.length >= 6,
     upper: /[A-Z]/.test(password),
     lower: /[a-z]/.test(password),
     special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
@@ -162,8 +160,8 @@ export default function RegisterPage() {
       return
     }
 
-    if (!passwordRules.length || !passwordRules.upper || !passwordRules.lower || !passwordRules.special) {
-      setError('A senha não atende a todos os requisitos de segurança.')
+    if (!passwordRules.length || !passwordRules.upper || !passwordRules.special) {
+      setError('A senha não atende aos requisitos (mín. 6 caracteres, maiúscula e caractere especial).')
       setIsLoading(false)
       return
     }
@@ -181,13 +179,11 @@ export default function RegisterPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-            `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             name,
             birth_date: birthDate || null,
@@ -197,7 +193,26 @@ export default function RegisterPage() {
           },
         },
       })
-      if (error) throw error
+
+      if (error) {
+        if (error.message.toLowerCase().includes('already registered')) {
+          setError('Este e-mail já está cadastrado. Por favor, faça login.')
+          return
+        }
+        throw error
+      }
+
+      // Redirecionamento direto se a confirmação de e-mail estiver desativada
+      if (data?.session) {
+        router.push('/onboarding')
+        return
+      }
+
+      if (data?.user?.identities?.length === 0) {
+        setError('Este e-mail já está cadastrado. Por favor, faça login.')
+        return
+      }
+
       setSuccess(true)
     } catch (error: any) {
       if (error.message?.includes('rate limit')) {
@@ -220,7 +235,7 @@ export default function RegisterPage() {
   if (success) {
     return (
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background transition-colors duration-300">
-        <div className="w-full max-w-sm">
+        <div className="w-full max-sm:max-w-sm">
           <Card className="border-primary/20 shadow-lg bg-card animate-in fade-in zoom-in duration-300">
             <CardContent className="pt-8">
               <div className="flex flex-col items-center gap-4 text-center">
@@ -229,7 +244,7 @@ export default function RegisterPage() {
                 </div>
                 <h2 className="text-xl font-semibold">Conta criada com sucesso!</h2>
                 <p className="text-muted-foreground text-sm">Verifique seu e-mail para confirmar sua conta.</p>
-                <Button asChild className="w-full mt-4 h-11">
+                <Button asChild className="w-full mt-4 h-11 cursor-pointer">
                   <Link href="/login">Ir para Login</Link>
                 </Button>
               </div>
@@ -289,9 +304,8 @@ export default function RegisterPage() {
               </div>
 
               <form onSubmit={handleSignUp} className="space-y-4">
-                {/* Nome */}
                 <div className="grid gap-2">
-                  <Label htmlFor="name" className={isNameInvalid ? "text-destructive" : ""}>Nome completo *</Label>
+                  <Label htmlFor="name" className={`cursor-pointer ${isNameInvalid ? "text-destructive" : ""}`}>Nome completo *</Label>
                   <Input 
                     id="name" 
                     placeholder="Seu nome" 
@@ -306,9 +320,8 @@ export default function RegisterPage() {
                   )}
                 </div>
                 
-                {/* Email */}
                 <div className="grid gap-2 relative">
-                  <Label htmlFor="email" className={isEmailInvalid ? "text-destructive" : ""}>E-mail *</Label>
+                  <Label htmlFor="email" className={`cursor-pointer ${isEmailInvalid ? "text-destructive" : ""}`}>E-mail *</Label>
                   <Input 
                     id="email" 
                     type="email" 
@@ -326,7 +339,7 @@ export default function RegisterPage() {
                   {emailSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 w-full z-50 mt-1 bg-card border border-muted rounded-md shadow-lg overflow-hidden">
                       {emailSuggestions.map((suggestion) => (
-                        <button key={suggestion} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors" onClick={() => { setEmail(suggestion); setEmailSuggestions([]) }}>{suggestion}</button>
+                        <button key={suggestion} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors cursor-pointer" onClick={() => { setEmail(suggestion); setEmailSuggestions([]) }}>{suggestion}</button>
                       ))}
                     </div>
                   )}
@@ -334,11 +347,11 @@ export default function RegisterPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="birthDate" className={isBirthDateInvalid ? "text-destructive" : ""}>Nascimento *</Label>
+                    <Label htmlFor="birthDate" className={`cursor-pointer ${isBirthDateInvalid ? "text-destructive" : ""}`}>Nascimento *</Label>
                     <Input 
                       id="birthDate" 
                       type="date" 
-                      className={`h-11 ${isBirthDateInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`} 
+                      className={`h-11 cursor-pointer ${isBirthDateInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`} 
                       required 
                       value={birthDate} 
                       onChange={e => setBirthDate(e.target.value)}
@@ -349,78 +362,78 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="gender" className={isGenderInvalid ? "text-destructive" : ""}>Gênero *</Label>
+                    <Label htmlFor="gender" className="cursor-pointer">Gênero *</Label>
                     <Select value={gender} onValueChange={(val) => { setGender(val); setGenderTouched(true) }}>
-                      <SelectTrigger className={`h-11 ${isGenderInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`}>
+                      <SelectTrigger className={`h-11 cursor-pointer ${isGenderInvalid ? "border-destructive focus-visible:ring-destructive" : ""}`}>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Masculino</SelectItem>
-                        <SelectItem value="female">Feminino</SelectItem>
-                        <SelectItem value="other">Outro</SelectItem>
-                        <SelectItem value="prefer_not_say">Prefiro não dizer</SelectItem>
+                        <SelectItem value="male" className="cursor-pointer">Masculino</SelectItem>
+                        <SelectItem value="female" className="cursor-pointer">Feminino</SelectItem>
+                        <SelectItem value="other" className="cursor-pointer">Outro</SelectItem>
+                        <SelectItem value="prefer_not_say" className="cursor-pointer">Prefiro não dizer</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="studyType">Área de Concurso *</Label>
+                  <Label htmlFor="studyType" className="cursor-pointer">Área de Concurso *</Label>
                   <Select value={studyType} onValueChange={setStudyType}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11 cursor-pointer"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="administrativa">Administrativa</SelectItem>
-                      <SelectItem value="policial">Policial</SelectItem>
-                      <SelectItem value="tribunais">Tribunais / Judiciária</SelectItem>
-                      <SelectItem value="fiscal">Fiscal / Controle</SelectItem>
-                      <SelectItem value="saude">Saúde</SelectItem>
-                      <SelectItem value="educacao">Educação</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
+                      <SelectItem value="administrativa" className="cursor-pointer">Administrativa</SelectItem>
+                      <SelectItem value="policial" className="cursor-pointer">Policial</SelectItem>
+                      <SelectItem value="tribunais" className="cursor-pointer">Tribunais / Judiciária</SelectItem>
+                      <SelectItem value="fiscal" className="cursor-pointer">Fiscal / Controle</SelectItem>
+                      <SelectItem value="saude" className="cursor-pointer">Saúde</SelectItem>
+                      <SelectItem value="educacao" className="cursor-pointer">Educação</SelectItem>
+                      <SelectItem value="outros" className="cursor-pointer">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="password">Senha *</Label>
+                    <Label htmlFor="password" title="Clique para focar na senha" className="cursor-pointer">Senha *</Label>
                     <div className="relative">
                       <Input id="password" type={showPassword ? "text" : "password"} className="h-11 pr-10" required value={password} onChange={e => setPassword(e.target.value)} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-y-2 bg-muted/30 p-3 rounded-lg border border-muted">
-                    <RuleItem met={passwordRules.length} text="Mín. 8 caracteres" />
+                    <RuleItem met={passwordRules.length} text="Mín. 6 caracteres" />
                     <RuleItem met={passwordRules.upper} text="Letra maiúscula" />
                     <RuleItem met={passwordRules.lower} text="Letra minúscula" />
                     <RuleItem met={passwordRules.special} text="Caractere especial" />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                    <Label htmlFor="confirmPassword" title="Confirme sua senha" className="cursor-pointer">Confirmar Senha *</Label>
                     <div className="relative">
                       <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} className="h-11 pr-10" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1">{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-2 pt-2">
-                  <Checkbox id="terms" checked={termsAccepted} onCheckedChange={checked => setTermsAccepted(checked as boolean)} />
+                  <Checkbox id="terms" checked={termsAccepted} onCheckedChange={checked => setTermsAccepted(checked as boolean)} className="cursor-pointer" />
                   <label htmlFor="terms" className="text-xs text-muted-foreground leading-tight cursor-pointer select-none">
-                    Li e concordo com os <Link href="/terms" className="text-primary font-medium hover:underline">Termos de Uso</Link> e a <Link href="/privacy" className="text-primary font-medium hover:underline">Política de Privacidade</Link>
+                    Li e concordo com os <Link href="/terms" className="text-primary font-medium hover:underline cursor-pointer">Termos de Uso</Link> e a <Link href="/privacy" className="text-primary font-medium hover:underline cursor-pointer">Política de Privacidade</Link>
                   </label>
                 </div>
 
                 {error && <p className="text-sm font-medium text-destructive text-center bg-destructive/10 p-2 rounded-md animate-in fade-in zoom-in">{error}</p>}
 
-                <Button type="submit" className="w-full h-11 text-base font-semibold transition-all active:scale-[0.98]" disabled={isLoading || isGoogleLoading}>
+                <Button type="submit" className={`w-full h-11 text-base font-semibold transition-all active:scale-[0.98] ${isLoading || isGoogleLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`} disabled={isLoading || isGoogleLoading}>
                   {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando conta...</> : 'Criar minha conta'}
                 </Button>
 
                 <div className="text-center text-sm pt-2">
                   <span className="text-muted-foreground">Já tem uma conta?</span>{' '}
-                  <Link href="/login" className="text-primary font-bold hover:underline underline-offset-4">Entrar</Link>
+                  <Link href="/login" className="text-primary font-bold hover:underline underline-offset-4 cursor-pointer">Entrar</Link>
                 </div>
               </form>
             </CardContent>
