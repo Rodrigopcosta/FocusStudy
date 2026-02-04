@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { CookieBanner } from '@/components/ui/cookie-banner'
+import { DeviceTracker } from '@/components/device-tracker'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -102,6 +103,9 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
+          {/* Componente que garante a geração do ID do dispositivo */}
+          <DeviceTracker />
+          
           {children}
           <CookieBanner />
           <Toaster position="top-right" richColors closeButton />
