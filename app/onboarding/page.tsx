@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
 interface Subject {
   id: string
@@ -36,9 +37,21 @@ interface Subject {
 }
 
 const STRIPE_PRICES = {
-  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
-  yearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
+  monthly_trial: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_TRIAL_PRICE_ID,
+  yearly_trial: process.env.NEXT_PUBLIC_STRIPE_YEARLY_TRIAL_PRICE_ID,
+  monthly_direct: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_DIRECT_PRICE_ID,
+  yearly_direct: process.env.NEXT_PUBLIC_STRIPE_YEARLY_DIRECT_PRICE_ID,
 }
+
+const daysOfWeek = [
+  { label: 'S', value: 'seg' },
+  { label: 'T', value: 'ter' },
+  { label: 'Q', value: 'qua' },
+  { label: 'Q', value: 'qui' },
+  { label: 'S', value: 'sex' },
+  { label: 'S', value: 'sab' },
+  { label: 'D', value: 'dom' },
+]
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -51,10 +64,13 @@ export default function OnboardingPage() {
   const [isTrialEligible, setIsTrialEligible] = useState(true)
   const [isValidatingCpf, setIsValidatingCpf] = useState(false)
   const [cpfHash, setCpfHash] = useState<string | null>(null)
+  const [lastValidatedCpf, setLastValidatedCpf] = useState<string>('')
+  const [deviceId, setDeviceId] = useState<string | null>(null)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [cpfAttempts, setCpfAttempts] = useState(0)
+  const MAX_CPF_ATTEMPTS = 3
 
-  // Matérias iniciando com nível 'medio' por padrão
   const [subjects, setSubjects] = useState<Subject[]>([
     { id: '1', name: 'Direito Constitucional', level: 'medio' },
     { id: '2', name: 'Língua Portuguesa', level: 'medio' },
@@ -65,20 +81,49 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
   const totalSteps = 4
+  const abortControllerRef = useRef<AbortController | null>(null)
 
+  // 1. Inicializa o Fingerprint e vincula ao perfil
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/login')
-      } else {
+    const initialize = async () => {
+      try {
+        const fp = await FingerprintJS.load()
+        const result = await fp.get()
+        const id = result.visitorId
+        setDeviceId(id)
+        
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push('/login')
+          return
+        }
+
+        // Verifica se onboarding já foi completado
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profile?.onboarding_completed) {
+          router.push('/dashboard')
+          return
+        }
+
+        await supabase
+          .from('profiles')
+          .update({ device_id: id })
+          .eq('id', session.user.id)
+
         setIsCheckingAuth(false)
+      } catch (error) {
+        console.error("FJS Error:", error)
+        toast.error("Erro ao identificar dispositivo.")
       }
     }
-    checkUser()
+    initialize()
   }, [router, supabase])
 
-  // Máscara de CPF em tempo real
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '')
     if (value.length <= 11) {
@@ -89,138 +134,190 @@ export default function OnboardingPage() {
     }
   }
 
-  // Validação matemática do CPF (Dígitos Verificadores)
-  const validateCPF = (cpf: string) => {
-    const cleanCpf = cpf.replace(/\D/g, '')
+  const validateCPF = (cpfValue: string) => {
+    const cleanCpf = cpfValue.replace(/\D/g, '')
     if (cleanCpf.length !== 11 || !!cleanCpf.match(/(\d)\1{10}/)) return false
-    
     let sum = 0, rest
-    for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (11 - i)
+    for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf.substring(i - 1, i)) * (11 - i)
     rest = (sum * 10) % 11
     if ((rest === 10) || (rest === 11)) rest = 0
     if (rest !== parseInt(cleanCpf.substring(9, 10))) return false
-    
     sum = 0
-    for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (12 - i)
+    for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf.substring(i - 1, i)) * (12 - i)
     rest = (sum * 10) % 11
     if ((rest === 10) || (rest === 11)) rest = 0
     if (rest !== parseInt(cleanCpf.substring(10, 11))) return false
-    
     return true
   }
 
-  useEffect(() => {
-    const cleanCpf = cpf.replace(/\D/g, '')
-    if (cleanCpf.length === 11) {
-      if (validateCPF(cleanCpf)) {
-        checkEligibility(cleanCpf)
-      } else {
-        toast.error('CPF matematicamente inválido. Verifique os números.')
-        setIsTrialEligible(false)
-      }
-    }
-  }, [cpf])
+  // 2. Valida Elegibilidade (CPF + Dispositivo)
+  const checkEligibility = useCallback(async (cleanCpf: string) => {
+    if (!deviceId || cleanCpf.length !== 11 || cleanCpf === lastValidatedCpf) return cpfHash
+    
+    if (abortControllerRef.current) abortControllerRef.current.abort()
+    abortControllerRef.current = new AbortController()
 
-  const checkEligibility = async (cleanCpf: string) => {
     setIsValidatingCpf(true)
     try {
       const response = await fetch('/api/check-eligibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: cleanCpf }),
+        body: JSON.stringify({ cpf: cleanCpf, deviceId }),
+        signal: abortControllerRef.current.signal
       })
+      
       const data = await response.json()
+      
+      // Bloqueia se o servidor retornar que o dispositivo já foi usado
       setIsTrialEligible(data.eligible)
-      if (data.hash) setCpfHash(data.hash)
-
-      if (!data.eligible) {
-        toast.warning('Atenção: Este CPF já possui uma conta ou utilizou o período de teste.')
+      setLastValidatedCpf(cleanCpf)
+      
+      if (data.hash) {
+        setCpfHash(data.hash)
+        setCpfAttempts(prev => prev + 1)
+        return data.hash
       }
-    } catch (error) {
-      console.error('Erro ao validar CPF:', error)
+    } catch (error: any) {
+      if (error.name !== 'AbortError') console.error("Erro na elegibilidade.")
     } finally {
       setIsValidatingCpf(false)
     }
-  }
+    return null
+  }, [deviceId, lastValidatedCpf, cpfHash])
 
-  const finalizeWithCpf = async (skipToDashboard = false) => {
-    setIsLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Sessão expirada.')
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          cpf_hash: cpfHash,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id)
-
-      if (error) {
-        if (error.code === '23505') throw new Error('Este CPF já está vinculado a outro estudante.')
-        throw error
-      }
-
-      if (skipToDashboard) router.push('/dashboard')
-      return true
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar dados de segurança.')
-      return false
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    if (cleanCpf.length === 11 && deviceId && validateCPF(cleanCpf)) {
+        checkEligibility(cleanCpf)
     }
+  }, [cpf, deviceId, checkEligibility])
+
+  const finalizeProfileInDatabase = async (activeHash: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) throw new Error('Sessão expirada.')
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        cpf_hash: activeHash,
+        device_id: deviceId,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', session.user.id)
+
+    if (error) {
+      if (error.code === '23505') throw new Error('Este CPF já está vinculado a outra conta.')
+      throw error
+    }
+    return true
   }
 
   const handleSubscription = async () => {
     const cleanCpf = cpf.replace(/\D/g, '')
-    if (cleanCpf.length !== 11 || !cpfHash) {
-      toast.error('Insira um CPF válido para continuar.')
-      return
-    }
-
-    const saved = await finalizeWithCpf()
-    if (!saved) return
+    if (!deviceId) return toast.error("Erro de identificação do dispositivo.")
 
     setIsRedirecting(true)
     try {
-      const priceId = billingCycle === 'monthly' ? STRIPE_PRICES.monthly : STRIPE_PRICES.yearly
+      let finalHash = cpfHash
+      
+      // Se AINDA não tem hash após digitação e validação automática, tenta uma última vez
+      // MAS SÓ se o CPF foi alterado desde a última validação
+      if (!finalHash && cleanCpf !== lastValidatedCpf) {
+        if (!validateCPF(cleanCpf)) {
+          toast.error("CPF inválido.")
+          setIsRedirecting(false)
+          return
+        }
+        finalHash = await checkEligibility(cleanCpf)
+      }
+
+      // Se não tem hash e NÃO é elegível para trial, gera um hash genérico
+      // (plano pago não precisa de validação de elegibilidade tão rígida)
+      if (!finalHash && !isTrialEligible) {
+        // Faz uma chamada rápida pro servidor só pra gerar o hash
+        const hashResponse = await fetch('/api/check-eligibility', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cpf: cleanCpf, deviceId }),
+        }).catch(() => null)
+        
+        if (hashResponse?.ok) {
+          const data = await hashResponse.json()
+          finalHash = data.hash
+        }
+      }
+
+      // Se não tem hash e ainda é elegível, erro
+      if (!finalHash && isTrialEligible) {
+        toast.error("Validação pendente. Tente novamente.")
+        setIsRedirecting(false)
+        return
+      }
+
+      // Se tem hash, finaliza no banco
+      if (finalHash) {
+        await finalizeProfileInDatabase(finalHash)
+      }
+
+      // Seleciona o priceId baseado em elegibilidade
+      const priceId = isTrialEligible 
+        ? (billingCycle === 'monthly' ? STRIPE_PRICES.monthly_trial : STRIPE_PRICES.yearly_trial)
+        : (billingCycle === 'monthly' ? STRIPE_PRICES.monthly_direct : STRIPE_PRICES.yearly_direct)
+
+      if (!priceId) {
+        toast.error("Configuração de preço não encontrada.")
+        setIsRedirecting(false)
+        return
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, cpf: cleanCpf }),
+        body: JSON.stringify({ 
+            priceId,
+            cpf: cleanCpf, 
+            deviceId,
+        }),
       })
+      
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Erro no checkout')
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error(data.error || "Erro ao gerar checkout.")
+      }
     } catch (error: any) {
-      toast.error(error.message)
+      console.error("Erro na assinatura:", error)
+      toast.error(error.message || "Erro ao processar assinatura")
       setIsRedirecting(false)
     }
   }
 
-  const daysOfWeek = [
-    { label: 'S', value: 'seg' }, { label: 'T', value: 'ter' },
-    { label: 'Q', value: 'qua' }, { label: 'Q', value: 'qui' },
-    { label: 'S', value: 'sex' }, { label: 'S', value: 'sab' },
-    { label: 'D', value: 'dom' },
-  ]
-
-  const toggleDay = (day: string) => {
-    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
-  }
-
-  const updateSubjectLevel = (id: string, level: string) => {
-    setSubjects(prev => prev.map(s => (s.id === id ? { ...s, level } : s)))
+  const handleSkipSubscription = async () => {
+    // Usuário opta por acessar com plano gratuito
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: true,
+          plan_type: 'free',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session?.user.id)
+      
+      toast.success("Bem-vindo ao FocusStudy! Acesso gratuito ativado.")
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast.error("Erro ao processar: " + error.message)
+    }
   }
 
   const saveOnboardingData = async () => {
     setIsLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) throw new Error('Sessão expirada.')
-
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -230,27 +327,21 @@ export default function OnboardingPage() {
           show_tutorial: showTutorial,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', session.user.id)
-
-      if (error) throw new Error(error.message)
+        .eq('id', session?.user.id)
+      if (error) throw error
       setStep(3)
     } catch (error: any) {
-      toast.error("Erro ao salvar preferências: " + error.message)
+      toast.error(error.message)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const nextStep = () => setStep(s => Math.min(s + 1, 4))
-  const prevStep = () => setStep(s => Math.max(s - 1, 1))
-
-  if (isCheckingAuth) {
-    return (
-      <div className="flex min-h-svh w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  if (isCheckingAuth) return (
+    <div className="flex min-h-svh w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  )
 
   return (
     <div className="flex min-h-svh w-full flex-col items-center justify-center p-6 md:p-10 bg-background text-foreground transition-colors duration-500">
@@ -284,16 +375,12 @@ export default function OnboardingPage() {
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Dias da semana</Label>
                   <div className="flex justify-between gap-1">
-                    {daysOfWeek.map(day => (
+                    {daysOfWeek.map((day) => (
                       <button
                         key={day.value}
                         type="button"
-                        onClick={() => toggleDay(day.value)}
-                        className={`h-10 w-10 rounded-full border text-xs font-bold transition-all cursor-pointer ${
-                          selectedDays.includes(day.value)
-                            ? 'bg-primary text-primary-foreground border-primary shadow-md scale-110'
-                            : 'bg-background text-muted-foreground hover:border-primary/50 border-input'
-                        }`}
+                        onClick={() => setSelectedDays(prev => prev.includes(day.value) ? prev.filter(d => d !== day.value) : [...prev, day.value])}
+                        className={`h-10 w-10 rounded-full border text-xs font-bold transition-all cursor-pointer ${selectedDays.includes(day.value) ? 'bg-primary text-primary-foreground border-primary shadow-md scale-110' : 'bg-background text-muted-foreground hover:border-primary/50 border-input'}`}
                       >
                         {day.label}
                       </button>
@@ -314,7 +401,7 @@ export default function OnboardingPage() {
                     ))}
                   </select>
                 </div>
-                <Button onClick={nextStep} disabled={selectedDays.length === 0} className="w-full h-11 font-semibold cursor-pointer">
+                <Button onClick={() => setStep(2)} disabled={selectedDays.length === 0} className="w-full h-11 font-semibold cursor-pointer">
                   Continuar <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -339,10 +426,8 @@ export default function OnboardingPage() {
                           <button
                             key={lvl}
                             type="button"
-                            onClick={() => updateSubjectLevel(sub.id, lvl)}
-                            className={`py-1.5 text-[10px] uppercase font-bold rounded border transition-all cursor-pointer ${
-                              sub.level === lvl ? 'bg-primary/20 border-primary text-primary shadow-sm' : 'bg-background hover:bg-muted/50 border-input text-muted-foreground'
-                            }`}
+                            onClick={() => setSubjects(prev => prev.map(s => s.id === sub.id ? {...s, level: lvl} : s))}
+                            className={`py-1.5 text-[10px] uppercase font-bold rounded border transition-all cursor-pointer ${sub.level === lvl ? 'bg-primary/20 border-primary text-primary shadow-sm' : 'bg-background hover:bg-muted/50 border-input text-muted-foreground'}`}
                           >
                             {lvl === 'facil' ? 'Fácil' : lvl === 'medio' ? 'Médio' : 'Difícil'}
                           </button>
@@ -353,14 +438,14 @@ export default function OnboardingPage() {
                 </div>
                 <div className="pt-4 space-y-4">
                   <div className="flex items-start space-x-3 p-4 border border-input rounded-lg bg-muted/30 cursor-pointer" onClick={() => setShowTutorial(!showTutorial)}>
-                    <Checkbox id="tutorial" checked={showTutorial} onCheckedChange={() => {}} className="cursor-pointer" />
+                    <Checkbox id="tutorial" checked={showTutorial} onCheckedChange={() => { }} className="cursor-pointer" />
                     <div className="grid gap-1.5 leading-none cursor-pointer">
                       <Label className="text-sm font-bold cursor-pointer">Ativar tutorial guiado</Label>
                       <p className="text-xs text-muted-foreground">Dicas visuais na dashboard.</p>
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">
+                    <Button variant="outline" onClick={() => setStep(1)} className="flex-1 cursor-pointer">
                       <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
                     </Button>
                     <Button onClick={saveOnboardingData} disabled={isLoading} className="flex-2 font-semibold cursor-pointer">
@@ -384,8 +469,8 @@ export default function OnboardingPage() {
                   <p className="text-sm font-medium">Analisamos seus dados e seu ambiente de estudos está sendo preparado.</p>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
-                  <Button onClick={nextStep} className="flex-2 font-semibold bg-primary cursor-pointer text-primary-foreground">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1 cursor-pointer">Voltar</Button>
+                  <Button onClick={() => setStep(4)} className="flex-2 font-semibold bg-primary cursor-pointer text-primary-foreground">
                     Gerar Cronograma
                   </Button>
                 </div>
@@ -397,13 +482,13 @@ export default function OnboardingPage() {
             <div className="animate-in zoom-in duration-300">
               <CardHeader className="text-center">
                 <div className="mx-auto w-14 h-14 bg-amber-500/10 rounded-full flex items-center justify-center mb-2">
-                  <Lock className="h-7 w-7 text-amber-600" />
+                  <Lock className={`h-7 w-7 ${isTrialEligible ? 'text-amber-600' : 'text-primary'}`} />
                 </div>
                 <CardTitle className={`text-2xl font-bold ${isTrialEligible ? 'text-amber-600' : 'text-primary'}`}>
                   {isTrialEligible ? 'Ciclo Inteligente' : 'Acesso Premium'}
                 </CardTitle>
                 <CardDescription>
-                  {isTrialEligible ? 'Valide seu documento para o teste gratuito' : 'Este documento já utilizou o teste. Assine para continuar.'}
+                  {isTrialEligible ? 'Valide seu documento para o teste gratuito' : 'Assine agora para liberar acesso total à inteligência.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -426,11 +511,20 @@ export default function OnboardingPage() {
                     placeholder="000.000.000-00"
                     value={cpf}
                     onChange={handleCpfChange}
-                    className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary font-mono outline-none ${!isTrialEligible ? 'border-amber-500/50 bg-amber-500/5' : 'border-input'}`}
+                    disabled={cpfAttempts >= MAX_CPF_ATTEMPTS}
+                    className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary font-mono outline-none ${!isTrialEligible ? 'border-amber-500 border-2 bg-amber-500/5' : 'border-input'} ${cpfAttempts >= MAX_CPF_ATTEMPTS ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
+                  <div className="text-[10px] text-muted-foreground">
+                    Tentativas: {cpfAttempts}/{MAX_CPF_ATTEMPTS}
+                  </div>
                   {!isTrialEligible && (
-                    <div className="flex items-center gap-1.5 text-amber-600 text-[10px] font-bold uppercase">
-                      <AlertCircle className="h-3 w-3" /> Este CPF já está em uso em outra conta de estudo
+                    <div className="flex items-center gap-1.5 text-amber-700 text-[10px] font-bold uppercase p-2 bg-amber-100 rounded mt-1 border border-amber-200">
+                      <AlertCircle className="h-3 w-3" /> Benefício de teste já utilizado neste dispositivo.
+                    </div>
+                  )}
+                  {cpfAttempts >= MAX_CPF_ATTEMPTS && (
+                    <div className="flex items-center gap-1.5 text-red-700 text-[10px] font-bold uppercase p-2 bg-red-100 rounded mt-1 border border-red-200">
+                      <AlertCircle className="h-3 w-3" /> Limite de tentativas atingido. Acesse como plano gratuito.
                     </div>
                   )}
                 </div>
@@ -449,25 +543,24 @@ export default function OnboardingPage() {
                 <div className="flex flex-col gap-3">
                   <Button
                     onClick={handleSubscription}
-                    disabled={isRedirecting || !cpf || isValidatingCpf || cpf.replace(/\D/g, '').length < 11}
-                    className={`w-full h-12 text-base font-bold shadow-lg transition-all cursor-pointer ${
-                      isTrialEligible ? 'bg-amber-600 hover:bg-amber-700 shadow-orange-500/20 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                    }`}
+                    disabled={isRedirecting || !cpf || isValidatingCpf || cpf.replace(/\D/g, '').length < 11 || !deviceId || cpfAttempts >= MAX_CPF_ATTEMPTS}
+                    className={`w-full h-12 text-base font-bold shadow-lg transition-all cursor-pointer ${isTrialEligible ? 'bg-amber-600 hover:bg-amber-700 shadow-orange-500/20 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}
                   >
-                    {isRedirecting ? <Loader2 className="h-5 w-5 animate-spin" /> : isTrialEligible ? 'Ativar 7 Dias Grátis' : 'Assinar Agora'}
+                    {isRedirecting ? <Loader2 className="h-5 w-5 animate-spin" /> : isTrialEligible ? 'Ativar 7 Dias Grátis' : 'Assinar Plano Premium'}
                   </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => finalizeWithCpf(true)}
-                      disabled={isLoading || !cpf || cpf.replace(/\D/g, '').length < 11}
-                      className="flex-2 text-muted-foreground text-xs cursor-pointer"
-                    >
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continuar com cronograma manual'}
-                    </Button>
-                  </div>
+                  
+                  <Button 
+                    onClick={handleSkipSubscription}
+                    variant="outline"
+                    className="w-full cursor-pointer"
+                  >
+                    Usar Plano Gratuito
+                  </Button>
                 </div>
+
+                <Button variant="ghost" onClick={() => setStep(3)} className="w-full cursor-pointer">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                </Button>
               </CardContent>
             </div>
           )}
