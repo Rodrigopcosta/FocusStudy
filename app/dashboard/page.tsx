@@ -4,7 +4,6 @@ import { TodayTasks } from '@/components/dashboard/today-tasks'
 import { QuickPomodoro } from '@/components/dashboard/quick-pomodoro'
 import { RecentNotes } from '@/components/dashboard/recent-notes'
 import { TasksChartClient } from '@/components/dashboard/tasks-chart-client'
-import { UpgradeBanner } from '@/components/dashboard/upgrade-banner'
 import { CheckCircle2, PartyPopper } from 'lucide-react'
 
 interface DashboardProps {
@@ -110,8 +109,6 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             Acompanhe seu progresso e mantenha o foco nos estudos.
           </p>
         </div>
-
-        {isFreePlan && <UpgradeBanner />}
       </div>
 
       <StatsCards

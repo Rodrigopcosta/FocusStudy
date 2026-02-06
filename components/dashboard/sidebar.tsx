@@ -40,7 +40,8 @@ import {
   HelpCircle,
   Trophy,
   Layers,
-  Brain, // Ícone para Estudo
+  Brain,
+  Sparkles, // Ícone para o Resumo
 } from 'lucide-react'
 
 const menuItems = [
@@ -51,7 +52,8 @@ const menuItems = [
   { title: 'Pomodoro', href: '/dashboard/pomodoro', icon: Timer },
   { title: 'Jornada', href: '/dashboard/jornada', icon: Trophy },
   { title: 'Flashcards', href: '/dashboard/flashcards', icon: Layers },
-  { title: 'Estudar', href: '/dashboard/study', icon: Brain }, // ADICIONADO: Rota de Estudo
+  { title: 'Estudar', href: '/dashboard/study', icon: Brain },
+  { title: 'Resumir IA', href: '/dashboard/summarize', icon: Sparkles }, // ADICIONADO AQUI
 ]
 
 interface DashboardSidebarProps {

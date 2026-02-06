@@ -13,23 +13,31 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { 
-  BookOpen, 
-  ArrowRight, 
-  ArrowLeft, 
-  Lock, 
-  Sparkles, 
-  Clock, 
+import {
+  BookOpen,
+  ArrowRight,
+  ArrowLeft,
+  Lock,
+  Sparkles,
+  Clock,
   Calendar,
   GraduationCap,
-  Loader2
+  Loader2,
+  Check,
+  AlertCircle,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Subject {
   id: string
   name: string
   level: string | null
+}
+
+const STRIPE_PRICES = {
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
+  yearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
 }
 
 export default function OnboardingPage() {
@@ -39,24 +47,30 @@ export default function OnboardingPage() {
   const [showTutorial, setShowTutorial] = useState(true)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [hoursPerDay, setHoursPerDay] = useState('2')
-  
+  const [cpf, setCpf] = useState('')
+  const [isTrialEligible, setIsTrialEligible] = useState(true)
+  const [isValidatingCpf, setIsValidatingCpf] = useState(false)
+  const [cpfHash, setCpfHash] = useState<string | null>(null)
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [isRedirecting, setIsRedirecting] = useState(false)
+
+  // Matérias iniciando com nível 'medio' por padrão
   const [subjects, setSubjects] = useState<Subject[]>([
-    { id: '1', name: 'Direito Constitucional', level: null },
-    { id: '2', name: 'Língua Portuguesa', level: null },
-    { id: '3', name: 'Raciocínio Lógico', level: null },
-    { id: '4', name: 'Direito Administrativo', level: null },
+    { id: '1', name: 'Direito Constitucional', level: 'medio' },
+    { id: '2', name: 'Língua Portuguesa', level: 'medio' },
+    { id: '3', name: 'Raciocínio Lógico', level: 'medio' },
+    { id: '4', name: 'Direito Administrativo', level: 'medio' },
   ])
 
   const router = useRouter()
   const supabase = createClient()
-  const totalSteps = 3
+  const totalSteps = 4
 
-  // Proteção de Rota: Verifica se o usuário está logado ao carregar a página
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/login') // Redireciona se não houver sessão
+        router.push('/login')
       } else {
         setIsCheckingAuth(false)
       }
@@ -64,63 +78,172 @@ export default function OnboardingPage() {
     checkUser()
   }, [router, supabase])
 
+  // Máscara de CPF em tempo real
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '')
+    if (value.length <= 11) {
+      value = value.replace(/(\d{3})(\d)/, '$1.$2')
+      value = value.replace(/(\d{3})(\d)/, '$1.$2')
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      setCpf(value)
+    }
+  }
+
+  // Validação matemática do CPF (Dígitos Verificadores)
+  const validateCPF = (cpf: string) => {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    if (cleanCpf.length !== 11 || !!cleanCpf.match(/(\d)\1{10}/)) return false
+    
+    let sum = 0, rest
+    for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (11 - i)
+    rest = (sum * 10) % 11
+    if ((rest === 10) || (rest === 11)) rest = 0
+    if (rest !== parseInt(cleanCpf.substring(9, 10))) return false
+    
+    sum = 0
+    for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (12 - i)
+    rest = (sum * 10) % 11
+    if ((rest === 10) || (rest === 11)) rest = 0
+    if (rest !== parseInt(cleanCpf.substring(10, 11))) return false
+    
+    return true
+  }
+
+  useEffect(() => {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    if (cleanCpf.length === 11) {
+      if (validateCPF(cleanCpf)) {
+        checkEligibility(cleanCpf)
+      } else {
+        toast.error('CPF matematicamente inválido. Verifique os números.')
+        setIsTrialEligible(false)
+      }
+    }
+  }, [cpf])
+
+  const checkEligibility = async (cleanCpf: string) => {
+    setIsValidatingCpf(true)
+    try {
+      const response = await fetch('/api/check-eligibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: cleanCpf }),
+      })
+      const data = await response.json()
+      setIsTrialEligible(data.eligible)
+      if (data.hash) setCpfHash(data.hash)
+
+      if (!data.eligible) {
+        toast.warning('Atenção: Este CPF já possui uma conta ou utilizou o período de teste.')
+      }
+    } catch (error) {
+      console.error('Erro ao validar CPF:', error)
+    } finally {
+      setIsValidatingCpf(false)
+    }
+  }
+
+  const finalizeWithCpf = async (skipToDashboard = false) => {
+    setIsLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) throw new Error('Sessão expirada.')
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          cpf_hash: cpfHash,
+          onboarding_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id)
+
+      if (error) {
+        if (error.code === '23505') throw new Error('Este CPF já está vinculado a outro estudante.')
+        throw error
+      }
+
+      if (skipToDashboard) router.push('/dashboard')
+      return true
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar dados de segurança.')
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubscription = async () => {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    if (cleanCpf.length !== 11 || !cpfHash) {
+      toast.error('Insira um CPF válido para continuar.')
+      return
+    }
+
+    const saved = await finalizeWithCpf()
+    if (!saved) return
+
+    setIsRedirecting(true)
+    try {
+      const priceId = billingCycle === 'monthly' ? STRIPE_PRICES.monthly : STRIPE_PRICES.yearly
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, cpf: cleanCpf }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Erro no checkout')
+      if (data.url) window.location.href = data.url
+    } catch (error: any) {
+      toast.error(error.message)
+      setIsRedirecting(false)
+    }
+  }
+
   const daysOfWeek = [
-    { label: 'S', value: 'seg' },
-    { label: 'T', value: 'ter' },
-    { label: 'Q', value: 'qua' },
-    { label: 'Q', value: 'qui' },
-    { label: 'S', value: 'sex' },
-    { label: 'S', value: 'sab' },
+    { label: 'S', value: 'seg' }, { label: 'T', value: 'ter' },
+    { label: 'Q', value: 'qua' }, { label: 'Q', value: 'qui' },
+    { label: 'S', value: 'sex' }, { label: 'S', value: 'sab' },
     { label: 'D', value: 'dom' },
   ]
 
   const toggleDay = (day: string) => {
-    setSelectedDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    )
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
   }
 
   const updateSubjectLevel = (id: string, level: string) => {
-    setSubjects(prev => prev.map(s => s.id === id ? { ...s, level } : s))
+    setSubjects(prev => prev.map(s => (s.id === id ? { ...s, level } : s)))
   }
 
   const saveOnboardingData = async () => {
     setIsLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session?.user) {
-        throw new Error('Sessão expirada. Por favor, faça login novamente.')
-      }
+      if (!session?.user) throw new Error('Sessão expirada.')
 
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: session.user.id,
+        .update({
           study_days: selectedDays,
           hours_per_day: parseInt(hoursPerDay),
           subject_levels: subjects,
           show_tutorial: showTutorial,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
+        .eq('id', session.user.id)
 
       if (error) throw new Error(error.message)
-
       setStep(3)
     } catch (error: any) {
-      console.error('Erro Onboarding:', error)
-      alert(error.message)
+      toast.error("Erro ao salvar preferências: " + error.message)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const nextStep = () => setStep((s) => Math.min(s + 1, 4))
-  const prevStep = () => setStep((s) => Math.max(s - 1, 1))
-  const allSubjectsRated = subjects.every(s => s.level !== null)
+  const nextStep = () => setStep(s => Math.min(s + 1, 4))
+  const prevStep = () => setStep(s => Math.max(s - 1, 1))
 
-  // Enquanto verifica a autenticação, mostra um estado de carregamento simples
   if (isCheckingAuth) {
     return (
       <div className="flex min-h-svh w-full items-center justify-center">
@@ -130,15 +253,14 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-svh w-full flex-col items-center justify-center p-6 md:p-10 bg-background transition-colors duration-300">
+    <div className="flex min-h-svh w-full flex-col items-center justify-center p-6 md:p-10 bg-background text-foreground transition-colors duration-500">
       <div className="w-full max-w-md">
-        
         <div className="flex flex-col items-center gap-4 mb-8">
           <div className="flex flex-col items-center gap-2">
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
               <BookOpen className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl tracking-tight text-foreground">FocusStudy</span>
+            <span className="font-bold text-2xl tracking-tight">FocusStudy</span>
           </div>
           <div className="w-full space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground font-medium">
@@ -149,7 +271,7 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <Card className="shadow-2xl border-muted/50 bg-card">
+        <Card className="shadow-2xl border-muted/50 overflow-hidden bg-card">
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <CardHeader className="text-center">
@@ -162,15 +284,15 @@ export default function OnboardingPage() {
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Dias da semana</Label>
                   <div className="flex justify-between gap-1">
-                    {daysOfWeek.map((day) => (
+                    {daysOfWeek.map(day => (
                       <button
                         key={day.value}
                         type="button"
                         onClick={() => toggleDay(day.value)}
                         className={`h-10 w-10 rounded-full border text-xs font-bold transition-all cursor-pointer ${
-                          selectedDays.includes(day.value) 
-                          ? 'bg-primary text-primary-foreground border-primary shadow-md scale-110' 
-                          : 'bg-background text-muted-foreground border-muted hover:border-primary/50'
+                          selectedDays.includes(day.value)
+                            ? 'bg-primary text-primary-foreground border-primary shadow-md scale-110'
+                            : 'bg-background text-muted-foreground hover:border-primary/50 border-input'
                         }`}
                       >
                         {day.label}
@@ -178,23 +300,21 @@ export default function OnboardingPage() {
                     ))}
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold flex items-center gap-2">
                     <Clock className="h-4 w-4" /> Horas por dia
                   </Label>
-                  <select 
+                  <select
                     value={hoursPerDay}
-                    onChange={(e) => setHoursPerDay(e.target.value)}
-                    className="w-full h-11 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                    onChange={e => setHoursPerDay(e.target.value)}
+                    className="w-full h-11 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary cursor-pointer text-foreground outline-none"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(h => (
                       <option key={h} value={h}>{h} {h === 1 ? 'hora' : 'horas'}</option>
                     ))}
                   </select>
                 </div>
-
-                <Button onClick={nextStep} disabled={selectedDays.length === 0} className="w-full h-11 text-base font-semibold mt-4 cursor-pointer">
+                <Button onClick={nextStep} disabled={selectedDays.length === 0} className="w-full h-11 font-semibold cursor-pointer">
                   Continuar <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -210,20 +330,18 @@ export default function OnboardingPage() {
                 <CardDescription>Qual o seu nível de conhecimento?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="max-h-75 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                  {subjects.map((sub) => (
-                    <div key={sub.id} className="p-3 border rounded-lg space-y-2">
+                <div className="space-y-4">
+                  {subjects.map(sub => (
+                    <div key={sub.id} className="p-3 border border-input rounded-lg space-y-2 bg-muted/20">
                       <Label className="text-sm font-bold">{sub.name}</Label>
                       <div className="grid grid-cols-3 gap-2">
-                        {['facil', 'medio', 'dificil'].map((lvl) => (
+                        {['facil', 'medio', 'dificil'].map(lvl => (
                           <button
                             key={lvl}
                             type="button"
                             onClick={() => updateSubjectLevel(sub.id, lvl)}
                             className={`py-1.5 text-[10px] uppercase font-bold rounded border transition-all cursor-pointer ${
-                              sub.level === lvl 
-                              ? 'bg-primary/10 border-primary text-primary shadow-sm' 
-                              : 'bg-background border-muted text-muted-foreground hover:bg-muted/50'
+                              sub.level === lvl ? 'bg-primary/20 border-primary text-primary shadow-sm' : 'bg-background hover:bg-muted/50 border-input text-muted-foreground'
                             }`}
                           >
                             {lvl === 'facil' ? 'Fácil' : lvl === 'medio' ? 'Médio' : 'Difícil'}
@@ -233,33 +351,19 @@ export default function OnboardingPage() {
                     </div>
                   ))}
                 </div>
-                
                 <div className="pt-4 space-y-4">
-                  <div 
-                    className="flex items-start space-x-3 p-4 border rounded-lg bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors" 
-                    onClick={() => setShowTutorial(!showTutorial)}
-                  >
-                    <Checkbox 
-                      id="tutorial" 
-                      checked={showTutorial} 
-                      className="cursor-pointer mt-0.5" 
-                      onCheckedChange={() => {}} 
-                    />
-                    <div className="grid gap-1.5 leading-none">
+                  <div className="flex items-start space-x-3 p-4 border border-input rounded-lg bg-muted/30 cursor-pointer" onClick={() => setShowTutorial(!showTutorial)}>
+                    <Checkbox id="tutorial" checked={showTutorial} onCheckedChange={() => {}} className="cursor-pointer" />
+                    <div className="grid gap-1.5 leading-none cursor-pointer">
                       <Label className="text-sm font-bold cursor-pointer">Ativar tutorial guiado</Label>
-                      <p className="text-xs text-muted-foreground cursor-pointer leading-relaxed">
-                        Dicas visuais na dashboard para facilitar seu início.
-                      </p>
+                      <p className="text-xs text-muted-foreground">Dicas visuais na dashboard.</p>
                     </div>
                   </div>
-
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={prevStep} className="flex-1 h-11 cursor-pointer">Voltar</Button>
-                    <Button 
-                      onClick={saveOnboardingData} 
-                      disabled={!allSubjectsRated || isLoading} 
-                      className="flex-2 h-11 font-semibold cursor-pointer"
-                    >
+                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                    </Button>
+                    <Button onClick={saveOnboardingData} disabled={isLoading} className="flex-2 font-semibold cursor-pointer">
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Finalizar Configuração'}
                     </Button>
                   </div>
@@ -275,15 +379,13 @@ export default function OnboardingPage() {
                 <CardDescription>Seu perfil foi configurado com sucesso.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 text-center">
-                <div className="p-8 bg-primary/5 rounded-2xl border border-primary/10 relative overflow-hidden group">
+                <div className="p-8 bg-primary/5 rounded-2xl border border-primary/10">
                   <Sparkles className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-                  <p className="text-sm font-medium text-foreground">
-                    Analisamos seus dados e seu ambiente de estudos está sendo preparado.
-                  </p>
+                  <p className="text-sm font-medium">Analisamos seus dados e seu ambiente de estudos está sendo preparado.</p>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={prevStep} className="flex-1 h-11 cursor-pointer">Voltar</Button>
-                  <Button onClick={nextStep} className="flex-2 h-11 font-semibold bg-linear-to-r from-primary to-primary/80 cursor-pointer">
+                  <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
+                  <Button onClick={nextStep} className="flex-2 font-semibold bg-primary cursor-pointer text-primary-foreground">
                     Gerar Cronograma
                   </Button>
                 </div>
@@ -297,19 +399,75 @@ export default function OnboardingPage() {
                 <div className="mx-auto w-14 h-14 bg-amber-500/10 rounded-full flex items-center justify-center mb-2">
                   <Lock className="h-7 w-7 text-amber-600" />
                 </div>
-                <CardTitle className="text-2xl font-bold text-amber-600">Ciclo Inteligente</CardTitle>
-                <CardDescription>Recurso Exclusivo Premium</CardDescription>
+                <CardTitle className={`text-2xl font-bold ${isTrialEligible ? 'text-amber-600' : 'text-primary'}`}>
+                  {isTrialEligible ? 'Ciclo Inteligente' : 'Acesso Premium'}
+                </CardTitle>
+                <CardDescription>
+                  {isTrialEligible ? 'Valide seu documento para o teste gratuito' : 'Este documento já utilizou o teste. Assine para continuar.'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-3 bg-muted/50 p-4 rounded-lg text-sm text-muted-foreground border-l-4 border-amber-500">
-                  Para gerar um cronograma baseado na sua curva de esquecimento e nível nas matérias, assine o plano Pro.
+                <div className="flex p-1 bg-muted rounded-lg">
+                  <button onClick={() => setBillingCycle('monthly')} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${billingCycle === 'monthly' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>
+                    Mensal
+                  </button>
+                  <button onClick={() => setBillingCycle('yearly')} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${billingCycle === 'yearly' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>
+                    Anual <span className="text-[10px] text-green-600 font-bold">-20%</span>
+                  </button>
                 </div>
-                <Button className="w-full h-12 text-base font-bold bg-linear-to-r from-amber-500 to-orange-600 hover:scale-[1.02] transition-transform shadow-lg shadow-orange-500/20 cursor-pointer">
-                  Assinar Agora
-                </Button>
-                <Button variant="ghost" onClick={() => router.push('/dashboard')} className="w-full text-muted-foreground text-xs hover:text-foreground cursor-pointer">
-                  Continuar com cronograma manual
-                </Button>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground flex justify-between">
+                    CPF do Titular
+                    {isValidatingCpf && <Loader2 className="h-3 w-3 animate-spin" />}
+                  </Label>
+                  <input
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={cpf}
+                    onChange={handleCpfChange}
+                    className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary font-mono outline-none ${!isTrialEligible ? 'border-amber-500/50 bg-amber-500/5' : 'border-input'}`}
+                  />
+                  {!isTrialEligible && (
+                    <div className="flex items-center gap-1.5 text-amber-600 text-[10px] font-bold uppercase">
+                      <AlertCircle className="h-3 w-3" /> Este CPF já está em uso em outra conta de estudo
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className={`h-4 w-4 ${isTrialEligible ? 'text-green-500' : 'text-muted-foreground opacity-50'}`} />
+                    <span className={isTrialEligible ? '' : 'line-through text-muted-foreground'}>7 dias de teste grátis</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Cronograma baseado em IA</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button
+                    onClick={handleSubscription}
+                    disabled={isRedirecting || !cpf || isValidatingCpf || cpf.replace(/\D/g, '').length < 11}
+                    className={`w-full h-12 text-base font-bold shadow-lg transition-all cursor-pointer ${
+                      isTrialEligible ? 'bg-amber-600 hover:bg-amber-700 shadow-orange-500/20 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    }`}
+                  >
+                    {isRedirecting ? <Loader2 className="h-5 w-5 animate-spin" /> : isTrialEligible ? 'Ativar 7 Dias Grátis' : 'Assinar Agora'}
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => finalizeWithCpf(true)}
+                      disabled={isLoading || !cpf || cpf.replace(/\D/g, '').length < 11}
+                      className="flex-2 text-muted-foreground text-xs cursor-pointer"
+                    >
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continuar com cronograma manual'}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </div>
           )}

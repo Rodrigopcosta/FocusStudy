@@ -22,12 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Save, LogOut } from 'lucide-react'
+import { Loader2, Save, LogOut, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 
+// Estendendo a interface Profile localmente para incluir o cpf_hash
+interface ExtendedProfile extends Profile {
+  cpf_hash?: string | null
+}
+
 interface SettingsFormProps {
-  profile: Profile | null
+  profile: ExtendedProfile | null
   userEmail: string
 }
 
@@ -39,7 +44,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [name, setName] = useState(profile?.name || '')
   const [pomodoroMode, setPomodoroMode] = useState<PomodoroMode>(
-    profile?.pomodoro_mode || '25/5'
+    (profile?.pomodoro_mode as PomodoroMode) || '25/5'
   )
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     profile?.notifications_enabled ?? true
@@ -109,9 +114,30 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" value={userEmail} disabled />
+            <Input id="email" value={userEmail} disabled className="bg-muted/30" />
             <p className="text-xs text-muted-foreground">
               O email não pode ser alterado
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cpf" className="flex items-center gap-2">
+              CPF 
+              <ShieldCheck className="h-3.5 w-3.5 text-green-500" />
+            </Label>
+            <div className="relative">
+              <Input 
+                id="cpf" 
+                value={profile?.cpf_hash ? "DOCUMENTO VERIFICADO E PROTEGIDO" : "Não informado"} 
+                disabled 
+                className="bg-muted/50 font-medium text-[11px] tracking-wider pr-10 border-green-500/20"
+              />
+              {profile?.cpf_hash && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+              Identificador criptografado para sua segurança
             </p>
           </div>
         </CardContent>
@@ -137,6 +163,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
               <SelectContent>
                 <SelectItem value="light">Claro</SelectItem>
                 <SelectItem value="dark">Escuro</SelectItem>
+                <SelectItem value="system">Sistema</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -182,7 +209,7 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
           <LogOut className="mr-2 h-4 w-4" />
           Sair da Conta
         </Button>
-        <Button onClick={handleSave} disabled={isLoading}>
+        <Button onClick={handleSave} disabled={isLoading} className="bg-primary">
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

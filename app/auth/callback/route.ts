@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         .single()
 
       let redirectUrl = '/onboarding'
-      
+
       if (profile?.onboarding_completed) {
         redirectUrl = nextParam ?? '/dashboard'
       }
