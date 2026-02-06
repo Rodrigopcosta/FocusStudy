@@ -48,22 +48,18 @@ export default function OnboardingPage() {
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [hoursPerDay, setHoursPerDay] = useState('2')
   const [cpf, setCpf] = useState('')
-
-  // Novos estados para controle de elegibilidade de trial
   const [isTrialEligible, setIsTrialEligible] = useState(true)
   const [isValidatingCpf, setIsValidatingCpf] = useState(false)
-  const [cpfHash, setCpfHash] = useState<string | null>(null) // Armazena o hash seguro
-
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(
-    'monthly'
-  )
+  const [cpfHash, setCpfHash] = useState<string | null>(null)
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [isRedirecting, setIsRedirecting] = useState(false)
 
+  // Matérias iniciando com nível 'medio' por padrão
   const [subjects, setSubjects] = useState<Subject[]>([
-    { id: '1', name: 'Direito Constitucional', level: null },
-    { id: '2', name: 'Língua Portuguesa', level: null },
-    { id: '3', name: 'Raciocínio Lógico', level: null },
-    { id: '4', name: 'Direito Administrativo', level: null },
+    { id: '1', name: 'Direito Constitucional', level: 'medio' },
+    { id: '2', name: 'Língua Portuguesa', level: 'medio' },
+    { id: '3', name: 'Raciocínio Lógico', level: 'medio' },
+    { id: '4', name: 'Direito Administrativo', level: 'medio' },
   ])
 
   const router = useRouter()
@@ -72,9 +68,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
       } else {
@@ -84,14 +78,46 @@ export default function OnboardingPage() {
     checkUser()
   }, [router, supabase])
 
-  // Efeito para validar o CPF assim que for digitado completamente
+  // Máscara de CPF em tempo real
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '')
+    if (value.length <= 11) {
+      value = value.replace(/(\d{3})(\d)/, '$1.$2')
+      value = value.replace(/(\d{3})(\d)/, '$1.$2')
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      setCpf(value)
+    }
+  }
+
+  // Validação matemática do CPF (Dígitos Verificadores)
+  const validateCPF = (cpf: string) => {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    if (cleanCpf.length !== 11 || !!cleanCpf.match(/(\d)\1{10}/)) return false
+    
+    let sum = 0, rest
+    for (let i = 1; i <= 9; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (11 - i)
+    rest = (sum * 10) % 11
+    if ((rest === 10) || (rest === 11)) rest = 0
+    if (rest !== parseInt(cleanCpf.substring(9, 10))) return false
+    
+    sum = 0
+    for (let i = 1; i <= 10; i++) sum += parseInt(cleanCpf.substring(i-1, i)) * (12 - i)
+    rest = (sum * 10) % 11
+    if ((rest === 10) || (rest === 11)) rest = 0
+    if (rest !== parseInt(cleanCpf.substring(10, 11))) return false
+    
+    return true
+  }
+
   useEffect(() => {
     const cleanCpf = cpf.replace(/\D/g, '')
     if (cleanCpf.length === 11) {
-      checkEligibility(cleanCpf)
-    } else {
-      setIsTrialEligible(true)
-      setCpfHash(null)
+      if (validateCPF(cleanCpf)) {
+        checkEligibility(cleanCpf)
+      } else {
+        toast.error('CPF matematicamente inválido. Verifique os números.')
+        setIsTrialEligible(false)
+      }
     }
   }, [cpf])
 
@@ -105,14 +131,10 @@ export default function OnboardingPage() {
       })
       const data = await response.json()
       setIsTrialEligible(data.eligible)
-      
-      // Armazena o hash retornado pela API para salvamento posterior
-      if (data.hash) {
-        setCpfHash(data.hash)
-      }
+      if (data.hash) setCpfHash(data.hash)
 
       if (!data.eligible) {
-        toast.info('Identificamos que este CPF já utilizou o período de teste.')
+        toast.warning('Atenção: Este CPF já possui uma conta ou utilizou o período de teste.')
       }
     } catch (error) {
       console.error('Erro ao validar CPF:', error)
@@ -121,7 +143,6 @@ export default function OnboardingPage() {
     }
   }
 
-  // Função para salvar o hash no perfil e finalizar o onboarding
   const finalizeWithCpf = async (skipToDashboard = false) => {
     setIsLoading(true)
     try {
@@ -131,20 +152,21 @@ export default function OnboardingPage() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          cpf_hash: cpfHash, // Salvando apenas o hash por segurança
-          onboarding_completed: true, // Garante que o status mude aqui também
+          cpf_hash: cpfHash,
+          onboarding_completed: true,
           updated_at: new Date().toISOString(),
         })
         .eq('id', session.user.id)
 
-      if (error) throw error
-
-      if (skipToDashboard) {
-        router.push('/dashboard')
+      if (error) {
+        if (error.code === '23505') throw new Error('Este CPF já está vinculado a outro estudante.')
+        throw error
       }
+
+      if (skipToDashboard) router.push('/dashboard')
       return true
     } catch (error: any) {
-      toast.error('Erro ao salvar dados de segurança.')
+      toast.error(error.message || 'Erro ao salvar dados de segurança.')
       return false
     } finally {
       setIsLoading(false)
@@ -153,41 +175,25 @@ export default function OnboardingPage() {
 
   const handleSubscription = async () => {
     const cleanCpf = cpf.replace(/\D/g, '')
-
     if (cleanCpf.length !== 11 || !cpfHash) {
-      toast.error('Insira um CPF válido.')
+      toast.error('Insira um CPF válido para continuar.')
       return
     }
 
-    // Primeiro salvamos o hash no banco do usuário
     const saved = await finalizeWithCpf()
     if (!saved) return
 
     setIsRedirecting(true)
     try {
-      const priceId =
-        billingCycle === 'monthly'
-          ? STRIPE_PRICES.monthly
-          : STRIPE_PRICES.yearly
-
+      const priceId = billingCycle === 'monthly' ? STRIPE_PRICES.monthly : STRIPE_PRICES.yearly
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          cpf: cleanCpf, // CPF limpo vai apenas para o Stripe
-        }),
+        body: JSON.stringify({ priceId, cpf: cleanCpf }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao processar checkout')
-      }
-
-      if (data.url) {
-        window.location.href = data.url
-      }
+      if (!response.ok) throw new Error(data.error || 'Erro no checkout')
+      if (data.url) window.location.href = data.url
     } catch (error: any) {
       toast.error(error.message)
       setIsRedirecting(false)
@@ -195,19 +201,14 @@ export default function OnboardingPage() {
   }
 
   const daysOfWeek = [
-    { label: 'S', value: 'seg' },
-    { label: 'T', value: 'ter' },
-    { label: 'Q', value: 'qua' },
-    { label: 'Q', value: 'qui' },
-    { label: 'S', value: 'sex' },
-    { label: 'S', value: 'sab' },
+    { label: 'S', value: 'seg' }, { label: 'T', value: 'ter' },
+    { label: 'Q', value: 'qua' }, { label: 'Q', value: 'qui' },
+    { label: 'S', value: 'sex' }, { label: 'S', value: 'sab' },
     { label: 'D', value: 'dom' },
   ]
 
   const toggleDay = (day: string) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    )
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
   }
 
   const updateSubjectLevel = (id: string, level: string) => {
@@ -217,9 +218,7 @@ export default function OnboardingPage() {
   const saveOnboardingData = async () => {
     setIsLoading(true)
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) throw new Error('Sessão expirada.')
 
       const { error } = await supabase
@@ -234,7 +233,7 @@ export default function OnboardingPage() {
         .eq('id', session.user.id)
 
       if (error) throw new Error(error.message)
-      setStep(3) // Avança para o passo de sucesso antes do checkout
+      setStep(3)
     } catch (error: any) {
       toast.error("Erro ao salvar preferências: " + error.message)
     } finally {
@@ -244,7 +243,6 @@ export default function OnboardingPage() {
 
   const nextStep = () => setStep(s => Math.min(s + 1, 4))
   const prevStep = () => setStep(s => Math.max(s - 1, 1))
-  const allSubjectsRated = subjects.every(s => s.level !== null)
 
   if (isCheckingAuth) {
     return (
@@ -332,7 +330,7 @@ export default function OnboardingPage() {
                 <CardDescription>Qual o seu nível de conhecimento?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="max-h-75 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                <div className="space-y-4">
                   {subjects.map(sub => (
                     <div key={sub.id} className="p-3 border border-input rounded-lg space-y-2 bg-muted/20">
                       <Label className="text-sm font-bold">{sub.name}</Label>
@@ -362,8 +360,10 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
-                    <Button onClick={saveOnboardingData} disabled={!allSubjectsRated || isLoading} className="flex-2 font-semibold cursor-pointer">
+                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                    </Button>
+                    <Button onClick={saveOnboardingData} disabled={isLoading} className="flex-2 font-semibold cursor-pointer">
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Finalizar Configuração'}
                     </Button>
                   </div>
@@ -425,12 +425,12 @@ export default function OnboardingPage() {
                     type="text"
                     placeholder="000.000.000-00"
                     value={cpf}
-                    onChange={e => setCpf(e.target.value)}
+                    onChange={handleCpfChange}
                     className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary font-mono outline-none ${!isTrialEligible ? 'border-amber-500/50 bg-amber-500/5' : 'border-input'}`}
                   />
                   {!isTrialEligible && (
                     <div className="flex items-center gap-1.5 text-amber-600 text-[10px] font-bold uppercase">
-                      <AlertCircle className="h-3 w-3" /> Teste indisponível para este CPF
+                      <AlertCircle className="h-3 w-3" /> Este CPF já está em uso em outra conta de estudo
                     </div>
                   )}
                 </div>
@@ -446,24 +446,28 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSubscription}
-                  disabled={isRedirecting || !cpf || isValidatingCpf || cpf.length < 11}
-                  className={`w-full h-12 text-base font-bold shadow-lg transition-all cursor-pointer ${
-                    isTrialEligible ? 'bg-amber-600 hover:bg-amber-700 shadow-orange-500/20 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                  }`}
-                >
-                  {isRedirecting ? <Loader2 className="h-5 w-5 animate-spin" /> : isTrialEligible ? 'Ativar 7 Dias Grátis' : 'Assinar Agora'}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => finalizeWithCpf(true)} // Salva o hash antes de ir para a dashboard
-                  disabled={isLoading || !cpf || cpf.length < 11}
-                  className="w-full text-muted-foreground text-xs cursor-pointer"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continuar com cronograma manual'}
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    onClick={handleSubscription}
+                    disabled={isRedirecting || !cpf || isValidatingCpf || cpf.replace(/\D/g, '').length < 11}
+                    className={`w-full h-12 text-base font-bold shadow-lg transition-all cursor-pointer ${
+                      isTrialEligible ? 'bg-amber-600 hover:bg-amber-700 shadow-orange-500/20 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    }`}
+                  >
+                    {isRedirecting ? <Loader2 className="h-5 w-5 animate-spin" /> : isTrialEligible ? 'Ativar 7 Dias Grátis' : 'Assinar Agora'}
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={prevStep} className="flex-1 cursor-pointer">Voltar</Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => finalizeWithCpf(true)}
+                      disabled={isLoading || !cpf || cpf.replace(/\D/g, '').length < 11}
+                      className="flex-2 text-muted-foreground text-xs cursor-pointer"
+                    >
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continuar com cronograma manual'}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </div>
           )}
