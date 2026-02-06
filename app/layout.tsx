@@ -105,7 +105,7 @@ export default function RootLayout({
         >
           {/* Componente que garante a geração do ID do dispositivo */}
           <DeviceTracker />
-          
+
           {children}
           <CookieBanner />
           <Toaster position="top-right" richColors closeButton />

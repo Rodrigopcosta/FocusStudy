@@ -6,7 +6,7 @@ export function DeviceTracker() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let deviceId = localStorage.getItem('device_id')
-      
+
       if (!deviceId) {
         // Gera um ID único e persistente para este navegador/dispositivo
         deviceId = crypto.randomUUID()

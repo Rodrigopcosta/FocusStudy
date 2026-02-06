@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { DashboardHeader } from '@/components/dashboard/header'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import { UpgradeBanner } from '@/components/dashboard/upgrade-banner'
 
 export default async function DashboardLayout({
   children,
@@ -27,11 +28,18 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  const isFreePlan = !profile?.plan_type || profile?.plan_type === 'free'
+
   return (
     <SidebarProvider>
       <DashboardSidebar user={user} profile={profile} />
       <SidebarInset>
         <DashboardHeader user={user} profile={profile} />
+        {isFreePlan && (
+          <div className="px-4 pt-4">
+            <UpgradeBanner />
+          </div>
+        )}
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

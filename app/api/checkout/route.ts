@@ -14,21 +14,19 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Não autorizado' }), 
-        { status: 401 }
-      )
+      return new NextResponse(JSON.stringify({ error: 'Não autorizado' }), {
+        status: 401,
+      })
     }
 
     if (!cpf) {
-      return new NextResponse(
-        JSON.stringify({ error: 'CPF é obrigatório' }), 
-        { status: 400 }
-      )
+      return new NextResponse(JSON.stringify({ error: 'CPF é obrigatório' }), {
+        status: 400,
+      })
     }
 
     // --- LÓGICA ANTIFRAUDE ROBUSTA ---
-    
+
     // A. Limpa o CPF e gera o Hash no Servidor
     const cleanCPF = cpf.replace(/\D/g, '')
     const cpfHash = createHash('sha256').update(cleanCPF).digest('hex')
@@ -65,7 +63,7 @@ export async function POST(req: Request) {
       metadata: {
         supabase_user_id: user.id,
         cpf_hash: cpfHash,
-        was_trial: shouldGiveTrial ? 'true' : 'false'
+        was_trial: shouldGiveTrial ? 'true' : 'false',
       },
     }
 
@@ -79,13 +77,15 @@ export async function POST(req: Request) {
       }
       console.log(`[Checkout] Usuário ${user.id} elegível para trial.`)
     } else {
-      console.log(`[Checkout] Usuário ${user.id} NÃO elegível. Cobrança imediata.`)
+      console.log(
+        `[Checkout] Usuário ${user.id} NÃO elegível. Cobrança imediata.`
+      )
     }
 
     // 3. Cria a sessão de checkout no Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      
+
       tax_id_collection: {
         enabled: true,
       },
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
-      
+
       // O Stripe substituirá {CHECKOUT_SESSION_ID} automaticamente
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
@@ -107,12 +107,12 @@ export async function POST(req: Request) {
       metadata: {
         supabase_user_id: user.id,
         cpf_hash: cpfHash,
-        is_trial_conversion: shouldGiveTrial ? 'true' : 'false'
+        is_trial_conversion: shouldGiveTrial ? 'true' : 'false',
       },
-      
+
       customer_email: user.email,
       subscription_data: subscriptionData,
-      
+
       billing_address_collection: 'required',
     })
 
@@ -120,7 +120,9 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Erro no Checkout:', error)
     return new NextResponse(
-      JSON.stringify({ error: error.message || 'Erro interno ao criar sessão de checkout' }), 
+      JSON.stringify({
+        error: error.message || 'Erro interno ao criar sessão de checkout',
+      }),
       { status: 500 }
     )
   }

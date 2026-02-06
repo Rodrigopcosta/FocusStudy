@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-// Limite Premium: 50.000 caracteres (Aprox. 10k a 12k tokens)
-// Isso garante que textos muito longos caibam na janela do gpt-4o-mini
+// Limite Premium: 50.000 caracteres
 const SERVER_MAX_CHARS = 50000
+// Limite de resumos por dia para assinantes (ajuste conforme necessário)
+const DAILY_SUMMARY_LIMIT = 10
 
 export async function POST(req: Request) {
   try {
@@ -24,75 +25,103 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
+    // 1. VERIFICAÇÃO DE ASSINATURA E LIMITE DIÁRIO
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan_type')
+      .eq('id', user.id)
+      .single()
+
+    // Como você disse que é exclusivo para quem tem assinatura:
+    if (profile?.plan_type !== 'pro' && profile?.plan_type !== 'premium') {
+      return NextResponse.json(
+        {
+          error: 'subscription_required',
+          message: 'O Resumo Premium de 50k é exclusivo para assinantes.',
+        },
+        { status: 403 }
+      )
+    }
+
+    // Trava de quantidade diária (mesmo para assinantes, para evitar abusos)
+    const today = new Date().toISOString().split('T')[0]
+
+    // Assumindo que você tenha uma tabela 'summaries' para registrar os usos
+    // Se não tiver, você pode criar uma ou usar uma tabela de logs de uso genérica
+    const { count: usageToday } = await supabase
+      .from('summaries') // Certifique-se de que esta tabela existe
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', today)
+
+    if (usageToday !== null && usageToday >= DAILY_SUMMARY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: 'limit_reached',
+          message: `Você atingiu seu limite diário de ${DAILY_SUMMARY_LIMIT} resumos premium.`,
+        },
+        { status: 429 }
+      )
+    }
+
     let { text, mode, lines } = await req.json()
 
-    // Validação de segurança no Servidor
+    // 2. VALIDAÇÃO DE CONTEÚDO
     if (!text || text.trim().length < 20) {
       return NextResponse.json(
-        { error: 'invalid_content', message: 'Texto muito curto para resumir.' },
+        {
+          error: 'invalid_content',
+          message: 'Texto muito curto para resumir.',
+        },
         { status: 400 }
       )
     }
 
-    // Lógica de "Safe-Cut": Se passar do limite no servidor, cortamos para processar
-    // Isso evita que a requisição falhe por erro 413 e garante o serviço ao usuário premium
     if (text.length > SERVER_MAX_CHARS) {
       text = text.substring(0, SERVER_MAX_CHARS)
-      console.log(`[API Summary] Texto cortado para ${SERVER_MAX_CHARS} caracteres para o usuário ${user.id}`)
     }
 
-    // Configuração do tom do resumo baseado no 'mode'
     const promptInstructions = {
-      bullets: "Crie um resumo estruturado exclusivamente em tópicos (bullet points) claros e objetivos.",
-      short: "Crie um resumo executivo de um único parágrafo, sendo extremamente direto e sintetizado.",
-      detailed: "Crie um resumo detalhado e abrangente, mantendo a cronologia, os argumentos principais e conceitos fundamentais.",
-      lines: `Crie um resumo conciso que tenha exatamente entre ${lines || 5} e ${Math.max((lines || 5) + 2, 7)} linhas de texto.`
+      bullets:
+        'Crie um resumo estruturado exclusivamente em tópicos (bullet points) claros.',
+      short: 'Crie um resumo executivo de um único parágrafo.',
+      detailed:
+        'Crie um resumo detalhado, mantendo a cronologia e conceitos principais.',
+      lines: `Crie um resumo conciso que tenha entre ${lines || 5} e ${Math.max((lines || 5) + 2, 7)} linhas.`,
     }
 
+    // 3. CHAMADA À OPENAI
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `Você é um tutor acadêmico de elite especializado em síntese e análise de conteúdo. 
-          Sua tarefa é ler textos extensos e extrair a essência educativa de forma precisa.
-          REGRAS CRÍTICAS:
-          1. NUNCA use marcações de flashcards como {{termo}}.
-          2. Não invente fatos; atenha-se ao conteúdo fornecido.
-          3. Use uma linguagem acadêmica, porém acessível.
-          4. Retorne a resposta exclusivamente no formato JSON solicitado.
-          5. Se o texto fornecido for incompreensível, ofensivo ou puramente aleatório, retorne {"error": "invalid_content"}.`,
+          content: `Você é um tutor acadêmico especializado em síntese. Responda apenas em JSON.`,
         },
         {
           role: 'user',
-          content: `${promptInstructions[mode as keyof typeof promptInstructions] || promptInstructions.bullets}\n\nTexto para resumir: "${text}"\n\nRetorne obrigatoriamente neste formato JSON:\n{ "summary": "conteúdo do resumo aqui", "error": null }`,
+          content: `${promptInstructions[mode as keyof typeof promptInstructions]}\n\nTexto: "${text}"\n\nRetorne JSON: { "summary": "...", "error": null }`,
         },
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.6, // Reduzido levemente para maior precisão em textos longos
     })
 
     const data = JSON.parse(response.choices[0].message.content || '{}')
 
-    if (data.error === 'invalid_content') {
-      return NextResponse.json(
-        { 
-          error: 'invalid_content', 
-          message: 'Não foi possível identificar um tema acadêmico ou educativo consistente para resumir.' 
-        },
-        { status: 400 }
-      )
+    // 4. REGISTRO DE USO NO BANCO (Importante para a trava funcionar)
+    if (data.summary) {
+      await supabase.from('summaries').insert({
+        user_id: user.id,
+        content_length: text.length,
+        mode: mode,
+      })
     }
 
     return NextResponse.json(data)
   } catch (error: any) {
-    console.error('Erro na IA de Resumo:', error)
+    console.error('Erro na IA:', error)
     return NextResponse.json(
-      { 
-        error: 'server_error', 
-        message: 'Falha ao processar o volume de dados. Tente novamente em instantes.',
-        details: error.message 
-      },
+      { error: 'server_error', message: 'Erro ao processar resumo.' },
       { status: 500 }
     )
   }

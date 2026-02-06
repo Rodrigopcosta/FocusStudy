@@ -8,7 +8,10 @@ export async function POST(req: Request) {
     const supabase = await createClient()
 
     if (!cpf) {
-      return NextResponse.json({ eligible: false, error: 'CPF necessário' }, { status: 400 })
+      return NextResponse.json(
+        { eligible: false, error: 'CPF necessário' },
+        { status: 400 }
+      )
     }
 
     // 1. Gera o hash idêntico ao do checkout
@@ -24,7 +27,9 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     // 3. Verifica se o usuário logado já usou trial (prevenção extra)
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     let userAlreadyUsed = false
 
     if (user) {
@@ -33,7 +38,7 @@ export async function POST(req: Request) {
         .select('trial_redeemed')
         .eq('id', user.id)
         .single()
-      
+
       if (profile?.trial_redeemed) userAlreadyUsed = true
     }
 
