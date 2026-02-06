@@ -75,10 +75,7 @@ export function UpgradeBanner() {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          isTrialEligible,
-        }),
+        body: JSON.stringify({ priceId, isTrialEligible }),
       })
 
       const data = await response.json()
@@ -99,69 +96,67 @@ export function UpgradeBanner() {
   if (isValidating || !isVisible) return null
 
   return (
-    <div className="flex w-full justify-end px-4 py-2">
-      <div className="relative flex w-full max-w-xl flex-col gap-4 overflow-hidden rounded-xl border border-amber-500/20 bg-card p-4 pr-12 shadow-lg animate-in fade-in slide-in-from-right-4 sm:flex-row sm:items-center">
-        {/* Botão Fechar com cursor-pointer */}
-        <button
-          onClick={() => setIsVisible(false)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer z-10"
-          title="Fechar"
-        >
-          <X className="h-4 w-4" />
-        </button>
+    <div className="flex h-11 w-full min-w-130 max-w-150 items-center justify-between overflow-hidden rounded-xl border border-amber-500/30 bg-card pl-4 pr-11 shadow-sm animate-in fade-in slide-in-from-right-4 relative">
+      {/* Botão Fechar - Isolado no canto */}
+      <button
+        onClick={() => setIsVisible(false)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer z-10"
+        title="Fechar"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
 
-        <div className="flex-1">
-          <p className="text-sm font-bold flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-500" />
+      {/* Lado Esquerdo: Texto (Com espaço garantido) */}
+      <div className="flex items-center gap-3 overflow-hidden mr-4">
+        <div className="bg-amber-500/10 p-1.5 rounded-lg shrink-0">
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+        </div>
+        <div className="flex flex-col truncate">
+          <p className="text-[13px] font-bold leading-tight truncate">
             {isTrialEligible
               ? 'Turbine seus estudos com IA'
               : 'Seja FocusStudy Pro'}
           </p>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {isTrialEligible ? (
-              'Assine agora e ganhe 7 dias grátis.'
-            ) : (
-              <span className="flex items-center gap-1 text-amber-600 font-medium">
-                <AlertCircle className="h-3.5 w-3.5" />
-                Trial indisponível.
-              </span>
-            )}
-          </div>
+          <p className="text-[11px] text-muted-foreground leading-tight truncate">
+            {isTrialEligible
+              ? 'Ganhe 7 dias de acesso total grátis.'
+              : 'Trial indisponível.'}
+          </p>
         </div>
-
-        {/* Container de Botões */}
-        <div className="flex items-center gap-2 mr-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleUpgrade('monthly')}
-            disabled={!!isLoading}
-            className="h-8 cursor-pointer font-medium hover:bg-muted text-xs px-3"
-          >
-            {isLoading === 'monthly' ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              'Mensal'
-            )}
-          </Button>
-
-          <Button
-            size="sm"
-            className="h-8 bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer shadow-sm transition-all active:scale-95 text-xs px-3"
-            onClick={() => handleUpgrade('yearly')}
-            disabled={!!isLoading}
-          >
-            {isLoading === 'yearly' ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              'Anual'
-            )}
-          </Button>
-        </div>
-
-        {/* Efeito visual */}
-        <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-amber-500/5 blur-2xl" />
       </div>
+
+      {/* Lado Direito: Ações (Agrupadas e fixas) */}
+      <div className="flex items-center gap-2 shrink-0">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleUpgrade('monthly')}
+          disabled={!!isLoading}
+          className="h-7 text-[11px] px-3 cursor-pointer hover:bg-muted font-medium border-amber-500/10"
+        >
+          {isLoading === 'monthly' ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            'Mensal'
+          )}
+        </Button>
+
+        <Button
+          size="sm"
+          className="h-7 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] px-4 cursor-pointer shadow-sm transition-all active:scale-95 whitespace-nowrap"
+          onClick={() => handleUpgrade('yearly')}
+          disabled={!!isLoading}
+        >
+          {isLoading === 'yearly' ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            'Anual'
+          )}
+        </Button>
+      </div>
+
+      {/* Brilho de fundo sutil */}
+      <div className="absolute -right-2 top-0 h-full w-24 bg-linear-to-l from-amber-500/5 to-transparent pointer-events-none" />
     </div>
   )
 }

@@ -35,11 +35,6 @@ export default async function DashboardLayout({
       <DashboardSidebar user={user} profile={profile} />
       <SidebarInset>
         <DashboardHeader user={user} profile={profile} />
-        {isFreePlan && (
-          <div className="px-4 pt-4">
-            <UpgradeBanner />
-          </div>
-        )}
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
