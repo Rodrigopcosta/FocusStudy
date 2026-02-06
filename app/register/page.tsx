@@ -251,14 +251,14 @@ export default function RegisterPage() {
 
       setSuccess(true)
     } catch (error: any) {
+      console.error('Erro detalhado no registro:', error)
+      
       if (error.message?.includes('rate limit')) {
-        setError(
-          'Muitas tentativas. Aguarde um pouco antes de tentar novamente.'
-        )
+        setError('Muitas tentativas. Aguarde um pouco antes de tentar novamente.')
+      } else if (error.message?.includes('Database error saving new user')) {
+        setError('Erro interno ao salvar perfil. Verifique as configurações do banco de dados.')
       } else {
-        setError(
-          error instanceof Error ? error.message : 'Erro ao criar conta.'
-        )
+        setError(error instanceof Error ? error.message : 'Erro ao criar conta.')
       }
     } finally {
       setIsLoading(false)

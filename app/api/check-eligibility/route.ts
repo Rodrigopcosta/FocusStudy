@@ -1,3 +1,5 @@
+// app/api/check-eligibility/route.ts
+
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
@@ -45,7 +47,11 @@ export async function POST(req: Request) {
     // Elegível apenas se o CPF nunca foi usado E o usuário nunca usou trial
     const isEligible = !existingTrial && !userAlreadyUsed
 
-    return NextResponse.json({ eligible: isEligible })
+    // Retornamos o hash para que o Onboarding possa salvá-lo no profile
+    return NextResponse.json({ 
+      eligible: isEligible,
+      hash: cpfHash 
+    })
   } catch (error) {
     console.error('Erro ao checar elegibilidade:', error)
     return NextResponse.json({ eligible: false }, { status: 500 })
