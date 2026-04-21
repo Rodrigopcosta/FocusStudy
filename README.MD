@@ -48,7 +48,7 @@ O FocusStudy é uma plataforma Full Stack projetada para transformar a rotina de
 
 O projeto segue uma estrutura modular focada em escalabilidade:
 
-```text
+```bash
 app/
 ├── auth/callback/   # Manipulação de tokens OAuth
 ├── dashboard/       # Núcleo da aplicação (Disciplinas, Pomodoro, Notas)
@@ -63,7 +63,7 @@ components/
 lib/
 └── supabase/        # Configurações de Client, Server e Proxy
 
-
+```
 
 ## 👤 Autor
 
@@ -74,4 +74,3 @@ lib/
 - Portfolio: [rodrigopcosta.github.io](https://rodrigopcosta.github.io)
 
 Desenvolvido com foco em performance e simplicidade. 🚀
-```
