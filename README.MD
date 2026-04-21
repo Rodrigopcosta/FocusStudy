@@ -14,18 +14,11 @@
 
 ## 📸 Screenshots do Projeto
 
-### 🖥️ Desktop (Web)
+### Desktop
+![Desktop](./public/screenshots/desktop.png)
 
-|                             Dashboard (Modo Claro)                              |                             Pomodoro (Modo Escuro)                             |
-| :-----------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
-| ![Dashboard Web](https://via.placeholder.com/600x400?text=Dashboard+Modo+Claro) | ![Pomodoro Web](https://via.placeholder.com/600x400?text=Pomodoro+Modo+Escuro) |
-
-### 📱 Mobile
-
-<div align="center">
-  <img src="https://via.placeholder.com/200x400?text=Login+Mobile" width="200" />
-  <img src="https://via.placeholder.com/200x400?text=Tasks+Mobile" width="200" />
-</div>
+### Mobile
+![Mobile](./public/screenshots/mobile.png)
 
 ---
 
@@ -71,23 +64,6 @@ lib/
 └── supabase/        # Configurações de Client, Server e Proxy
 
 
-🚀 Roadmap de Evolução
-[x] Autenticação com Google OAuth.
-
-[x] CRUD de Disciplinas com tipagem rigorosa.
-
-[ ] Modo Offline (PWA).
-
-[ ] Exportação de notas em PDF/Markdown.
-
-[ ] Sistema de Metas Mensais de horas.
-
-[ ] Gamificação (Conquistas por horas de foco).
-
-💡 Monetização Ética
-Plano Free: Acesso total às ferramentas de estudo essenciais.
-
-Plano Pro: Custom Domains, armazenamento ilimitado de arquivos nas notas e estatísticas avançadas de performance. Sem anúncios para não prejudicar o foco.
 
 👤 Autor
 Rodrigo Ward
