@@ -14,18 +14,11 @@
 
 ## 📸 Screenshots do Projeto
 
-### 🖥️ Desktop (Web)
+### Desktop
+![Desktop](./public/screenshots/desktop.png)
 
-|                             Dashboard (Modo Claro)                              |                             Pomodoro (Modo Escuro)                             |
-| :-----------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
-| ![Dashboard Web](https://via.placeholder.com/600x400?text=Dashboard+Modo+Claro) | ![Pomodoro Web](https://via.placeholder.com/600x400?text=Pomodoro+Modo+Escuro) |
-
-### 📱 Mobile
-
-<div align="center">
-  <img src="https://via.placeholder.com/200x400?text=Login+Mobile" width="200" />
-  <img src="https://via.placeholder.com/200x400?text=Tasks+Mobile" width="200" />
-</div>
+### Mobile
+![Mobile](./public/screenshots/mobile.png)
 
 ---
 
@@ -55,7 +48,7 @@ O FocusStudy é uma plataforma Full Stack projetada para transformar a rotina de
 
 O projeto segue uma estrutura modular focada em escalabilidade:
 
-```text
+```bash
 app/
 ├── auth/callback/   # Manipulação de tokens OAuth
 ├── dashboard/       # Núcleo da aplicação (Disciplinas, Pomodoro, Notas)
@@ -70,33 +63,14 @@ components/
 lib/
 └── supabase/        # Configurações de Client, Server e Proxy
 
+```
 
-🚀 Roadmap de Evolução
-[x] Autenticação com Google OAuth.
+## 👤 Autor
 
-[x] CRUD de Disciplinas com tipagem rigorosa.
+**Rodrigo Costa**
 
-[ ] Modo Offline (PWA).
-
-[ ] Exportação de notas em PDF/Markdown.
-
-[ ] Sistema de Metas Mensais de horas.
-
-[ ] Gamificação (Conquistas por horas de foco).
-
-💡 Monetização Ética
-Plano Free: Acesso total às ferramentas de estudo essenciais.
-
-Plano Pro: Custom Domains, armazenamento ilimitado de arquivos nas notas e estatísticas avançadas de performance. Sem anúncios para não prejudicar o foco.
-
-👤 Autor
-Rodrigo Ward
-
-Se você tiver alguma dúvida ou sugestão, entre em contato:
-
-Email: rodrigo_ward@hotmail.com
-
-LinkedIn: https://www.linkedin.com/in/rodrigopc-developer/
+- GitHub: [@Rodrigopcosta](https://github.com/Rodrigopcosta)
+- LinkedIn: [in/rodrigopc-developer](https://www.linkedin.com/in/rodrigopc-developer)
+- Portfolio: [rodrigopcosta.github.io](https://rodrigopcosta.github.io)
 
 Desenvolvido com foco em performance e simplicidade. 🚀
-```
