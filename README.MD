@@ -65,14 +65,13 @@ lib/
 
 
 
-👤 Autor
-Rodrigo Ward
+## 👤 Autor
 
-Se você tiver alguma dúvida ou sugestão, entre em contato:
+**Rodrigo Costa**
 
-Email: rodrigo_ward@hotmail.com
-
-LinkedIn: https://www.linkedin.com/in/rodrigopc-developer/
+- GitHub: [@Rodrigopcosta](https://github.com/Rodrigopcosta)
+- LinkedIn: [in/rodrigopc-developer](https://www.linkedin.com/in/rodrigopc-developer)
+- Portfolio: [rodrigopcosta.github.io](https://rodrigopcosta.github.io)
 
 Desenvolvido com foco em performance e simplicidade. 🚀
 ```
