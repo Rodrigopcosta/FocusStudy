@@ -71,6 +71,6 @@ lib/
 
 - GitHub: [@Rodrigopcosta](https://github.com/Rodrigopcosta)
 - LinkedIn: [in/rodrigopc-developer](https://www.linkedin.com/in/rodrigopc-developer)
-- Portfolio: [rodrigopcosta.github.io](https://rodrigopcosta.github.io)
+- Portfolio: [rodrigocosta-dev.vercel.app](https://rodrigocosta-dev.vercel.app/)
 
 Desenvolvido com foco em performance e simplicidade. 🚀
