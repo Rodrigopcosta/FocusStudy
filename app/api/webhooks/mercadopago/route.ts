@@ -61,7 +61,7 @@ export async function POST(req: Request) {
           .from('profiles')
           .update({
             subscription_id: subscription.id,
-            subscription_status: 'payment_failed',
+            subscription_status: 'rejected',
             plan_type: 'free',
             subscription_updated_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

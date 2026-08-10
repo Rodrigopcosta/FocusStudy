@@ -112,7 +112,7 @@ export async function POST(req: Request) {
       .from('profiles')
       .update({
         subscription_id: subscription.id,
-        subscription_status: 'pending_payment',
+        subscription_status: 'pending',
         plan_type: 'free',
         ...(completeOnboarding ? { onboarding_completed: true } : {}),
         updated_at: new Date().toISOString(),
