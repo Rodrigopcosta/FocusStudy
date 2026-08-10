@@ -8,6 +8,8 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist'],
+
   images: {
     unoptimized: true,
   },
@@ -39,7 +41,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
 
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.vercel-scripts.com https://sdk.mercadopago.com https://*.mlstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.mercadopago.com https://*.mlstatic.com https://*.mercadolibre.com; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://ubwiwcpyxxnwkmxwwzae.supabase.co wss://ubwiwcpyxxnwkmxwwzae.supabase.co https://api.mercadopago.com https://*.mercadopago.com https://*.mlstatic.com https://*.mercadolibre.com; frame-src 'self' https://*.mercadopago.com https://*.mercadolibre.com https://*.mlstatic.com; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
           },
           {
             key: 'Referrer-Policy',

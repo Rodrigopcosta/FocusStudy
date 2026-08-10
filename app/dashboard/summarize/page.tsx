@@ -18,16 +18,15 @@ import {
   X,
   Crown,
   Target,
-  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input' // Importar Input para o CPF
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { MercadoPagoSubscriptionBrick } from '@/components/payments/mercado-pago-subscription-brick'
 
 const MAX_CHARS = 50000
 const DAILY_LIMIT = 10
@@ -37,10 +36,11 @@ export default function SummaryPage() {
   const [summary, setSummary] = useState('')
   const [loading, setLoading] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
-  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
+  const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   // Estados para o Checkout
-  const [cpf, setCpf] = useState('')
   const [mode, setMode] = useState<'short' | 'detailed' | 'bullets' | 'lines'>(
     'bullets'
   )
@@ -60,6 +60,8 @@ export default function SummaryPage() {
       data: { session },
     } = await supabase.auth.getSession()
     if (!session?.user) return
+    setUserEmail(session.user.email || null)
+    setDeviceId(localStorage.getItem('device_id'))
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -80,47 +82,7 @@ export default function SummaryPage() {
   }
 
   const handleCheckout = async (plan: 'monthly' | 'yearly') => {
-    // Validação de CPF antes de chamar a API
-    if (cpf.length < 11) {
-      toast.error('Por favor, insira um CPF válido para continuar.')
-      return
-    }
-
-    const priceId =
-      plan === 'monthly'
-        ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID
-        : process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
-
-    if (!priceId) {
-      toast.error('Configuração de preço não encontrada.')
-      return
-    }
-
-    setLoadingPriceId(priceId)
-
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          cpf, // ENVIANDO O CPF OBRIGATÓRIO AGORA
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        throw new Error(data.error || 'Erro ao gerar sessão de checkout')
-      }
-    } catch (error: any) {
-      console.error('Erro no checkout:', error)
-      toast.error(error.message || 'Erro ao redirecionar para o pagamento.')
-    } finally {
-      setLoadingPriceId(null)
-    }
+    setSelectedPlan(plan)
   }
 
   const handleSummarize = async () => {
@@ -333,25 +295,6 @@ export default function SummaryPage() {
                 </p>
               </div>
 
-              {/* CAMPO DE CPF OBRIGATÓRIO PARA O CHECKOUT */}
-              <div className="mb-8 space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <ShieldCheck size={14} /> Validação de Identidade (CPF)
-                </label>
-                <Input
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={e =>
-                    setCpf(e.target.value.replace(/\D/g, '').substring(0, 11))
-                  }
-                  className="h-14 rounded-xl border-2 focus:border-primary font-bold text-lg"
-                />
-                <p className="text-[9px] text-muted-foreground italic">
-                  Necessário para processar seu trial de 7 dias com segurança.
-                </p>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Opção Anual */}
                 <div className="border-2 border-primary bg-primary/5 rounded-3xl p-6 flex flex-col items-center text-center relative group hover:bg-primary/10 transition-colors">
@@ -368,15 +311,9 @@ export default function SummaryPage() {
                   </div>
                   <Button
                     onClick={() => handleCheckout('yearly')}
-                    disabled={!!loadingPriceId || cpf.length < 11}
                     className="w-full bg-primary hover:bg-primary/90 font-black cursor-pointer rounded-xl h-12 shadow-lg active:scale-95 transition-all"
                   >
-                    {loadingPriceId ===
-                    process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      'ASSINAR AGORA'
-                    )}
+                    ASSINAR AGORA
                   </Button>
                 </div>
 
@@ -390,31 +327,20 @@ export default function SummaryPage() {
                   </div>
                   <Button
                     onClick={() => handleCheckout('monthly')}
-                    disabled={!!loadingPriceId || cpf.length < 11}
                     variant="outline"
                     className="w-full border-2 font-black cursor-pointer rounded-xl h-12 hover:bg-accent active:scale-95 transition-all"
                   >
-                    {loadingPriceId ===
-                    process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      'ASSINAR MENSAL'
-                    )}
+                    ASSINAR MENSAL
                   </Button>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-center gap-4 opacity-50 grayscale">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
-                  alt="Stripe"
-                  className="h-5"
-                />
-                <div className="h-4 w-px bg-border" />
-                <p className="text-[10px] font-black uppercase tracking-widest">
-                  Pagamento 100% Seguro
-                </p>
-              </div>
+              <MercadoPagoSubscriptionBrick
+                plan={selectedPlan}
+                deviceId={deviceId}
+                userEmail={userEmail}
+                onSuccess={() => { setShowUpgradeModal(false); window.location.reload() }}
+              />
             </motion.div>
           </div>
         )}

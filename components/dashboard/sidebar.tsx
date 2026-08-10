@@ -41,7 +41,8 @@ import {
   Trophy,
   Layers,
   Brain,
-  Sparkles, // Ícone para o Resumo
+  Sparkles,
+  CalendarRange, // Adicionado ícone para Plano de Estudos
 } from 'lucide-react'
 
 const menuItems = [
@@ -49,11 +50,12 @@ const menuItems = [
   { title: 'Tarefas', href: '/dashboard/tasks', icon: CheckSquare },
   { title: 'Anotações', href: '/dashboard/notes', icon: FileText },
   { title: 'Disciplinas', href: '/dashboard/disciplines', icon: GraduationCap },
+  { title: 'Plano de Estudos', href: '/dashboard/study-plan', icon: CalendarRange }, // ADICIONADO AQUI
   { title: 'Pomodoro', href: '/dashboard/pomodoro', icon: Timer },
   { title: 'Jornada', href: '/dashboard/jornada', icon: Trophy },
   { title: 'Flashcards', href: '/dashboard/flashcards', icon: Layers },
   { title: 'Estudar', href: '/dashboard/study', icon: Brain },
-  { title: 'Resumir IA', href: '/dashboard/summarize', icon: Sparkles }, // ADICIONADO AQUI
+  { title: 'Resumir IA', href: '/dashboard/summarize', icon: Sparkles },
 ]
 
 interface DashboardSidebarProps {

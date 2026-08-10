@@ -132,17 +132,11 @@ export default function RegisterPage() {
     setIsGoogleLoading(true)
     setError(null)
 
-    const deviceId = generateDeviceId()
-
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            // Passamos o device_id nos metadados da tentativa de login
-            device_id: deviceId,
-          },
         },
       })
       if (error) throw error

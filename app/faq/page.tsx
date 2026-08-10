@@ -31,7 +31,7 @@ const faqs = [
     category: 'PAGAMENTO',
     question: 'Quais as formas de pagamento disponíveis?',
     answer:
-      'Aceitamos exclusivamente Cartão de Crédito via Stripe. O uso do cartão é necessário para viabilizar o período de teste gratuito e garantir que sua renovação seja automática, evitando a interrupção do seu acesso e a perda do seu histórico de estudos.',
+      'Aceitamos cartão de crédito via Mercado Pago. O cartão é necessário para viabilizar o período de teste gratuito e garantir que sua renovação seja automática, evitando a interrupção do seu acesso e a perda do seu histórico de estudos.',
   },
   {
     category: 'INTELIGÊNCIA ARTIFICIAL',

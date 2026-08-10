@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  schemas   = ["public", "auth"]
+}
+
+enum PlanType {
+  FREE        @map("free")
+  PRO_MONTHLY @map("pro_monthly")
+  PRO_ANNUAL  @map("pro_annual")
+  PREMIUM     @map("premium")
+
+  @@map("plan_type")
+  @@schema("public")
+}
+
+enum SubscriptionStatus {
+  NONE      @map("none")
+  PENDING   @map("pending")
+  AUTHORIZED @map("authorized")
+  ACTIVE    @map("active")
+  PAUSED    @map("paused")
+  CANCELLED @map("cancelled")
+  REJECTED  @map("rejected")
+
+  @@map("subscription_status")
+  @@schema("public")
+}
+
+/// Read-only representation of Supabase auth.users.
+/// Prisma migrations must not create or alter this model.
+model AuthUser {
+  id      String  @id @db.Uuid
+  profile Profile?
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model Profile {
+  id                   String             @id @db.Uuid
+  planType             PlanType           @default(FREE) @map("plan_type")
+  subscriptionId       String?            @map("subscription_id")
+  subscriptionStatus   SubscriptionStatus @default(NONE) @map("subscription_status")
+  subscriptionUpdatedAt DateTime?         @map("subscription_updated_at")
+  onboardingCompleted  Boolean            @default(false) @map("onboarding_completed")
+  studyDays             String[]           @default([]) @map("study_days")
+  hoursPerDay           Int                @default(2) @map("hours_per_day")
+  subjectLevels         Json               @default("[]") @map("subject_levels")
+  showTutorial          Boolean            @default(true) @map("show_tutorial")
+  deviceId             String?            @map("device_id")
+  cpfHash              String?            @map("cpf_hash")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  user AuthUser @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([planType])
+  @@index([subscriptionId])
+  @@map("profiles")
+  @@schema("public")
+}

@@ -81,25 +81,7 @@ export function PricingSection() {
     }
 
     setLoadingPriceId(priceId)
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
-      })
-
-      if (response.status === 401) {
-        router.push('/register')
-        return
-      }
-
-      const data = await response.json()
-      if (data.url) window.location.href = data.url
-    } catch (error) {
-      console.error('Erro:', error)
-    } finally {
-      setLoadingPriceId(null)
-    }
+    router.push('/register')
   }
 
   return (
@@ -232,7 +214,7 @@ export function PricingSection() {
         <div className="mt-24 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 opacity-50 px-4 text-center">
           <div className="flex items-center gap-2 text-[11px] font-black uppercase italic tracking-widest">
             <ShieldCheck className="h-4 w-4 text-primary shrink-0" /> Pagamento
-            Seguro via Stripe
+            Seguro via Mercado Pago
           </div>
           <div className="flex items-center gap-2 text-[11px] font-black uppercase italic tracking-widest">
             <CalendarDays className="h-4 w-4 text-primary shrink-0" /> Liberação

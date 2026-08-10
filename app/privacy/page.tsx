@@ -82,12 +82,12 @@ export default function PrivacyPage() {
               </div>
               <div className="space-y-2">
                 <h3 className="font-bold text-foreground uppercase italic text-sm">
-                  2.2. Dados de Pagamento (Stripe)
+                  2.2. Dados de Pagamento (Mercado Pago)
                 </h3>
                 <p className="text-muted-foreground text-sm italic">
                   O FocusStudy <strong>não armazena</strong> dados de cartão de
                   crédito em seus servidores. Todas as transações são
-                  processadas pelo Stripe, que possui certificação PCI-DSS Nível
+                  processadas pelo Mercado Pago, que possui certificação PCI-DSS Nível
                   1. Coletamos apenas o status do pagamento para liberação dos
                   recursos Premium.
                 </p>
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside text-muted-foreground text-xs font-bold uppercase italic space-y-2 tracking-wide">
               <li>
-                <span className="text-primary">Stripe:</span> Processamento de
+                <span className="text-primary">Mercado Pago:</span> Processamento de
                 pagamentos e assinaturas.
               </li>
               <li>
