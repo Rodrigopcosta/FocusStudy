@@ -94,8 +94,8 @@ export async function POST(req: Request) {
       subscription = await createMercadoPagoSubscription(subscriptionBody)
     } catch (error: any) {
       const isCardTokenServiceError =
-        error?.message?.includes('HTTP 503') ||
-        error?.message?.includes('Card token service not found')
+        error?.message?.includes('Card token service not found') ||
+        error?.message?.includes('card_token_id')
 
       if (!isCardTokenServiceError) throw error
 
@@ -112,8 +112,8 @@ export async function POST(req: Request) {
       .from('profiles')
       .update({
         subscription_id: subscription.id,
-        subscription_status: subscription.status || 'authorized',
-        plan_type: plan === 'yearly' ? 'pro_annual' : 'pro_monthly',
+        subscription_status: 'pending_payment',
+        plan_type: 'free',
         ...(completeOnboarding ? { onboarding_completed: true } : {}),
         updated_at: new Date().toISOString(),
       })
@@ -124,6 +124,7 @@ export async function POST(req: Request) {
       id: subscription.id,
       status: subscription.status,
       init_point: hostedCheckoutUrl,
+      message: 'Assinatura criada. Aguardando confirmação de pagamento.',
     })
   } catch (error: any) {
     console.error('Erro ao criar assinatura Mercado Pago:', error)
