@@ -77,7 +77,6 @@ export async function POST(req: Request) {
       reason: plan === 'yearly' ? 'FocusStudy Ultimate Anual' : 'FocusStudy Pro Mensal',
       external_reference: user.id,
       payer_email: payerEmail,
-      card_token_id: cardTokenId,
       status: 'pending',
       back_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=mercadopago`,
       auto_recurring: {
@@ -88,6 +87,8 @@ export async function POST(req: Request) {
       },
     }
 
+    // O Mercado Pago não aceita payment_method/card_token_id em preapprovals
+    // pendentes. O pagamento será concluído no checkout hospedado pelo MP.
     const subscription = await createMercadoPagoSubscription(subscriptionBody)
 
     const { error: updateError } = await supabaseAdmin
