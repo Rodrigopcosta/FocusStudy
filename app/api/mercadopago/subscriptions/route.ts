@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       external_reference: user.id,
       payer_email: payerEmail,
       card_token_id: cardTokenId,
-      status: 'authorized',
+      status: 'pending',
       back_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=mercadopago`,
       auto_recurring: {
         frequency: 1,
@@ -88,25 +88,7 @@ export async function POST(req: Request) {
       },
     }
 
-    let subscription
-    let hostedCheckoutUrl: string | undefined
-    try {
-      subscription = await createMercadoPagoSubscription(subscriptionBody)
-    } catch (error: any) {
-      const isCardTokenServiceError =
-        error?.message?.includes('Card token service not found') ||
-        error?.message?.includes('card_token_id')
-
-      if (!isCardTokenServiceError) throw error
-
-      const pendingSubscription = await createMercadoPagoSubscription({
-        ...subscriptionBody,
-        status: 'pending',
-        card_token_id: undefined,
-      })
-      subscription = pendingSubscription
-      hostedCheckoutUrl = pendingSubscription.init_point
-    }
+    const subscription = await createMercadoPagoSubscription(subscriptionBody)
 
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
@@ -123,7 +105,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       id: subscription.id,
       status: subscription.status,
-      init_point: hostedCheckoutUrl,
+      init_point: subscription.init_point,
       message: 'Assinatura criada. Aguardando confirmação de pagamento.',
     })
   } catch (error: any) {
