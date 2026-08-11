@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CardPayment, initMercadoPago } from '@mercadopago/sdk-react'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -23,6 +23,18 @@ const amounts = {
 const QUICK_CHECK_INTERVAL_MS = 3000
 const QUICK_CHECK_ATTEMPTS = 5 // ~15s no total
 
+const cardCustomization = {
+  paymentMethods: {
+    minInstallments: 1,
+    maxInstallments: 1,
+    types: {
+      excluded: ['debit_card', 'prepaid_card'] as Array<
+        'debit_card' | 'prepaid_card'
+      >,
+    },
+  },
+}
+
 type BrickState = 'form' | 'submitting' | 'processing' | 'approved' | 'rejected' | 'still_pending'
 
 export function MercadoPagoSubscriptionBrick({
@@ -34,8 +46,20 @@ export function MercadoPagoSubscriptionBrick({
 }: Props) {
   const [state, setState] = useState<BrickState>('form')
   const [brickKey, setBrickKey] = useState(0) // força remontar o Brick limpo em caso de nova tentativa
-  const quickCheckTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const quickCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY
+
+  const initialization = useMemo(
+    () => ({
+      amount: amounts[plan],
+      payer: userEmail ? { email: userEmail } : undefined,
+    }),
+    [plan, userEmail]
+  )
+  const handleBrickReady = useCallback(() => undefined, [])
+  const handleBrickError = useCallback((error: unknown) => {
+    console.error('Erro no Brick Mercado Pago:', error)
+  }, [])
 
   useEffect(() => {
     if (publicKey) initMercadoPago(publicKey, { locale: 'pt-BR' })
@@ -43,7 +67,7 @@ export function MercadoPagoSubscriptionBrick({
 
   useEffect(() => {
     return () => {
-      if (quickCheckTimer.current) clearInterval(quickCheckTimer.current)
+      if (quickCheckTimer.current) clearTimeout(quickCheckTimer.current)
     }
   }, [])
 
@@ -51,11 +75,13 @@ export function MercadoPagoSubscriptionBrick({
     return <p className="text-sm text-destructive">Mercado Pago não configurado.</p>
   }
 
-  const quickCheckThenProceed = () => {
+  const quickCheckThenProceed = useCallback(() => {
+    if (quickCheckTimer.current) clearTimeout(quickCheckTimer.current)
+
     let attempts = 0
     setState('processing')
 
-    quickCheckTimer.current = setInterval(async () => {
+    const checkStatus = async () => {
       attempts += 1
 
       try {
@@ -66,13 +92,15 @@ export function MercadoPagoSubscriptionBrick({
           const data = await response.json()
 
           if (data.subscription_status === 'active') {
-            if (quickCheckTimer.current) clearInterval(quickCheckTimer.current)
+            if (quickCheckTimer.current) clearTimeout(quickCheckTimer.current)
+            quickCheckTimer.current = null
             setState('approved')
             return
           }
 
           if (data.subscription_status === 'rejected') {
-            if (quickCheckTimer.current) clearInterval(quickCheckTimer.current)
+            if (quickCheckTimer.current) clearTimeout(quickCheckTimer.current)
+            quickCheckTimer.current = null
             setState('rejected')
             return
           }
@@ -82,13 +110,19 @@ export function MercadoPagoSubscriptionBrick({
       }
 
       if (attempts >= QUICK_CHECK_ATTEMPTS) {
-        if (quickCheckTimer.current) clearInterval(quickCheckTimer.current)
+        if (quickCheckTimer.current) clearTimeout(quickCheckTimer.current)
+        quickCheckTimer.current = null
         setState('still_pending')
+        return
       }
-    }, QUICK_CHECK_INTERVAL_MS)
-  }
 
-  const submitSubscription = async (cardData: { token?: string }) => {
+      quickCheckTimer.current = setTimeout(checkStatus, QUICK_CHECK_INTERVAL_MS)
+    }
+
+    quickCheckTimer.current = setTimeout(checkStatus, QUICK_CHECK_INTERVAL_MS)
+  }, [])
+
+  const submitSubscription = useCallback(async (cardData: { token?: string }) => {
     if (!cardData.token) {
       toast.error('Não foi possível tokenizar o cartão.')
       return
@@ -119,7 +153,7 @@ export function MercadoPagoSubscriptionBrick({
       toast.error(error.message || 'Não foi possível concluir a assinatura.')
       setState('form')
     }
-  }
+  }, [completeOnboarding, deviceId, plan, quickCheckThenProceed])
 
   const tryAgain = () => {
     setBrickKey(prev => prev + 1) // remonta o Brick do zero, sem dados do cartão anterior
@@ -207,20 +241,11 @@ export function MercadoPagoSubscriptionBrick({
     <div className="space-y-4">
       <CardPayment
         key={brickKey}
-        initialization={{
-          amount: amounts[plan],
-          payer: userEmail ? { email: userEmail } : undefined,
-        }}
-        customization={{
-          paymentMethods: {
-            minInstallments: 1,
-            maxInstallments: 1,
-            types: { excluded: ['debit_card', 'prepaid_card'] },
-          },
-        }}
+        initialization={initialization}
+        customization={cardCustomization}
         onSubmit={submitSubscription}
-        onReady={() => undefined}
-        onError={(error: unknown) => console.error('Erro no Brick Mercado Pago:', error)}
+        onReady={handleBrickReady}
+        onError={handleBrickError}
       />
     </div>
   )

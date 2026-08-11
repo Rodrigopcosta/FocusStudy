@@ -28,12 +28,19 @@ export async function POST(req: Request) {
     const type = body?.type || body?.entity
     const id = body?.data?.id || body?.id || new URL(req.url).searchParams.get('id')
 
+    console.log('[MP webhook] Recebido:', JSON.stringify({ type, id }))
+
     if (!id) return NextResponse.json({ received: true })
 
     if (type === 'subscription_authorized_payment') {
       const payment = await fetchAuthorizedPayment(String(id))
       const preapprovalId = payment.preapproval_id
       const paymentStatus = payment.status
+
+      console.log(
+        '[MP webhook] Authorized payment consultado:',
+        JSON.stringify({ id: String(id), preapprovalId, paymentStatus })
+      )
 
       if (!preapprovalId) return NextResponse.json({ received: true })
 
@@ -45,6 +52,10 @@ export async function POST(req: Request) {
         subscription.auto_recurring?.transaction_amount === mercadoPagoAmounts.yearly
 
       if (paymentStatus === 'processed') {
+        console.log(
+          '[MP webhook] Ativando assinatura:',
+          JSON.stringify({ userId: subscription.external_reference, subscriptionId: subscription.id, yearly })
+        )
         const { error } = await supabaseAdmin
           .from('profiles')
           .update({
@@ -57,6 +68,10 @@ export async function POST(req: Request) {
           .eq('id', subscription.external_reference)
         if (error) throw error
       } else if (paymentStatus === 'rejected' || paymentStatus === 'cancelled') {
+        console.log(
+          '[MP webhook] Mantendo plano free:',
+          JSON.stringify({ userId: subscription.external_reference, subscriptionId: subscription.id, paymentStatus })
+        )
         const { error } = await supabaseAdmin
           .from('profiles')
           .update({
