@@ -77,7 +77,10 @@ export async function POST(req: Request) {
       reason: plan === 'yearly' ? 'FocusStudy Ultimate Anual' : 'FocusStudy Pro Mensal',
       external_reference: user.id,
       payer_email: payerEmail,
-      status: 'pending',
+      // Com card_token_id, a API exige preapproval autorizada. Isso não
+      // libera o plano local: o perfil permanece free/pending até o webhook.
+      status: 'authorized',
+      card_token_id: cardTokenId,
       back_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=mercadopago`,
       auto_recurring: {
         frequency: 1,
@@ -87,8 +90,6 @@ export async function POST(req: Request) {
       },
     }
 
-    // O Mercado Pago não aceita payment_method/card_token_id em preapprovals
-    // pendentes. O pagamento será concluído no checkout hospedado pelo MP.
     const subscription = await createMercadoPagoSubscription(subscriptionBody)
 
     const { error: updateError } = await supabaseAdmin
@@ -106,7 +107,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       id: subscription.id,
       status: subscription.status,
-      init_point: subscription.init_point,
       message: 'Assinatura criada. Aguardando confirmação de pagamento.',
     })
   } catch (error: any) {

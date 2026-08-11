@@ -142,11 +142,6 @@ export function MercadoPagoSubscriptionBrick({
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Não foi possível criar a assinatura.')
-      if (data.init_point) {
-        window.location.href = data.init_point
-        return
-      }
-
       quickCheckThenProceed()
     } catch (error: any) {
       console.error('Erro na assinatura Mercado Pago:', error)
