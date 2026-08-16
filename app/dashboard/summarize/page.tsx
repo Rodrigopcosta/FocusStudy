@@ -51,7 +51,9 @@ export default function SummaryPage() {
 
   const fetchUserData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
 
       const { data: profile, error } = await supabase
