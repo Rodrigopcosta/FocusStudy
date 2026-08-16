@@ -23,12 +23,12 @@ interface TaskSortProps {
 
 export function TaskSort({ value, onValueChange }: TaskSortProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
       <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
         <ArrowUpDown className="h-3 w-3" /> Ordenar por:
       </span>
       <Select value={value} onValueChange={v => onValueChange(v as SortOption)}>
-        <SelectTrigger className="w-50 h-9 text-xs bg-background shadow-sm border-muted-foreground/20">
+        <SelectTrigger className="h-9 w-full min-w-0 text-xs bg-background shadow-sm border-muted-foreground/20 sm:flex-1">
           <SelectValue placeholder="Selecione a ordem..." />
         </SelectTrigger>
         <SelectContent>

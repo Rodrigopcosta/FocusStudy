@@ -66,9 +66,9 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg">Tarefas Pendentes</CardTitle>
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="flex min-w-0 flex-row items-center justify-between gap-2 pb-2">
+        <CardTitle className="min-w-0 text-lg">Tarefas Pendentes</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/tasks">
             Ver todas
@@ -94,7 +94,7 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
             {localTasks.map(task => (
               <div
                 key={task.id}
-                className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className="flex min-w-0 items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
               >
                 <div className="flex items-center justify-center min-w-6 min-h-6">
                   <Checkbox
@@ -107,14 +107,14 @@ export function TodayTasks({ tasks: initialTasks }: TodayTasksProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`font-medium truncate ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}
+                    className={`block min-w-0 truncate font-medium ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}
                   >
                     {task.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
                     {task.discipline && (
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full"
+                        className="inline-block max-w-full truncate rounded-full px-2 py-0.5 text-xs"
                         style={{
                           backgroundColor: `${task.discipline.color}20`,
                           color: task.discipline.color,

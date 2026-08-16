@@ -369,12 +369,12 @@ export function NotesList({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex w-full min-w-0 gap-2">
           <Select
             value={orderBy}
             onValueChange={(v: OrderType) => setOrderBy(v)}
           >
-            <SelectTrigger className="w-45 h-11">
+            <SelectTrigger className="h-10 w-full min-w-0 flex-1">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -387,14 +387,19 @@ export function NotesList({
 
           <Button
             variant={isReorderMode ? 'default' : 'outline'}
+            size="lg"
             onClick={() => {
               setIsReorderMode(!isReorderMode)
               if (!isReorderMode) setOrderBy('custom')
             }}
-            className="md:hidden gap-2 h-11 font-bold uppercase text-[10px]"
+            aria-label={isReorderMode ? 'Salvar ordem' : 'Mudar ordem'}
+            title={isReorderMode ? 'Salvar ordem' : 'Mudar ordem'}
+            className="md:hidden shrink-0 gap-1 px-2 font-bold uppercase text-[10px] sm:px-3 sm:gap-2"
           >
             <Move className="h-4 w-4" />
-            {isReorderMode ? 'Salvar' : 'Mudar Ordem'}
+            <span className="max-[380px]:hidden">
+              {isReorderMode ? 'Salvar' : 'Mudar Ordem'}
+            </span>
           </Button>
         </div>
       </div>

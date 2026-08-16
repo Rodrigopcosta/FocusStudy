@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <DashboardSidebar user={user} profile={profile} />
+      <DashboardSidebar profile={profile} />
       <SidebarInset>
         <DashboardHeader user={user} profile={profile} />
         <main className="flex-1 p-4 md:p-6">{children}</main>

@@ -164,12 +164,12 @@ export default function SummaryPage() {
             <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-3">
               <Sparkles className="text-primary" size={32} /> Resumo Inteligente
             </h1>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <p className="text-muted-foreground font-semibold italic">
                 Transforme textos longos em conhecimento puro.
               </p>
               {isPro && (
-                <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-black border border-primary/20">
+                <span className="inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-center text-[10px] leading-none font-black text-primary">
                   USO HOJE: {usageCount}/{DAILY_LIMIT}
                 </span>
               )}
@@ -225,16 +225,16 @@ export default function SummaryPage() {
             <Button
               onClick={handleSummarize}
               disabled={loading || profileLoading}
-              className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xl shadow-xl cursor-pointer transition-all active:scale-[0.98] group"
+              className="group h-16 w-full rounded-2xl bg-primary px-3 text-base font-black text-primary-foreground shadow-xl transition-all active:scale-[0.98] hover:bg-primary/90 cursor-pointer sm:text-xl"
             >
               {loading || profileLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                <span className="flex items-center gap-2">
+                <span className="flex min-w-0 items-center justify-center gap-2">
                   {!isPro && (
                     <Lock size={18} className="text-primary-foreground/50" />
                   )}{' '}
-                  GERAR RESUMO PREMIUM{' '}
+                  <span className="truncate">GERAR RESUMO PREMIUM</span>
                   <ChevronRight className="group-hover:translate-x-1 transition-transform" />
                 </span>
               )}

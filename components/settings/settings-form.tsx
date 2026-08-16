@@ -183,15 +183,19 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between">
-        <Button variant="destructive" onClick={handleSignOut}>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          variant="destructive"
+          onClick={handleSignOut}
+          className="w-full sm:w-auto"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Sair da Conta
         </Button>
         <Button
           onClick={handleSave}
           disabled={isLoading}
-          className="bg-primary"
+          className="w-full bg-primary sm:w-auto"
         >
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

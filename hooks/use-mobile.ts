@@ -1,5 +1,7 @@
 import * as React from 'react'
 
+// Até tablet, o menu usa o painel modal; acima disso, permanece sobreposto
+// até telas largas, sem deslocar o conteúdo principal.
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {

@@ -118,22 +118,28 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         streak={profile?.streak_current || 0}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
           <TodayTasks tasks={pendingTasks || []} />
         </div>
-        <TasksChartClient
-          completed={completedTasksCount}
-          pending={pendingTasksCount}
-        />
+        <div className="min-w-0">
+          <TasksChartClient
+            completed={completedTasksCount}
+            pending={pendingTasksCount}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <QuickPomodoro
-          disciplines={disciplines || []}
-          tasks={pendingTasks || []}
-        />
-        <RecentNotes notes={recentNotes || []} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="min-w-0">
+          <QuickPomodoro
+            disciplines={disciplines || []}
+            tasks={pendingTasks || []}
+          />
+        </div>
+        <div className="min-w-0">
+          <RecentNotes notes={recentNotes || []} />
+        </div>
       </div>
     </div>
   )

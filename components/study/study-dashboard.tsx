@@ -21,11 +21,11 @@ export function StudyDashboard({
 }: any) {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-10 animate-in fade-in duration-500">
-      <header className="flex justify-between items-center">
-        <h1 className="text-4xl font-black uppercase italic flex items-center gap-3 tracking-tighter">
+      <header className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="flex items-center gap-3 text-3xl font-black uppercase italic tracking-tighter sm:text-4xl">
           <LayoutDashboard className="text-primary" size={28} /> Painel
         </h1>
-        <div className="bg-accent/20 p-3 rounded-2xl border text-right">
+        <div className="shrink-0 self-start rounded-2xl border bg-accent/20 p-3 text-left sm:self-auto sm:text-right">
           <p className="text-[10px] font-black uppercase opacity-50">
             Sessão Diária
           </p>
@@ -44,7 +44,7 @@ export function StudyDashboard({
         )}
         onClick={() => onStart('recent')}
       >
-        <CardContent className="p-12 space-y-6">
+        <CardContent className="flex flex-col items-center space-y-6 p-8 text-center sm:items-start sm:p-12 sm:text-left">
           <h3 className="text-5xl font-black uppercase tracking-tighter">
             {dailyStats.newDone >= MAX_DAILY_NEW
               ? 'Meta Batida!'
@@ -62,7 +62,7 @@ export function StudyDashboard({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <PerformanceItem
           title="Errei"
           count={categories.errei.count}
@@ -123,12 +123,14 @@ function PerformanceItem({
       )}
       onClick={onClick}
     >
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="p-2 bg-foreground/5 rounded-lg">{icon}</div>
+      <CardContent className="flex items-center gap-3 p-3 sm:flex-col sm:items-start sm:gap-0 sm:p-6">
+        <div className="flex items-center gap-2 sm:mb-2">
+          <div className="rounded-lg bg-foreground/5 p-2">{icon}</div>
+          <p className="text-2xl font-black text-foreground sm:text-3xl">
+            {count}
+          </p>
         </div>
-        <p className="text-3xl font-black text-foreground">{count}</p>
-        <p className="text-[10px] font-black text-muted-foreground uppercase">
+        <p className="text-[10px] font-black text-muted-foreground uppercase leading-tight sm:mt-0">
           {title}
         </p>
       </CardContent>

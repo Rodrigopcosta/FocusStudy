@@ -724,7 +724,9 @@ export function TaskList({ tasks: initialTasks, disciplines }: TaskListProps) {
             </Button>
           </div>
           {!isReorderMode && (
-            <TaskSort value={sortBy} onValueChange={setSortBy} />
+            <div className="w-full">
+              <TaskSort value={sortBy} onValueChange={setSortBy} />
+            </div>
           )}
         </div>
       </div>
