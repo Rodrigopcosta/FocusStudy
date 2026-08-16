@@ -37,7 +37,7 @@ const faqs = [
     category: 'INTELIGÊNCIA ARTIFICIAL',
     question: 'O uso da IA é ilimitado no plano pago?',
     answer:
-      'Não. Para proteger a plataforma de usos abusivos e garantir a qualidade para todos, aplicamos limites de créditos para resumos e flashcards. Esses limites são generosos e suficientes para uma rotina intensa de estudos.',
+      'Não. Para proteger a plataforma de usos abusivos e garantir a qualidade para todos, aplicamos limites: até 3 gerações de rotina de estudos por mês a partir de editais em PDF, além de créditos mensais para resumos e flashcards. Esses limites são generosos e suficientes para uma rotina intensa de estudos.',
   },
   {
     category: 'METODOLOGIA',
@@ -53,9 +53,9 @@ const faqs = [
   },
   {
     category: 'CANCELAMENTO',
-    question: 'É difícil cancelar o teste ou a assinatura?',
+    question: 'É difícil cancelar a assinatura?',
     answer:
-      'Absolutamente não. Você tem total autonomia para cancelar a renovação ou o seu período de teste com um clique no painel de Configurações. Sem chamados, sem e-mails, sem burocracia.',
+      'Absolutamente não. Você tem total autonomia para cancelar a renovação com um clique no painel de Configurações. Sem chamados, sem e-mails, sem burocracia. Seu acesso continua até o fim do período já pago.',
   },
   {
     category: 'SEGURANÇA',
@@ -124,8 +124,9 @@ export default function FAQPage() {
               Dúvidas <span className="text-primary">Frequentes</span>
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto font-medium text-sm md:text-base leading-relaxed">
-              Transparência sobre nosso período de teste, uso de IA e segurança.
-              Experimente a ferramenta líder para concurseiros de elite.
+              Transparência sobre nossos planos, uso de IA e segurança. Comece
+              gratuitamente e evolua para o plano Pro quando estiver pronto para
+              ir além.
             </p>
           </div>
         </section>

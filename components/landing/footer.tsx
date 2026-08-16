@@ -40,7 +40,7 @@ export function Footer() {
             Privacidade
           </Link>
           <Link
-            href="mailto:suporte@focusstudy.com.br"
+            href="mailto:contato@focusstudy.com.br"
             className="hover:text-primary transition-colors italic cursor-pointer"
           >
             Suporte

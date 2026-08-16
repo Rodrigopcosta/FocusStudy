@@ -178,7 +178,7 @@ export default function TermsPage() {
               Dúvidas Jurídicas? Entre em contato:
             </p>
             <p className="text-primary font-black italic uppercase tracking-tighter text-lg md:text-xl">
-              legal@focusstudy.com.br
+              contato@focusstudy.com.br
             </p>
           </footer>
         </div>

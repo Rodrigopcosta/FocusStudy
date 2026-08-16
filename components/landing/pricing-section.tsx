@@ -108,7 +108,10 @@ export function PricingSection() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16 md:mb-24 space-y-6">
-          <h2 className="text-4xl sm:text-5xl min-[1150px]:text-7xl font-extrabold italic uppercase tracking-tighter leading-[0.9] min-[1150px]:leading-tight">
+          <h2
+            className="text-4xl sm:text-5xl min-[1150px]:text-7xl font-extrabold italic uppercase tracking-tighter 
+  leading-[1.1] sm:leading-none min-[1150px]:leading-tight"
+          >
             Estude com <br className="min-[1150px]:hidden" />
             <span className="text-primary italic">Inteligência</span> e{' '}
             <br className="min-[1150px]:hidden" />
@@ -220,7 +223,7 @@ export function PricingSection() {
 
                 {plan.name !== 'Starter' && (
                   <p className="text-[10px] text-center font-black text-primary tracking-[0.2em] uppercase">
-                    7 DIAS DE TESTE TOTALMENTE GRÁTIS
+                    Cancele quando quiser
                   </p>
                 )}
               </div>
