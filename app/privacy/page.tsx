@@ -6,7 +6,7 @@ import { Target, ArrowLeft, Lock, Fingerprint, EyeOff } from 'lucide-react'
 import { Footer } from '@/components/landing/footer'
 
 export default function PrivacyPage() {
-  const lastUpdate = '25 de Janeiro de 2026'
+  const lastUpdate = '16 de Agosto de 2026'
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
                   2.3. Conteúdo de Estudo e IA
                 </h3>
                 <p className="text-muted-foreground text-sm italic">
-                  Suas notas e cronogramas são processados para gerar resumos
+                  Suas anotações e cronogramas são processados para gerar resumos
                   via Inteligência Artificial. Estes dados são utilizados apenas
                   para a prestação do serviço contratado e não são
                   compartilhados para treinamento de modelos públicos de
@@ -189,7 +189,7 @@ export default function PrivacyPage() {
               para atender dentro dos prazos legais.
             </p>
             <p className="text-primary font-black italic uppercase tracking-tighter text-xl md:text-2xl break-all">
-              privacidade@focusstudy.com.br
+              contato@focusstudy.com.br
             </p>
           </section>
         </div>
