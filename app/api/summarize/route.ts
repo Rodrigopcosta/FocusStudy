@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       .single()
 
     // Como você disse que é exclusivo para quem tem assinatura:
-    if (profile?.plan_type !== 'pro' && profile?.plan_type !== 'premium') {
+    if (!profile?.plan_type || profile.plan_type === 'free') {
       return NextResponse.json(
         {
           error: 'subscription_required',

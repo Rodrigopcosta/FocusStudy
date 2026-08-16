@@ -265,7 +265,7 @@ export default function JornadaPage() {
   }
 
   const xpRemaining = 1000 - (userData.xp % 1000)
-  const isPremium = planType === 'pro' || planType === 'ultimate'
+  const isPremium = planType !== 'free' && planType !== null
 
   const renderBadgeGrid = (category?: string) => {
     const filtered = category
