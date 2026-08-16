@@ -1,14 +1,20 @@
 // app/api/webhooks/stripe/route.ts
-
 import { stripe } from '@/lib/stripe'
-import { createClient } from '@supabase/supabase-js'
+import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getPlanType(priceId: string, status: string): string {
+  if (status !== 'active' && status !== 'trialing') return 'free'
+  
+  const isYearly = priceId === process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
+  
+  if (isYearly) {
+    return 'pro_annual'
+  }
+  
+  return 'pro_monthly'
+}
 
 export async function POST(req: Request) {
   const body = await req.text()
@@ -28,89 +34,79 @@ export async function POST(req: Request) {
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
   }
 
-  const session = event.data.object as any
+  const data = event.data.object as any
   console.log('🔔 Evento Recebido:', event.type)
 
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const userId = session.metadata?.supabase_user_id
-        const subscriptionId = session.subscription as string
+        const userId = data.metadata?.supabase_user_id
+        const subscriptionId = data.subscription as string
 
-        if (userId && subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-          const priceId = subscription.items.data[0].price.id
+        if (!userId || !subscriptionId) break
 
-          // Lógica de plano centralizada
-          const isYearly = [
-            process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
-          ].includes(priceId)
-          
-          const planType = isYearly ? 'ultimate' : 'pro'
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const priceId = subscription.items.data[0].price.id
+        const planType = getPlanType(priceId, subscription.status)
 
-          console.log(`🚀 Ativando plano ${planType} para o usuário: ${userId}`)
-          console.log(`📅 Status: ${subscription.status}`)
+        console.log(`🚀 Ativando plano ${planType} para: ${userId}`)
 
-          const { error: updateError } = await supabaseAdmin
-            .from('profiles')
-            .update({
-              stripe_customer_id: session.customer as string,
-              subscription_status: subscription.status,
-              plan_type: planType,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId)
+        // ✅ Usando upsert - cria o perfil se não existir
+        await prisma.profile.upsert({
+          where: { id: userId },
+          update: {
+            stripe_customer_id: data.customer as string,
+            subscription_id: subscriptionId,
+            subscription_status: subscription.status,
+            plan_type: planType,
+            onboarding_completed: true,
+            updated_at: new Date(),
+          },
+          create: {
+            id: userId,
+            stripe_customer_id: data.customer as string,
+            subscription_id: subscriptionId,
+            subscription_status: subscription.status,
+            plan_type: planType,
+            onboarding_completed: true,
+            study_days: [],
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        })
 
-          if (updateError) throw updateError
-          console.log('✅ Checkout completado com sucesso.')
-        }
+        console.log('✅ Checkout completado.')
         break
       }
 
       case 'customer.subscription.updated': {
-        const updatedSub = event.data.object as any
-        const priceId = updatedSub.items.data[0].price.id
-        
-        const isActive = updatedSub.status === 'active'
+        const priceId = data.items.data[0].price.id
+        const planType = getPlanType(priceId, data.status)
 
-        const isYearly = [
-          process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID,
-        ].includes(priceId)
-
-        const planType = isActive ? (isYearly ? 'ultimate' : 'pro') : 'free'
-
-        const { data: currentProfile } = await supabaseAdmin
-          .from('profiles')
-          .select('subscription_status')
-          .eq('stripe_customer_id', updatedSub.customer as string)
-          .single()
-
-        const { error: updateError } = await supabaseAdmin
-          .from('profiles')
-          .update({
-            subscription_status: updatedSub.status,
+        await prisma.profile.updateMany({
+          where: { stripe_customer_id: data.customer as string },
+          data: {
+            subscription_status: data.status,
             plan_type: planType,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('stripe_customer_id', updatedSub.customer as string)
+            updated_at: new Date(),
+          },
+        })
 
-        if (updateError) console.error('❌ Erro no update do sub.updated:', updateError.message)
+        console.log(`✅ Assinatura atualizada: ${data.status}`)
         break
       }
 
       case 'customer.subscription.deleted': {
-        const deletedSub = event.data.object as any
-
-        const { error: deleteError } = await supabaseAdmin
-          .from('profiles')
-          .update({
+        await prisma.profile.updateMany({
+          where: { stripe_customer_id: data.customer as string },
+          data: {
             subscription_status: 'canceled',
             plan_type: 'free',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('stripe_customer_id', deletedSub.customer as string)
+            updated_at: new Date(),
+          },
+        })
 
-        if (deleteError) console.error('❌ Erro no sub.deleted:', deleteError.message)
+        console.log('✅ Assinatura cancelada')
         break
       }
 

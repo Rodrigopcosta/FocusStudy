@@ -12,18 +12,15 @@ import {
   Loader2,
   ListChecks,
   AlignLeft,
-  MessageSquareQuote,
   ArrowLeft,
   Lock,
   X,
   Crown,
   Target,
-  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input' // Importar Input para o CPF
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -39,8 +36,6 @@ export default function SummaryPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
 
-  // Estados para o Checkout
-  const [cpf, setCpf] = useState('')
   const [mode, setMode] = useState<'short' | 'detailed' | 'bullets' | 'lines'>(
     'bullets'
   )
@@ -80,12 +75,6 @@ export default function SummaryPage() {
   }
 
   const handleCheckout = async (plan: 'monthly' | 'yearly') => {
-    // Validação de CPF antes de chamar a API
-    if (cpf.length < 11) {
-      toast.error('Por favor, insira um CPF válido para continuar.')
-      return
-    }
-
     const priceId =
       plan === 'monthly'
         ? process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID
@@ -102,10 +91,7 @@ export default function SummaryPage() {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          cpf, // ENVIANDO O CPF OBRIGATÓRIO AGORA
-        }),
+        body: JSON.stringify({ priceId }),
       })
 
       const data = await response.json()
@@ -297,7 +283,7 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      {/* MODAL DE UPGRADE COM CAMPO DE CPF */}
+      {/* MODAL DE UPGRADE */}
       <AnimatePresence>
         {showUpgradeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -333,25 +319,6 @@ export default function SummaryPage() {
                 </p>
               </div>
 
-              {/* CAMPO DE CPF OBRIGATÓRIO PARA O CHECKOUT */}
-              <div className="mb-8 space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <ShieldCheck size={14} /> Validação de Identidade (CPF)
-                </label>
-                <Input
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={e =>
-                    setCpf(e.target.value.replace(/\D/g, '').substring(0, 11))
-                  }
-                  className="h-14 rounded-xl border-2 focus:border-primary font-bold text-lg"
-                />
-                <p className="text-[9px] text-muted-foreground italic">
-                  Necessário para processar seu trial de 7 dias com segurança.
-                </p>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Opção Anual */}
                 <div className="border-2 border-primary bg-primary/5 rounded-3xl p-6 flex flex-col items-center text-center relative group hover:bg-primary/10 transition-colors">
@@ -368,7 +335,7 @@ export default function SummaryPage() {
                   </div>
                   <Button
                     onClick={() => handleCheckout('yearly')}
-                    disabled={!!loadingPriceId || cpf.length < 11}
+                    disabled={!!loadingPriceId}
                     className="w-full bg-primary hover:bg-primary/90 font-black cursor-pointer rounded-xl h-12 shadow-lg active:scale-95 transition-all"
                   >
                     {loadingPriceId ===
@@ -390,7 +357,7 @@ export default function SummaryPage() {
                   </div>
                   <Button
                     onClick={() => handleCheckout('monthly')}
-                    disabled={!!loadingPriceId || cpf.length < 11}
+                    disabled={!!loadingPriceId}
                     variant="outline"
                     className="w-full border-2 font-black cursor-pointer rounded-xl h-12 hover:bg-accent active:scale-95 transition-all"
                   >

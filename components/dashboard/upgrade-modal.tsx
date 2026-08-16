@@ -70,7 +70,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
               'Flashcards ilimitados com IA',
               'Resumos automáticos de conteúdo',
               'Ranking Global e Missões Diárias',
-              '7 dias grátis (cancele quando quiser)',
+              'Cancele quando quiser',
             ].map(text => (
               <div
                 key={text}
@@ -94,7 +94,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                   Preparando...
                 </>
               ) : (
-                'Experimentar Grátis agora'
+              'Experimentar Premium'
               )}
             </Button>
             <Button
