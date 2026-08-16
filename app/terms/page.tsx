@@ -112,15 +112,14 @@ export default function TermsPage() {
 
           <section className="space-y-4 md:space-y-6">
             <h2 className="text-lg md:text-xl font-black uppercase italic border-l-4 border-primary pl-3 md:pl-4">
-              3. Teste Gratuito (Trial)
+              3. Cancelamento e Reembolso
             </h2>
             <p className="text-muted-foreground text-xs md:text-sm leading-relaxed italic">
-              O plano <strong>Professional</strong> pode oferecer um período de
-              teste de 7 dias. Durante este período, o usuário terá acesso às
-              funcionalidades premium. Caso o cancelamento não ocorra antes do
-              término do 7º dia, a cobrança do plano mensal será processada
-              automaticamente. É de inteira responsabilidade do usuário
-              gerenciar o prazo do trial.
+              Em conformidade com o Art. 49 do Código de Defesa do Consumidor
+              (CDC), o usuário possui o prazo de <strong>7 (sete) dias</strong>{' '}
+              após a primeira contratação para solicitar o estorno integral dos
+              valores pagos, sem necessidade de justificativa. O cancelamento
+              pode ser feito diretamente pelo painel de Configurações.
             </p>
           </section>
 

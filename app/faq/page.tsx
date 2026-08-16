@@ -23,21 +23,21 @@ import { Footer } from '@/components/landing/footer'
 const faqs = [
   {
     category: 'PLANOS E ACESSO',
-    question: 'Como funciona o período de teste de 7 dias?',
+    question: 'Quais planos estão disponíveis?',
     answer:
-      'Ao assinar os planos Professional ou Ultimate, você ganha 7 dias para experimentar todas as funcionalidades de elite. A cobrança no seu cartão de crédito só será processada após esse período. Se você cancelar dentro dos 7 dias, nada será cobrado.',
+      'O FocusStudy oferece três planos: Gratuito, com acesso às funcionalidades básicas; Mensal, com acesso completo cobrado mensalmente; e Anual, com acesso completo com desconto de 20% em relação ao plano mensal.',
   },
   {
     category: 'PAGAMENTO',
     question: 'Quais as formas de pagamento disponíveis?',
     answer:
-      'Aceitamos exclusivamente Cartão de Crédito via Stripe. O uso do cartão é necessário para viabilizar o período de teste gratuito e garantir que sua renovação seja automática, evitando a interrupção do seu acesso e a perda do seu histórico de estudos.',
+      'Aceitamos exclusivamente Cartão de Crédito via Stripe. A renovação é automática ao final de cada período, garantindo a continuidade do seu acesso e do seu histórico de estudos.',
   },
   {
     category: 'INTELIGÊNCIA ARTIFICIAL',
-    question: 'O uso da IA é ilimitado durante o teste?',
+    question: 'O uso da IA é ilimitado no plano pago?',
     answer:
-      'Não. Para proteger a plataforma de usos abusivos e garantir a qualidade para todos, aplicamos limites de créditos para resumos e flashcards, inclusive durante o período de teste. Esses limites são generosos e suficientes para uma rotina intensa de estudos.',
+      'Não. Para proteger a plataforma de usos abusivos e garantir a qualidade para todos, aplicamos limites de créditos para resumos e flashcards. Esses limites são generosos e suficientes para uma rotina intensa de estudos.',
   },
   {
     category: 'METODOLOGIA',
@@ -117,7 +117,7 @@ export default function FAQPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <ShieldCheck className="h-3 w-3 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                Teste Grátis por 7 Dias • Sem Cobrança Antecipada
+                Planos Gratuito, Mensal e Anual
               </span>
             </div>
             <h1 className="text-4xl md:text-7xl font-black uppercase italic tracking-tighter leading-none mb-6">
@@ -175,7 +175,7 @@ export default function FAQPage() {
             <div className="p-8 rounded-4xl bg-primary/10 border border-primary/20 flex flex-col items-center text-center group">
               <Sparkles className="h-10 w-10 text-primary mb-4 group-hover:rotate-12 transition-transform" />
               <h3 className="font-black uppercase italic text-lg mb-2">
-                7 Dias de Teste
+                Acesso Premium
               </h3>
               <p className="text-xs text-muted-foreground mb-6 uppercase font-bold tracking-wider italic">
                 Libere seu acesso agora
@@ -184,7 +184,7 @@ export default function FAQPage() {
                 asChild
                 className="w-full font-black uppercase italic tracking-widest py-6 rounded-xl cursor-pointer shadow-lg shadow-primary/20"
               >
-                <Link href="/auth/signup">Iniciar Teste Grátis</Link>
+                <Link href="/register">Criar Conta Grátis</Link>
               </Button>
             </div>
           </div>

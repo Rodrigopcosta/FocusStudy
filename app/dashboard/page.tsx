@@ -92,8 +92,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 <CheckCircle2 className="h-4 w-4 text-primary" />
               </h4>
               <p className="text-sm text-muted-foreground">
-                Seu período de 7 dias grátis começou. Todas as funções premium
-                estão liberadas.
+                Sua assinatura está ativa. Todas as funções premium estão liberadas.
               </p>
             </div>
           </div>
