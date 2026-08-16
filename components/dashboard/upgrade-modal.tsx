@@ -94,7 +94,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                   Preparando...
                 </>
               ) : (
-              'Experimentar Premium'
+                'Experimentar Premium'
               )}
             </Button>
             <Button

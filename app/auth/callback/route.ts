@@ -43,7 +43,14 @@ export async function GET(request: Request) {
         redirectUrl = nextParam ?? '/dashboard'
       }
 
-      return NextResponse.redirect(`${origin}${redirectUrl}`)
+      const response = NextResponse.redirect(`${origin}${redirectUrl}`)
+
+      // Propagar cookies de sessão para o redirect
+      cookieStore.getAll().forEach(cookie => {
+        response.cookies.set(cookie.name, cookie.value)
+      })
+
+      return response
     }
   }
 

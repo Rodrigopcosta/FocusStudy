@@ -61,8 +61,12 @@ export function UpgradeBanner() {
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
         </div>
         <div className="flex flex-col truncate">
-          <p className="text-[13px] font-bold leading-tight truncate">Turbine seus estudos com IA</p>
-          <p className="text-[11px] text-muted-foreground leading-tight truncate">Desbloqueie todas as funções premium.</p>
+          <p className="text-[13px] font-bold leading-tight truncate">
+            Turbine seus estudos com IA
+          </p>
+          <p className="text-[11px] text-muted-foreground leading-tight truncate">
+            Desbloqueie todas as funções premium.
+          </p>
         </div>
       </div>
 
@@ -74,7 +78,11 @@ export function UpgradeBanner() {
           disabled={!!isLoading}
           className="h-7 text-[11px] px-3 cursor-pointer hover:bg-muted font-medium border-amber-500/10"
         >
-          {isLoading === 'monthly' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Mensal'}
+          {isLoading === 'monthly' ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            'Mensal'
+          )}
         </Button>
 
         <Button
@@ -83,7 +91,11 @@ export function UpgradeBanner() {
           onClick={() => handleUpgrade('yearly')}
           disabled={!!isLoading}
         >
-          {isLoading === 'yearly' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Anual'}
+          {isLoading === 'yearly' ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            'Anual'
+          )}
         </Button>
       </div>
 

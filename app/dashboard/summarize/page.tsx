@@ -39,10 +39,9 @@ export default function SummaryPage() {
   const [mode, setMode] = useState<'short' | 'detailed' | 'bullets' | 'lines'>(
     'bullets'
   )
-  const [planType, setPlanType] = useState<
-    'free' | 'pro' | 'ultimate' | 'premium'
-  >('free')
+  const [planType, setPlanType] = useState<string>('free')
   const [usageCount, setUsageCount] = useState(0)
+  const [profileLoading, setProfileLoading] = useState(true)
 
   const supabase = createClient()
 
@@ -51,27 +50,33 @@ export default function SummaryPage() {
   }, [])
 
   const fetchUserData = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session?.user) return
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('plan_type')
-      .eq('id', session.user.id)
-      .single()
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('plan_type')
+        .eq('id', user.id)
+        .single()
 
-    setPlanType(profile?.plan_type || 'free')
+      console.log('[summarize] user.id:', user.id)
+      console.log('[summarize] profile:', profile, 'error:', error)
+      setPlanType(profile?.plan_type || 'free')
 
-    const today = new Date().toISOString().split('T')[0]
-    const { count } = await supabase
-      .from('summaries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', session.user.id)
-      .gte('created_at', today)
+      const today = new Date().toISOString().split('T')[0]
+      const { count } = await supabase
+        .from('summaries')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', today)
 
-    setUsageCount(count || 0)
+      setUsageCount(count || 0)
+    } finally {
+      setProfileLoading(false)
+    }
   }
 
   const handleCheckout = async (plan: 'monthly' | 'yearly') => {
@@ -109,8 +114,10 @@ export default function SummaryPage() {
     }
   }
 
+  const isPro = planType !== 'free'
+
   const handleSummarize = async () => {
-    if (planType === 'free') {
+    if (!isPro) {
       setShowUpgradeModal(true)
       return
     }
@@ -161,7 +168,7 @@ export default function SummaryPage() {
               <p className="text-muted-foreground font-semibold italic">
                 Transforme textos longos em conhecimento puro.
               </p>
-              {planType !== 'free' && (
+              {isPro && (
                 <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-black border border-primary/20">
                   USO HOJE: {usageCount}/{DAILY_LIMIT}
                 </span>
@@ -217,14 +224,14 @@ export default function SummaryPage() {
 
             <Button
               onClick={handleSummarize}
-              disabled={loading}
+              disabled={loading || profileLoading}
               className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xl shadow-xl cursor-pointer transition-all active:scale-[0.98] group"
             >
-              {loading ? (
+              {loading || profileLoading ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <span className="flex items-center gap-2">
-                  {planType === 'free' && (
+                  {!isPro && (
                     <Lock size={18} className="text-primary-foreground/50" />
                   )}{' '}
                   GERAR RESUMO PREMIUM{' '}

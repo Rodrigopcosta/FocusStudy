@@ -8,18 +8,193 @@ datasource db {
 
 model Profile {
   id                      String    @id @db.Uuid
+  // Dados pessoais
+  name                    String?
+  full_name               String?
+  avatar_url              String?
+  birth_date              String?
+  gender                  String?
+  study_type              String    @default("exam")
+  // Preferências
+  theme                   String    @default("dark")
+  pomodoro_mode           String    @default("25/5")
+  notifications_enabled   Boolean   @default(true)
+  show_tutorial           Boolean   @default(true)
+  // Gamificação
+  xp                      Int       @default(0)
+  level                   Int       @default(1)
+  streak_current          Int       @default(0)
+  streak_best             Int       @default(0)
+  last_study_date         String?
+  // Onboarding
+  onboarding_completed    Boolean   @default(false)
+  study_days              String[]
+  hours_per_day           Int?
+  subject_levels          Json?
+  terms_accepted_at       String?
+  // Stripe / Plano
   plan_type               String    @default("free")
   subscription_id         String?
   subscription_status     String    @default("pending")
   subscription_updated_at DateTime?
-  onboarding_completed    Boolean   @default(false)
   stripe_customer_id      String?
-  study_days              String[]
-  hours_per_day           Int?
-  subject_levels          Json?
-  show_tutorial           Boolean   @default(true)
+  // Timestamps
   created_at              DateTime  @default(now()) @db.Timestamp(6)
   updated_at              DateTime  @updatedAt @db.Timestamp(6)
 
+  disciplines    Discipline[]
+  tasks          Task[]
+  notes          Note[]
+  focus_sessions FocusSession[]
+  study_stats    StudyStat[]
+  flashcards     Flashcard[]
+  study_logs     StudyLog[]
+  summaries      Summary[]
+  user_badges    UserBadge[]
+
   @@map("profiles")
+}
+
+model Discipline {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  name       String
+  color      String   @default("#3b82f6")
+  icon       String   @default("📚")
+  course     String?
+  subject    String?
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  user  Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  tasks Task[]
+  notes Note[]
+
+  @@map("disciplines")
+}
+
+model Task {
+  id                String    @id @default(uuid()) @db.Uuid
+  user_id           String    @db.Uuid
+  discipline_id     String?   @db.Uuid
+  title             String
+  description       String?
+  type              String    @default("theory")
+  priority          String    @default("medium")
+  status            String    @default("pending")
+  estimated_minutes Int       @default(30)
+  actual_minutes    Int       @default(0)
+  start_date        DateTime?
+  due_date          DateTime?
+  completed_at      DateTime?
+  reminder_at       DateTime?
+  position          Int       @default(0)
+  is_pinned         Boolean   @default(false)
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
+  updated_at        DateTime  @updatedAt @db.Timestamp(6)
+
+  user       Profile     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  discipline Discipline? @relation(fields: [discipline_id], references: [id], onDelete: SetNull)
+
+  @@map("tasks")
+}
+
+model Note {
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String   @db.Uuid
+  discipline_id String?  @db.Uuid
+  title         String
+  content       String   @default("")
+  topic         String?
+  is_important  Boolean  @default(false)
+  is_pinned     Boolean  @default(false)
+  color         String?
+  position      Int      @default(0)
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @updatedAt @db.Timestamp(6)
+
+  user       Profile     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  discipline Discipline? @relation(fields: [discipline_id], references: [id], onDelete: SetNull)
+
+  @@map("notes")
+}
+
+model FocusSession {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  duration_minutes Int      @default(0)
+  completed_at     DateTime @default(now()) @db.Timestamp(6)
+
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("focus_sessions")
+}
+
+model StudyStat {
+  id                  String   @id @default(uuid()) @db.Uuid
+  user_id             String   @db.Uuid
+  date                String
+  total_minutes       Float    @default(0)
+  tasks_completed     Int      @default(0)
+  pomodoros_completed Int      @default(0)
+  created_at          DateTime @default(now()) @db.Timestamp(6)
+
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+  @@map("study_stats")
+}
+
+model Flashcard {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  front            String
+  back             String
+  ease_factor      Float    @default(2.5)
+  interval         Int      @default(1)
+  repetition_count Int      @default(0)
+  next_review      DateTime @default(now()) @db.Timestamp(6)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @updatedAt @db.Timestamp(6)
+
+  user       Profile    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  study_logs StudyLog[]
+
+  @@map("flashcards")
+}
+
+model StudyLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  card_id    String   @db.Uuid
+  type       String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  user      Profile   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  flashcard Flashcard @relation(fields: [card_id], references: [id], onDelete: Cascade)
+
+  @@map("study_logs")
+}
+
+model Summary {
+  id             String   @id @default(uuid()) @db.Uuid
+  user_id        String   @db.Uuid
+  content_length Int      @default(0)
+  mode           String   @default("bullets")
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
+}
+
+model UserBadge {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  badge_id    String
+  unlocked_at DateTime @default(now()) @db.Timestamp(6)
+
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, badge_id])
+  @@map("user_badges")
 }

@@ -78,7 +78,7 @@ export default function FlashcardsPage() {
   const handleGenerate = async () => {
     if (!content) return
 
-    if (planType !== 'pro' && planType !== 'ultimate') {
+    if (!planType || planType === 'free') {
       setShowUpgradeModal(true)
       return
     }
