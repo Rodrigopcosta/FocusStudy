@@ -83,14 +83,14 @@ export function DisciplinesList({
               style={{ backgroundColor: discipline.color }}
             />
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{discipline.icon}</span>
-                  <div>
-                    <h3 className="font-medium">{discipline.name}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="shrink-0 text-2xl">{discipline.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate font-medium">{discipline.name}</h3>
                     {studyType === 'college' &&
                       (discipline.course || discipline.subject) && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="truncate text-sm text-muted-foreground">
                           {discipline.course && (
                             <span>{discipline.course}</span>
                           )}

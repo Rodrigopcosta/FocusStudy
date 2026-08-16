@@ -11,7 +11,7 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
 
   if (total === 0) {
     return (
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base font-semibold">
             Progresso das Tarefas
@@ -34,14 +34,14 @@ export function TasksChart({ completed, pending }: TasksChartProps) {
   const percentage = Math.round((completed / total) * 100)
 
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle className="text-base font-semibold">
           Progresso das Tarefas
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+      <CardContent className="min-w-0">
+        <div className="flex min-w-0 flex-col items-center gap-6 sm:flex-row">
           {/* Container do Gráfico com tamanho fixo v4 */}
           <div className="w-35 h-35">
             <ResponsiveContainer width="100%" height="100%">

@@ -10,9 +10,9 @@ interface RecentNotesProps {
 
 export function RecentNotes({ notes }: RecentNotesProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg">Notas Recentes</CardTitle>
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="flex min-w-0 flex-row items-center justify-between gap-2 pb-2">
+        <CardTitle className="min-w-0 text-lg">Notas Recentes</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/notes">
             Ver todas
@@ -32,21 +32,21 @@ export function RecentNotes({ notes }: RecentNotesProps) {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {notes.map(note => (
               <Link
                 key={note.id}
                 href={`/dashboard/notes/${note.id}`}
-                className="group"
+                className="group block min-w-0"
               >
-                <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                  <div className="flex items-start gap-3">
+                <div className="min-w-0 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
+                  <div className="flex min-w-0 items-start gap-3">
                     <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate group-hover:text-primary transition-colors">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="min-w-0 flex-1 truncate font-medium transition-colors group-hover:text-primary">
                           {note.title}
                         </p>
                         {note.is_important && (
@@ -55,7 +55,7 @@ export function RecentNotes({ notes }: RecentNotesProps) {
                       </div>
                       {note.discipline && (
                         <span
-                          className="text-xs px-2 py-0.5 rounded-full inline-block mt-1"
+                          className="mt-1 inline-block max-w-full truncate rounded-full px-2 py-0.5 text-xs"
                           style={{
                             backgroundColor: `${note.discipline.color}20`,
                             color: note.discipline.color,

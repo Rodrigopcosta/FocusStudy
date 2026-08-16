@@ -1,14 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
+import { usePathname } from 'next/navigation'
 import type { Profile } from '@/types/database'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,16 +13,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   BookOpen,
   LayoutDashboard,
@@ -33,8 +23,6 @@ import {
   FileText,
   Timer,
   Settings,
-  LogOut,
-  ChevronUp,
   Flame,
   GraduationCap,
   HelpCircle,
@@ -57,35 +45,20 @@ const menuItems = [
 ]
 
 interface DashboardSidebarProps {
-  user: User
   profile: Profile | null
 }
 
-export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
+export function DashboardSidebar({ profile }: DashboardSidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const { isMobile, setOpen, setOpenMobile } = useSidebar()
 
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    if (isMobile) setOpenMobile(false)
-    router.push('/login')
+  const closeSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    } else {
+      setOpen(false)
+    }
   }
-
-  const closeMobile = () => {
-    if (isMobile) setOpenMobile(false)
-  }
-
-  const initials =
-    profile?.name
-      ?.split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) ||
-    user.email?.slice(0, 2).toUpperCase() ||
-    'US'
 
   return (
     <Sidebar>
@@ -95,6 +68,11 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
             <BookOpen className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
           <span className="font-semibold text-lg">FocusStudy</span>
+          <SidebarTrigger
+            className="ml-auto"
+            aria-label="Fechar menu lateral"
+            title="Fechar menu lateral"
+          />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -107,7 +85,7 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    onClick={closeMobile}
+                    onClick={closeSidebar}
                   >
                     <Link href={item.href} prefetch={true}>
                       <item.icon className="h-4 w-4" />
@@ -140,11 +118,30 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
         )}
 
         <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/dashboard/settings'}
+                  onClick={closeSidebar}
+                >
+                  <Link href="/dashboard/settings" prefetch={true}>
+                    <Settings className="h-4 w-4" />
+                    <span>Configurações</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
           <SidebarGroupLabel>Ajuda</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild onClick={closeMobile}>
+                <SidebarMenuButton asChild onClick={closeSidebar}>
                   <Link href="/faq" target="_blank">
                     <HelpCircle className="h-4 w-4" />
                     <span>Perguntas Frequentes</span>
@@ -155,43 +152,6 @@ export function DashboardSidebar({ user, profile }: DashboardSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 text-left truncate">
-                    {profile?.name || user.email}
-                  </span>
-                  <ChevronUp className="h-4 w-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                className="w-(--radix-popper-anchor-width)"
-              >
-                <DropdownMenuItem asChild onClick={closeMobile}>
-                  <Link href="/dashboard/settings" prefetch={true}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   )
 }

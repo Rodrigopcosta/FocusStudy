@@ -325,12 +325,20 @@ export default function JornadaPage() {
       </div>
 
       <Tabs defaultValue="progresso" className="w-full">
-        <TabsList className="grid grid-cols-2 w-full max-w-md bg-secondary/30 mb-8">
-          <TabsTrigger value="progresso" className="font-bold gap-2">
-            <LayoutDashboard className="h-4 w-4" /> Meu Progresso
+        <TabsList className="grid w-full max-w-md grid-cols-2 bg-secondary/30 mb-8 p-1">
+          <TabsTrigger
+            value="progresso"
+            className="min-w-0 px-1 font-bold gap-1 text-[10px] sm:px-2 sm:text-sm"
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">Meu Progresso</span>
           </TabsTrigger>
-          <TabsTrigger value="ranking" className="font-bold gap-2">
-            <Users className="h-4 w-4" /> Ranking Global
+          <TabsTrigger
+            value="ranking"
+            className="min-w-0 px-1 font-bold gap-1 text-[10px] sm:px-2 sm:text-sm"
+          >
+            <Users className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">Ranking Global</span>
           </TabsTrigger>
         </TabsList>
 
@@ -354,11 +362,25 @@ export default function JornadaPage() {
                   </h2>
                 </div>
                 <Tabs defaultValue="all">
-                  <TabsList className="bg-secondary/20 mb-6">
-                    <TabsTrigger value="all">Todas</TabsTrigger>
-                    <TabsTrigger value="consistency">Foco</TabsTrigger>
-                    <TabsTrigger value="discipline">Estudo</TabsTrigger>
-                    <TabsTrigger value="speed">Performance</TabsTrigger>
+                  <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-1 bg-secondary/20 p-1 sm:grid-cols-4">
+                    <TabsTrigger value="all" className="min-w-0 px-1 text-xs">
+                      Todas
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="consistency"
+                      className="min-w-0 px-1 text-xs"
+                    >
+                      Foco
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="discipline"
+                      className="min-w-0 px-1 text-xs"
+                    >
+                      Estudo
+                    </TabsTrigger>
+                    <TabsTrigger value="speed" className="min-w-0 px-1 text-xs">
+                      Performance
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="all">{renderBadgeGrid()}</TabsContent>
                   <TabsContent value="consistency">

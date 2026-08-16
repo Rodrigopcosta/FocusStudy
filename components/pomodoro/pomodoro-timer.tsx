@@ -418,14 +418,21 @@ export function PomodoroTimer({
                 }}
                 disabled={isRunning}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tarefa vinculada..." />
+                <SelectTrigger className="w-full min-w-0">
+                  <SelectValue
+                    className="min-w-0 flex-1 truncate"
+                    placeholder="Tarefa vinculada..."
+                  />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                   <SelectItem value="none">Nenhuma tarefa</SelectItem>
                   {tasks.map(task => (
-                    <SelectItem key={task.id} value={task.id}>
-                      {task.title}
+                    <SelectItem
+                      key={task.id}
+                      value={task.id}
+                      className="min-w-0 [&>span:last-child]:min-w-0 [&>span:last-child]:flex-1 [&>span:last-child]:truncate"
+                    >
+                      <span className="block truncate">{task.title}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
