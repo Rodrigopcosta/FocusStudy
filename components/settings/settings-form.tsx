@@ -109,7 +109,12 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" value={userEmail} disabled className="bg-muted/30" />
+            <Input
+              id="email"
+              value={userEmail}
+              disabled
+              className="bg-muted/30"
+            />
             <p className="text-xs text-muted-foreground">
               O email não pode ser alterado
             </p>
@@ -183,7 +188,11 @@ export function SettingsForm({ profile, userEmail }: SettingsFormProps) {
           <LogOut className="mr-2 h-4 w-4" />
           Sair da Conta
         </Button>
-        <Button onClick={handleSave} disabled={isLoading} className="bg-primary">
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          className="bg-primary"
+        >
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

@@ -6,13 +6,13 @@ import { NextResponse } from 'next/server'
 
 function getPlanType(priceId: string, status: string): string {
   if (status !== 'active' && status !== 'trialing') return 'free'
-  
+
   const isYearly = priceId === process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID
-  
+
   if (isYearly) {
     return 'pro_annual'
   }
-  
+
   return 'pro_monthly'
 }
 

@@ -7,10 +7,15 @@ export async function POST(req: Request) {
     const supabase = await createClient()
 
     if (!deviceId) {
-      return NextResponse.json({ eligible: false, error: 'Dados insuficientes.' }, { status: 400 })
+      return NextResponse.json(
+        { eligible: false, error: 'Dados insuficientes.' },
+        { status: 400 }
+      )
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     const { data: records, error } = await supabase
       .from('profiles')
@@ -20,11 +25,16 @@ export async function POST(req: Request) {
     if (error) throw error
 
     const otherRecords = records?.filter(p => p.id !== user?.id) ?? []
-    const hasAlreadyRedeemed = otherRecords.some(p => p.trial_redeemed === true || p.has_trial_active === true)
+    const hasAlreadyRedeemed = otherRecords.some(
+      p => p.trial_redeemed === true || p.has_trial_active === true
+    )
 
     return NextResponse.json({ eligible: !hasAlreadyRedeemed })
   } catch (error) {
     console.error('Erro ao checar elegibilidade:', error)
-    return NextResponse.json({ eligible: false, error: 'Erro interno.' }, { status: 500 })
+    return NextResponse.json(
+      { eligible: false, error: 'Erro interno.' },
+      { status: 500 }
+    )
   }
 }

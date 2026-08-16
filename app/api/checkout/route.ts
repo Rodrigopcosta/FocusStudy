@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { priceId } = await req.json()
+    const { priceId, cancelUrl } = await req.json()
     const supabase = await createClient()
 
     const {
@@ -18,9 +18,12 @@ export async function POST(req: Request) {
     }
 
     if (!priceId) {
-      return new NextResponse(JSON.stringify({ error: 'O ID do preço não foi fornecido.' }), {
-        status: 400,
-      })
+      return new NextResponse(
+        JSON.stringify({ error: 'O ID do preço não foi fornecido.' }),
+        {
+          status: 400,
+        }
+      )
     }
 
     const metadata = {
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
       customer_email: user.email,
       subscription_data: { metadata },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?canceled=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}${cancelUrl ?? '/dashboard'}?canceled=true`,
       billing_address_collection: 'required',
     })
 
